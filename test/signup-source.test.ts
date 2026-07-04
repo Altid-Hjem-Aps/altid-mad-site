@@ -14,6 +14,16 @@ describe('normalizeSignupSource', () => {
     }
   })
 
+  it('pins every source a shipped component emits', () => {
+    // Iterating SIGNUP_SOURCES alone would stay green if an entry were
+    // removed while a live component still sends it (silently becoming
+    // the default in the data). Pin them explicitly: the site default
+    // (WaitlistForm) and the exit-intent dialog's source.
+    for (const source of ['altid-mad', 'altid-mad-exit']) {
+      expect(SIGNUP_SOURCES).toContain(source)
+    }
+  })
+
   it('falls back to forside for unknown strings and logs a warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     expect(normalizeSignupSource('evil-source')).toBe(DEFAULT_SIGNUP_SOURCE)

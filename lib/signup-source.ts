@@ -3,7 +3,9 @@
  * (allowlist). Nye kampagnesider tilføjes HER, ét sted, så klient og server
  * ikke kan drifte fra hinanden.
  */
-export const SIGNUP_SOURCES = ['altid-mad'] as const
+// 'altid-mad-exit' mirrors Hjem's 'exit-intent' but stays distinguishable
+// from Hjem's exit signups in the shared Supabase/Amplitude backend.
+export const SIGNUP_SOURCES = ['altid-mad', 'altid-mad-exit'] as const
 
 export type SignupSource = (typeof SIGNUP_SOURCES)[number]
 

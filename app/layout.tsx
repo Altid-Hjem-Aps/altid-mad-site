@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Onest, Afacad } from 'next/font/google'
 import './globals.css'
 import ResetScrollOnLoad from '@/components/ResetScrollOnLoad'
+import ExitIntentModal from '@/components/ExitIntentModal'
 
 const onest = Onest({
   subsets: ['latin'],
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ResetScrollOnLoad />
         {children}
+        <ExitIntentModal />
       </body>
     </html>
   )

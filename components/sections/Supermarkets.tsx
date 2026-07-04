@@ -1,6 +1,6 @@
 'use client'
 
-import { useAutoCarousel, CarouselPagination } from '@/components/useAutoCarousel'
+import { useAutoCarousel, useCarouselReveal, CarouselPagination } from '@/components/useAutoCarousel'
 import { EYEBROW } from '@/lib/typography'
 
 // Supermarket logo strip below the hero (Mad CVI frame node 44:1060): the
@@ -32,6 +32,7 @@ const LOOP = [...CHAINS, ...CHAINS, ...CHAINS]
 export default function Supermarkets() {
   const carousel = useAutoCarousel(N)
   const { trackRef, onScroll, cancelGlide } = carousel
+  const reveal = useCarouselReveal(trackRef, carousel.reduced, N, carousel.demoNudge)
 
   return (
     <section className="py-14 sm:py-16" style={{ background: '#fff' }}>
@@ -55,6 +56,7 @@ export default function Supermarkets() {
               key={`${c.alt}-${i}`}
               aria-hidden={clone || undefined}
               className="snap-center shrink-0 flex items-center justify-center min-w-[160px]"
+              style={reveal(i)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

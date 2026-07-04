@@ -34,7 +34,47 @@ const ITEMS: Item[] = [
 const MOBILE_VISIBLE = 3
 
 export default function Faq() {
-  const [open, setOpen] = useState<number | null>(0)
+  // The first answer ends up open, but it STARTS closed and folds out when
+  // the section scrolls into view — seeing the accordion move once teaches
+  // the mechanic. Reduced motion (and no-IO browsers) get it open instantly.
+  const [open, setOpen] = useState<number | null>(null)
+  const sectionRef = useRef<HTMLElement>(null)
+  // "Untouched" must mean the VISITOR hasn't interacted — open===null alone
+  // can't tell "never touched" from "opened and deliberately closed again",
+  // and the auto-open must never fight an explicit close.
+  const touchedRef = useRef(false)
+  useEffect(() => {
+    const openFirstIfUntouched = () => {
+      if (touchedRef.current) return
+      setOpen(o => (o === null ? 0 : o))
+    }
+    if (
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
+      typeof IntersectionObserver === 'undefined'
+    ) {
+      openFirstIfUntouched()
+      return
+    }
+    const el = sectionRef.current
+    if (!el) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      io.disconnect()
+      // Hold the closed state for a beat AFTER the section is comfortably in
+      // view, so the visitor sees it closed first and then the fold-out reads
+      // as an event — never override a question they opened themselves.
+      timer = setTimeout(openFirstIfUntouched, 650)
+      // 0.35, not higher: intersectionRatio can never reach 0.5 for a section
+      // taller than ~2× the viewport (short landscape screens, high zoom) —
+      // the fold-out would simply never fire there.
+    }, { threshold: 0.35 })
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      if (timer) clearTimeout(timer)
+    }
+  }, [])
   // Mobile shows the first questions + a "Vis flere" pill (altidenergi.dk
   // pattern) instead of the desktop scroll area.
   const [showAll, setShowAll] = useState(false)
@@ -60,7 +100,7 @@ export default function Faq() {
   }, [])
 
   return (
-    <section className="relative" style={{ background: '#fdfaf4' }}>
+    <section ref={sectionRef} className="relative" style={{ background: '#fdfaf4' }}>
       {/* App-icon badge straddling the seam to the Trust section above */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -104,7 +144,7 @@ export default function Faq() {
                     >
                       <button
                         type="button"
-                        onClick={() => setOpen(isOpen ? null : i)}
+                        onClick={() => { touchedRef.current = true; setOpen(isOpen ? null : i) }}
                         aria-expanded={isOpen}
                         aria-controls={`faq-answer-${i}`}
                         className="w-full flex items-center justify-between gap-6 text-left py-[clamp(18px,1.6vw,26px)]"
@@ -113,7 +153,7 @@ export default function Faq() {
                           {item.q}
                         </span>
                         <span
-                          className="shrink-0 flex items-center justify-center rounded-full transition-transform duration-300 motion-reduce:transition-none"
+                          className="shrink-0 flex items-center justify-center rounded-full transition-transform duration-500 motion-reduce:transition-none"
                           style={{
                             width: 34,
                             height: 34,
@@ -132,7 +172,7 @@ export default function Faq() {
                       <div
                         id={`faq-answer-${i}`}
                         aria-hidden={!isOpen}
-                        className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
+                        className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)] motion-reduce:transition-none"
                         style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
                       >
                         <div className="overflow-hidden">

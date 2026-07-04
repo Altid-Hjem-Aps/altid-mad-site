@@ -2,10 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { fluid } from '@/lib/fluid'
+import { REVEAL_SPRING } from '@/lib/motion'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
-// Spring-ish easing for the on-scroll card reveal (slight overshoot on settle).
-const REVEAL_SPRING = 'cubic-bezier(0.34, 1.2, 0.64, 1)'
 
 // "Fordelene, du har ventet på" — teal section (Mad CVI frame node 44:1060)
 // with six white benefit cards: a mint icon circle, a title and a one-liner

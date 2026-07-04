@@ -27,10 +27,12 @@ const NAV_LINKS: NavLink[] = [
   { label: 'Hjem', href: 'https://altidhjem.dk', tone: 'live' },
   { label: 'Mad', href: '/', tone: 'home' },
   { label: 'Energi', href: 'https://altidenergi.dk', tone: 'live' },
-  { label: 'Alarm', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
-  { label: 'Opladning', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
-  { label: 'Forsikring', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
-  { label: 'Mobil', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
+  // 'soon' services are muted with a "Kommer snart" sublabel (Figma 26:105)
+  // and rendered inactive (no link) until their site launches.
+  { label: 'Alarm', href: '#', tone: 'soon' },
+  { label: 'Opladning', href: '#', tone: 'soon' },
+  { label: 'Forsikring', href: '#', tone: 'soon' },
+  { label: 'Mobil', href: '#', tone: 'soon' },
 ]
 
 interface BannerConfig {
@@ -61,6 +63,9 @@ const SPIIR_BANNER: BannerConfig = {
 // use the Mad mint instead of Hjem's signal green.
 const FOREST = '#163223'
 const MINT = '#bfe6e0'
+// Deliberately low-contrast: these links are INACTIVE until each service's
+// site launches (WCAG 1.4.3 exempts inactive components); they flip to
+// 'live'/white when switched on.
 const MUTED = '#6f6a61'
 
 export default function Nav({ spiirBanner = false, banner }: NavProps) {
@@ -141,15 +146,25 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
     <div className="hidden xl:flex items-center gap-[clamp(56px,5.5vw,105px)]">
       {NAV_LINKS.map(({ label, href, tone }) => {
         const active = tone === 'home' && pathname === '/'
+        const external = href.startsWith('http')
         return (
-          <span key={label} className="relative">
-            <a
-              href={href}
-              className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-              style={{ color: linkColor(tone) }}
-            >
-              {label}
-            </a>
+          <span key={label} className="relative" style={tone === 'soon' ? { opacity: 0.6 } : undefined}>
+            {tone === 'soon' ? (
+              // Not a link: "Kommer snart" services are inactive until launch.
+              <span className="text-[16px] font-medium whitespace-nowrap cursor-default select-none" style={{ color: linkColor(tone) }}>
+                {label}
+              </span>
+            ) : (
+              <a
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
+                style={{ color: linkColor(tone) }}
+              >
+                {label}
+              </a>
+            )}
             {active && (
               <span
                 aria-hidden
@@ -157,13 +172,21 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
                 style={{ background: MINT }}
               />
             )}
+            {tone === 'soon' && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 top-full mt-0.5 text-[9px] font-medium uppercase tracking-[0.08em] whitespace-nowrap"
+                style={{ color: MUTED }}
+              >
+                Kommer snart
+              </span>
+            )}
           </span>
         )
       })}
       <button
         type="button"
         onClick={() => handleCTA('nav')}
-        className="inline-flex items-center justify-center font-medium rounded-[20px] transition-opacity hover:opacity-90 whitespace-nowrap text-[16px] w-[clamp(200px,15.83vw,304px)] h-[clamp(52px,3.65vw,70px)]"
+        className="inline-flex items-center justify-center font-medium rounded-[20px] transition-opacity hover:opacity-90 whitespace-nowrap text-[16px] leading-tight w-[clamp(200px,15.83vw,304px)] py-[23px]"
         style={{
           background: MINT,
           color: FOREST,
@@ -220,17 +243,39 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
       <ul className="flex flex-col px-5 sm:px-8 pt-2">
         {NAV_LINKS.map(({ label, href, tone }) => {
           const active = tone === 'home' && pathname === '/'
+          const external = href.startsWith('http')
+          const inner = (
+            <>
+              {label}
+              {active && <span aria-hidden className="w-[7px] h-[7px] rounded-full" style={{ background: MINT }} />}
+              {tone === 'soon' && (
+                <span className="text-[10px] font-medium uppercase tracking-[0.08em]" style={{ color: MUTED }}>
+                  Kommer snart
+                </span>
+              )}
+            </>
+          )
+          const rowClass = 'flex items-center gap-2 py-3.5 text-[17px] font-medium'
+          const rowStyle = { color: linkColor(tone), borderBottom: '1px solid rgba(255,255,255,0.06)' }
           return (
             <li key={label}>
-              <a
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 py-3.5 text-[17px] font-medium"
-                style={{ color: linkColor(tone), borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                {label}
-                {active && <span aria-hidden className="w-[7px] h-[7px] rounded-full" style={{ background: MINT }} />}
-              </a>
+              {tone === 'soon' ? (
+                // Inactive until launch — rendered as plain text, not a link.
+                <span className={`${rowClass} cursor-default select-none`} style={{ ...rowStyle, opacity: 0.6 }}>
+                  {inner}
+                </span>
+              ) : (
+                <a
+                  href={href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  onClick={() => setMenuOpen(false)}
+                  className={rowClass}
+                  style={rowStyle}
+                >
+                  {inner}
+                </a>
+              )}
             </li>
           )
         })}
@@ -250,7 +295,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
 
   const navInner = (
     <>
-      <a href="/" className="shrink-0" aria-label="Altid Mad – forside">
+      <a href="/" aria-label="Altid Mad – forside" className="shrink-0">
         <MadLogo size={44} />
       </a>
       {desktopMenu}

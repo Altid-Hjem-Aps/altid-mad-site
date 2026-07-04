@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useAutoCarousel, CarouselPagination } from '@/components/useAutoCarousel'
+import { useAutoCarousel, useCarouselReveal, CarouselPagination } from '@/components/useAutoCarousel'
 import { H2, EYEBROW } from '@/lib/typography'
 
 // Blog strip — the "read more" section linking to altidhjem.dk's SEO pages
@@ -129,6 +129,7 @@ function PostCard({ post, clone = false }: { post: Post; clone?: boolean }) {
 export default function Blog() {
   const carousel = useAutoCarousel(N, AUTO_MS)
   const { trackRef, onScroll, cancelGlide } = carousel
+  const reveal = useCarouselReveal(trackRef, carousel.reduced, N, carousel.demoNudge)
 
   return (
     <section className="py-20 sm:py-28" style={{ background: '#ffffff' }}>
@@ -161,7 +162,7 @@ export default function Blog() {
           // keyboard/screen-reader users every post three times.
           const clone = i < N || i >= 2 * N
           return (
-            <div key={`${p.href}-${i}`} aria-hidden={clone || undefined} className="snap-center shrink-0 flex w-[86vw] max-w-[520px] lg:max-w-none lg:w-[clamp(560px,37.5vw,760px)]">
+            <div key={`${p.href}-${i}`} aria-hidden={clone || undefined} className="snap-center shrink-0 flex w-[86vw] max-w-[520px] lg:max-w-none lg:w-[clamp(560px,37.5vw,760px)]" style={reveal(i)}>
               <PostCard post={p} clone={clone} />
             </div>
           )

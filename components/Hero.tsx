@@ -11,8 +11,8 @@ const STATS = [
 export default function Hero() {
   return (
     <section id="top" className="relative overflow-hidden" style={{ background: '#fdfaf4' }}>
-      {/* Spacer matching the fixed nav height (CTA button up to 70px + py-5). */}
-      <div className="h-[112px] shrink-0" />
+      {/* Spacer matching the fixed nav height (66px CTA + py-5 + border). */}
+      <div className="h-[108px] shrink-0" />
 
       {/* Wide grid as in the CVI frame: ~71px margins at 1920 (= Figma's ~95/47). */}
       <div className="max-w-[1920px] mx-auto w-full px-6 sm:px-10 lg:px-[clamp(48px,3.7vw,72px)]">
@@ -29,10 +29,10 @@ export default function Hero() {
             </h1>
 
             <p
-              className={`mt-7 ${BODY} mx-auto lg:mx-0`}
+              className={`mt-7 ${BODY} lg:text-[18px] mx-auto lg:mx-0`}
               style={{ color: '#6f6a61', maxWidth: 620 }}
             >
-              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. Du vælger, hvad I har lyst til. Resten kører automatisk. Altid.
+              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. Du vælger, hvad I har lyst til. Resten kører automatisk. <span style={{ color: '#163223' }}>Altid.</span>
             </p>
 
             <div id="venteliste" className="mt-8 w-full max-w-[600px] mx-auto lg:mx-0">

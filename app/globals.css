@@ -9,7 +9,7 @@
   --sage: #a8e063;
   --text-dark: #0d2010;
   --text-mid: #2a4030;
-  --text-light: #5a7a62;
+  --text-light: #4d6a55;
   --accent-yellow: #f5f07a;
   --accent-blue: #8fccff;
   --accent-pink: #ffbab8;
@@ -100,4 +100,10 @@ body {
 @keyframes slide-down-fade {
   from { opacity: 0; transform: translateY(-10px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Exit-intent overlay fade (ExitIntentDialog). */
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }

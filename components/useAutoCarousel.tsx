@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { REVEAL_SPRING } from '@/lib/motion'
 
 // Shared looping auto-carousel engine (Testimonials + Blog):
 // - the track renders its items ×3 and starts centred on the middle set; once
@@ -24,14 +25,24 @@ export function useAutoCarousel(n: number, autoMs = 5000) {
   const [inView, setInView] = useState(false)
   const [paused, setPaused] = useState(false)
 
-  const cancelGlide = () => {
+  const cancelGlideInternal = () => {
     if (animRef.current) cancelAnimationFrame(animRef.current)
     animRef.current = null
     if (trackRef.current) trackRef.current.style.scrollSnapType = ''
   }
 
+  // The EXPORTED cancelGlide is only ever wired to real user input
+  // (pointerdown / wheel / touchstart in the hosts) — so it doubles as the
+  // "visitor has grabbed this carousel themselves" signal that suppresses
+  // the demo nudge. Programmatic glides use the internal variant.
+  const userInteractedRef = useRef(false)
+  const cancelGlide = () => {
+    userInteractedRef.current = true
+    cancelGlideInternal()
+  }
+
   const glideTo = (el: HTMLElement, target: number, dur: number) => {
-    cancelGlide()
+    cancelGlideInternal()
     const start = el.scrollLeft
     const dist = target - start
     if (Math.abs(dist) < 1) return
@@ -114,10 +125,31 @@ export function useAutoCarousel(n: number, autoMs = 5000) {
     return () => {
       io?.disconnect()
       if (idleTimer.current) clearTimeout(idleTimer.current)
-      cancelGlide()
+      cancelGlideInternal()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Demo nudge: glide one card ahead ONCE — the movement itself tells the
+  // visitor "this slides" without waiting out the full autoplay interval.
+  // Called by useCarouselReveal after the cards' fade-up settles (NOT keyed
+  // on this hook's `inView`, which goes true while the track merely peeks in
+  // at the fold — the demo would spend itself off-screen before the visitor
+  // arrives). The resulting active-change resets the autoplay schedule.
+  const demoDoneRef = useRef(false)
+  const demoNudge = () => {
+    if (reduced || demoDoneRef.current) return
+    // A visitor who already grabbed/scrolled the carousel has discovered the
+    // mechanic — a demo glide now would fight their momentum scroll.
+    if (userInteractedRef.current) return
+    const el = trackRef.current
+    if (!el) return
+    // Mark spent only once we can actually perform the glide.
+    demoDoneRef.current = true
+    const { cards, best } = nearestCard(el)
+    const next = cards[best + 1]
+    if (next) glideTo(el, next.offsetLeft + next.offsetWidth / 2 - el.clientWidth / 2, 950)
+  }
 
   // Autoplay: whenever a card becomes (or stays) active, glide to the NEXT
   // absolute card once the (pausable) interval runs out.
@@ -140,7 +172,80 @@ export function useAutoCarousel(n: number, autoMs = 5000) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, reduced, inView, paused])
 
-  return { trackRef, active, reduced, inView, paused, onScroll, cancelGlide, goTo, togglePaused, autoMs }
+  return { trackRef, active, reduced, inView, paused, onScroll, cancelGlide, goTo, togglePaused, autoMs, demoNudge }
+}
+
+// One-shot card reveal for the carousels — the SAME entrance as the Services
+// ("Tjenesterne") cards: fade + rise from the bottom, staggered LEFT→RIGHT
+// across the visible cards. The track mounts centred on card `n` with card
+// `n-1` peeking in from the left, so that card leads the sweep; delays grow
+// with the loop index from there (capped, so far-off-screen clones don't lag
+// behind for seconds). The demo glide in useAutoCarousel then slides one card
+// AFTER this settles. Returns a per-card style factory.
+export function useCarouselReveal(
+  trackRef: React.RefObject<HTMLDivElement | null>,
+  reduced: boolean,
+  n: number,
+  /** Fired once, a beat after the reveal settles — the demo glide hooks in here. */
+  onSettled?: () => void,
+) {
+  const [revealed, setRevealed] = useState(false)
+  // Settled = entrance transition (incl. stagger) is over. Used to DROP the
+  // willChange hint — leaving it on would keep every card in the tripled
+  // loop promoted to its own compositor layer for the life of the page.
+  const [settled, setSettled] = useState(false)
+
+  useEffect(() => {
+    if (!revealed) return
+    const t = setTimeout(() => {
+      setSettled(true)
+      onSettled?.()
+    }, 1700)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed])
+  useEffect(() => {
+    const el = trackRef.current
+    if (!el) return
+    if (reduced || typeof IntersectionObserver === 'undefined') {
+      setRevealed(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setRevealed(true)
+          io.disconnect()
+        }
+      },
+      // Shrink the viewport's bottom edge: the track must rise out of the
+      // bottom fifth of the screen before the reveal starts. A bare threshold
+      // can't do this — the track is short, so a large share of it is visible
+      // even while it still peeks at the fold, and the reveal would play
+      // before the visitor arrives (the "you don't really see it" bug).
+      { rootMargin: '0px 0px -20% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [trackRef, reduced])
+
+  return (i: number): React.CSSProperties => {
+    // Visual position relative to the leftmost card in view at mount (i = n-1).
+    const step = Math.max(0, Math.min(i - (n - 1), 4))
+    const delay = step * 130
+    return {
+      opacity: revealed ? 1 : 0,
+      transform: revealed ? 'none' : 'translateY(28px)',
+      // The Services entrance, slowed down so it registers (these cards are
+      // much bigger than the service tiles). box-shadow stays in the list so
+      // cards with a hover shadow keep animating it (an inline transition
+      // would otherwise override the transition-shadow utility).
+      transition: reduced
+        ? 'none'
+        : `opacity 0.75s ease ${delay}ms, transform 0.9s ${REVEAL_SPRING} ${delay}ms, box-shadow 0.3s ease`,
+      willChange: settled ? undefined : 'opacity, transform',
+    }
+  }
 }
 
 // Apple-gallery pagination: dots where the active one stretches into a pill
@@ -158,36 +263,43 @@ export function CarouselPagination({
 }) {
   const { active, reduced, inView, paused, goTo, togglePaused, autoMs } = carousel
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center gap-0">
       {Array.from({ length: count }).map((_, i) => (
+        // The button is the (invisible) 24px+ touch target — WCAG 2.5.8 /
+        // Lighthouse target-size; the visible dot is the span inside.
         <button
           key={i}
           type="button"
           aria-label={itemLabel(i)}
           onClick={() => goTo(i)}
-          className="relative overflow-hidden rounded-full transition-[width] duration-300"
-          style={{
-            width: active === i ? 52 : 9,
-            height: 9,
-            background: 'rgba(22,50,35,0.2)',
-          }}
+          className="flex items-center justify-center"
+          style={{ minWidth: 24, height: 24, padding: 0 }}
         >
-          {active === i && (
-            <span
-              className="absolute inset-y-0 left-0 rounded-full"
-              style={{
-                background: '#163223',
-                width: reduced ? '100%' : undefined,
-                // Longhand props (not the `animation` shorthand) so the
-                // play-state can change without React shorthand conflicts.
-                animationName: reduced || !inView ? undefined : 'blog-progress',
-                animationDuration: `${autoMs}ms`,
-                animationTimingFunction: 'linear',
-                animationFillMode: 'forwards',
-                animationPlayState: paused ? 'paused' : 'running',
-              }}
-            />
-          )}
+          <span
+            className="relative overflow-hidden rounded-full transition-[width] duration-300 block"
+            style={{
+              width: active === i ? 52 : 9,
+              height: 9,
+              background: 'rgba(22,50,35,0.2)',
+            }}
+          >
+            {active === i && (
+              <span
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  background: '#163223',
+                  width: reduced ? '100%' : undefined,
+                  // Longhand props (not the `animation` shorthand) so the
+                  // play-state can change without React shorthand conflicts.
+                  animationName: reduced || !inView ? undefined : 'blog-progress',
+                  animationDuration: `${autoMs}ms`,
+                  animationTimingFunction: 'linear',
+                  animationFillMode: 'forwards',
+                  animationPlayState: paused ? 'paused' : 'running',
+                }}
+              />
+            )}
+          </span>
         </button>
       ))}
 

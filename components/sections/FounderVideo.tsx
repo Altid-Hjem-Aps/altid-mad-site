@@ -272,7 +272,7 @@ export default function FounderVideo() {
           <button
             type="button"
             onClick={handleCTA}
-            className="mt-9 inline-flex w-fit items-center justify-center font-medium rounded-[20px] px-8 py-[18px] xl:p-0 xl:w-[clamp(200px,15.83vw,304px)] xl:h-[clamp(52px,3.65vw,70px)] text-[16px] transition-opacity hover:opacity-90"
+            className="mt-9 inline-flex w-fit items-center justify-center font-medium rounded-[20px] px-8 py-[18px] xl:px-0 xl:py-[23px] xl:w-[clamp(200px,15.83vw,304px)] text-[16px] transition-opacity hover:opacity-90"
             style={{ background: '#bfe6e0', color: '#163223', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Skriv dig på ventelisten
@@ -351,7 +351,7 @@ export default function FounderVideo() {
             <button
               type="button"
               onClick={handleWatchWithSound}
-              aria-label="Afspil videoen forfra med lyd"
+              aria-label="Se med lyd — afspil videoen forfra"
               // Pill sits top-left below lg — on the narrow crops the burned-in
               // subtitles own the bottom of the frame; desktop has room at the
               // bottom-left.
