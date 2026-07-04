@@ -18,15 +18,17 @@ const afacad = Afacad({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://altidhjem.dk'),
+  // Domain not final — altidmad.dk is the working assumption until Thor
+  // confirms DNS ownership; swap here + robots/sitemap when decided.
+  metadataBase: new URL('https://altidmad.dk'),
   alternates: { canonical: './' },
-  title: 'Altid Hjem – Skriv dig på ventelisten',
-  description: 'Altid Hjem samler hjemmets faste udgifter i én app – ét overblik, ét login, én regning.',
+  title: 'Altid Mad – Skriv dig på ventelisten',
+  description: 'Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbslisten – så familien sparer penge på dagligvarer. Altid.',
   openGraph: {
-    title: 'Altid Hjem – Skriv dig på ventelisten',
-    description: 'Altid Hjem samler hjemmets faste udgifter i én app – ét overblik, ét login, én regning.',
-    url: 'https://altidhjem.dk',
-    siteName: 'Altid Hjem',
+    title: 'Altid Mad – Skriv dig på ventelisten',
+    description: 'Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbslisten – så familien sparer penge på dagligvarer. Altid.',
+    url: 'https://altidmad.dk',
+    siteName: 'Altid Mad',
     locale: 'da_DK',
     type: 'website',
   },

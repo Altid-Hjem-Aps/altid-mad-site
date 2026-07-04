@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useAutoCarousel, CarouselPagination } from '@/components/useAutoCarousel'
 import { H2, EYEBROW } from '@/lib/typography'
 
-// Blog strip — the "read more" section linking to the SEO pages.
+// Blog strip — the "read more" section linking to altidhjem.dk's SEO pages
+// (the Mad site has no local blog routes).
 // A centred snap carousel of large post cards (like the Figma frame, where the
 // cards overflow the viewport with dots below — on desktop too). Several cards
 // can point at the same SEO page from different angles; the chip icon matches
@@ -21,7 +22,7 @@ type Post = {
 
 const POSTS: Post[] = [
   {
-    href: '/hvad-koster-forsikring',
+    href: 'https://altidhjem.dk/hvad-koster-forsikring',
     icon: '/services/icon-forsikring.svg',
     category: 'Forsikring',
     title: 'Hvad koster forsikring i 2026?',
@@ -29,7 +30,7 @@ const POSTS: Post[] = [
     meta: '5 min læsning · 17. jun 2026',
   },
   {
-    href: '/hvornar-er-strommen-billigst',
+    href: 'https://altidhjem.dk/hvornar-er-strommen-billigst',
     icon: '/services/icon-strom.svg',
     category: 'Energi',
     title: 'Lad Altid Hjem holde øje med elprisen for dig',
@@ -37,7 +38,7 @@ const POSTS: Post[] = [
     meta: '5 min læsning · 25. jun 2026',
   },
   {
-    href: '/spiir-alternativ',
+    href: 'https://altidhjem.dk/spiir-alternativ',
     icon: '/app-badge.png',
     category: 'Overblik',
     title: 'Spiir lukker – hvad bruger du nu?',
@@ -45,7 +46,7 @@ const POSTS: Post[] = [
     meta: '4 min læsning · 10. jun 2026',
   },
   {
-    href: '/hvad-koster-forsikring',
+    href: 'https://altidhjem.dk/hvad-koster-forsikring',
     icon: '/services/icon-forsikring.svg',
     category: 'Forsikring',
     title: 'Er du forsikret dobbelt uden at vide det?',
@@ -53,7 +54,7 @@ const POSTS: Post[] = [
     meta: '4 min læsning · 17. jun 2026',
   },
   {
-    href: '/hvornar-er-strommen-billigst',
+    href: 'https://altidhjem.dk/hvornar-er-strommen-billigst',
     icon: '/services/icon-strom.svg',
     category: 'Energi',
     title: 'Hvornår er strømmen billigst?',
@@ -61,7 +62,7 @@ const POSTS: Post[] = [
     meta: '4 min læsning · 14. jun 2026',
   },
   {
-    href: '/spiir-alternativ',
+    href: 'https://altidhjem.dk/spiir-alternativ',
     icon: '/app-badge.png',
     category: 'Overblik',
     title: 'Få ro på hjemmets faste udgifter',

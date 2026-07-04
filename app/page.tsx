@@ -1,12 +1,11 @@
 import Nav from '@/components/Nav'
 import Hero from '@/components/Hero'
-import Testimonials from '@/components/sections/Testimonials'
+import Supermarkets from '@/components/sections/Supermarkets'
 import FounderVideo from '@/components/sections/FounderVideo'
-import SavingsCounter from '@/components/sections/SavingsCounter'
+import Savings from '@/components/sections/Savings'
 import Services from '@/components/sections/Services'
+import Problem from '@/components/sections/Problem'
 import HowItWorks from '@/components/sections/HowItWorks'
-// The "one home, too many bills" story — the bills→app-icon→phone animation.
-import WhatIs from '@/components/sections/WhatIs'
 import Trust from '@/components/sections/Trust'
 import Faq from '@/components/sections/Faq'
 import Blog from '@/components/sections/Blog'
@@ -19,11 +18,11 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
-        <Testimonials />
+        <Supermarkets />
         <FounderVideo />
-        <SavingsCounter />
+        <Savings />
         <Services />
-        <WhatIs />
+        <Problem />
         <HowItWorks />
         <Trust />
         <Faq />

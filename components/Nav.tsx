@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import * as amplitude from '@amplitude/analytics-browser'
-import { Logo } from '@/components/Logo'
+import { MadLogo } from '@/components/Logo'
 
 const HIDE_THRESHOLD = 80
 // The campaign banner is hidden at the top and only slides in once the user
@@ -14,9 +14,9 @@ const BANNER_REVEAL = 8
 const SCROLL_DELTA_DESKTOP = 6
 const SCROLL_DELTA_TOUCH = 30
 
-// The CVI navigation: one active item (Hjem); service links are muted until
-// their sites launch ('live' renders white). href points at the services
-// section so the link works from every page (homepage + SEO pages).
+// The CVI navigation on the Mad site: Mad is the active item (marker dot);
+// Hjem and Energi link to their live sites; the rest are muted until their
+// sites launch and point at the Hjem services section meanwhile.
 type LinkTone = 'home' | 'live' | 'soon'
 interface NavLink {
   label: string
@@ -24,15 +24,13 @@ interface NavLink {
   tone: LinkTone
 }
 const NAV_LINKS: NavLink[] = [
-  { label: 'Hjem', href: '/', tone: 'home' },
-  // All services muted until their sites are live — flip Mad/Energi back to
-  // 'live' (white) when they launch.
-  { label: 'Mad', href: '/#tjenester', tone: 'soon' },
-  { label: 'Energi', href: '/#tjenester', tone: 'soon' },
-  { label: 'Alarm', href: '/#tjenester', tone: 'soon' },
-  { label: 'Opladning', href: '/#tjenester', tone: 'soon' },
-  { label: 'Forsikring', href: '/#tjenester', tone: 'soon' },
-  { label: 'Mobil', href: '/#tjenester', tone: 'soon' },
+  { label: 'Hjem', href: 'https://altidhjem.dk', tone: 'live' },
+  { label: 'Mad', href: '/', tone: 'home' },
+  { label: 'Energi', href: 'https://altidenergi.dk', tone: 'live' },
+  { label: 'Alarm', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
+  { label: 'Opladning', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
+  { label: 'Forsikring', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
+  { label: 'Mobil', href: 'https://altidhjem.dk/#tjenester', tone: 'soon' },
 ]
 
 interface BannerConfig {
@@ -59,9 +57,10 @@ const SPIIR_BANNER: BannerConfig = {
   source: 'spiir-banner',
 }
 
-// Colours from the CVI frame (node 45:6428)
+// Colours from the Mad CVI frame (node 44:1060): CTAs and the active-item dot
+// use the Mad mint instead of Hjem's signal green.
 const FOREST = '#163223'
-const SIGNAL = '#90ff7c'
+const MINT = '#bfe6e0'
 const MUTED = '#6f6a61'
 
 export default function Nav({ spiirBanner = false, banner }: NavProps) {
@@ -129,8 +128,8 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
   }
 
   function linkColor(tone: LinkTone) {
-    if (tone === 'home' && pathname === '/') return SIGNAL
-    if (tone === 'live') return '#fff'
+    // The active item stays white — the mint dot below it is the marker.
+    if (tone === 'home' || tone === 'live') return '#fff'
     return MUTED
   }
 
@@ -155,7 +154,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
               <span
                 aria-hidden
                 className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-[7px] h-[7px] rounded-full"
-                style={{ background: SIGNAL }}
+                style={{ background: MINT }}
               />
             )}
           </span>
@@ -166,8 +165,8 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
         onClick={() => handleCTA('nav')}
         className="inline-flex items-center justify-center font-medium rounded-[20px] transition-opacity hover:opacity-90 whitespace-nowrap text-[16px] w-[clamp(200px,15.83vw,304px)] h-[clamp(52px,3.65vw,70px)]"
         style={{
-          background: SIGNAL,
-          color: '#003c16',
+          background: MINT,
+          color: FOREST,
           transform: 'translateZ(0)',
           touchAction: 'manipulation',
           WebkitTapHighlightColor: 'transparent',
@@ -230,7 +229,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
                 style={{ color: linkColor(tone), borderBottom: '1px solid rgba(255,255,255,0.06)' }}
               >
                 {label}
-                {active && <span aria-hidden className="w-[7px] h-[7px] rounded-full" style={{ background: SIGNAL }} />}
+                {active && <span aria-hidden className="w-[7px] h-[7px] rounded-full" style={{ background: MINT }} />}
               </a>
             </li>
           )
@@ -241,7 +240,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
           type="button"
           onClick={() => { setMenuOpen(false); handleCTA('nav') }}
           className="w-full text-base font-medium py-3.5 rounded-[20px]"
-          style={{ background: SIGNAL, color: '#003c16', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+          style={{ background: MINT, color: FOREST, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
           Skriv dig på ventelisten
         </button>
@@ -251,8 +250,8 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
 
   const navInner = (
     <>
-      <a href="/" className="shrink-0">
-        <Logo className="h-11 w-auto" variant="forest" />
+      <a href="/" className="shrink-0" aria-label="Altid Mad – forside">
+        <MadLogo size={44} />
       </a>
       {desktopMenu}
       {burger}
@@ -323,7 +322,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
           <span className="md:hidden align-middle">{bannerConfig.shortPrefix}</span>
           <span
             className="inline-block align-middle ml-2 px-3 py-1 rounded-full font-medium"
-            style={{ background: SIGNAL, color: '#003c16' }}
+            style={{ background: MINT, color: FOREST }}
           >
             {(bannerConfig.cta ?? 'Skriv dig på ventelisten').replace(/\s*→\s*$/, '')}
           </span>

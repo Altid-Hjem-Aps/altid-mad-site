@@ -13,6 +13,36 @@ const PATHS_HJEM = [
   "M927.48,465.71v-49.82c0-16.88-7.07-26.36-21.05-26.36-14.78,0-21.21,8.2-21.21,26.03v50.14h-16.71v-51.74c0-17.52-8.2-24.43-20.25-24.43-14.78,0-22.02,8.68-22.02,26.19v49.98h-16.71v-89.03h15.43v9.64h.32c7.23-8.52,13.98-12.05,25.55-12.05s23.14,5.63,27.64,14.94c6.43-10.12,15.27-14.94,29.41-14.94,23.14,0,36.32,14.46,36.32,37.44v53.99h-16.71Z",
 ]
 
+// "altid mad" lockup for the Mad site: the "altid" letter paths (cropped to
+// the word's own height) with the subbrand word set in Afacad below-right,
+// like the Services card lockups. `size` is the total lockup height in px.
+export function MadLogo({ className, style, size = 44, altidColor = '#fff', madColor = '#bfe6e0' }: {
+  className?: string
+  style?: React.CSSProperties
+  size?: number
+  altidColor?: string
+  madColor?: string
+}) {
+  return (
+    <span className={`inline-flex flex-col items-end ${className ?? ''}`} style={{ gap: size * 0.06, ...style }}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 944.2 319.73"
+        style={{ height: size * 0.6, width: 'auto' }}
+        aria-hidden
+      >
+        {PATHS_ALTID.map((d, i) => <path key={i} fill={altidColor} d={d} />)}
+      </svg>
+      <span
+        className="leading-none"
+        style={{ fontFamily: 'var(--font-afacad)', color: madColor, fontSize: size * 0.34 }}
+      >
+        mad
+      </span>
+    </span>
+  )
+}
+
 export function Logo({ className, style, variant = 'default' }: {
   className?: string
   style?: React.CSSProperties

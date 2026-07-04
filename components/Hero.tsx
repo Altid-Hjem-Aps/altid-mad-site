@@ -1,15 +1,11 @@
 import WaitlistForm from '@/components/WaitlistForm'
 import IPhoneMockup from '@/components/IPhoneMockup'
 import { H1, BODY } from '@/lib/typography'
-import LiveSavingsStat from '@/components/LiveSavingsStat'
 
-// Stats from the CVI frame (node 45:6428) — left column below the CTA.
+// Stats from the Mad CVI frame (node 44:1060) — left column below the CTA.
 const STATS = [
-  // Desktop only — the approved mobile layout shows just the two stats below.
-  { value: '0 kr.', label: 'at oprette en konto', color: '#202820', desktopOnly: true },
-  { value: '+15.000', label: 'Altid Energi-kunder', color: '#202820' },
-  // Live, exact amount — same source + burst behaviour as SavingsCounter.
-  { value: <LiveSavingsStat />, label: 'har Altid Energi-kunder sparet', color: '#163223', tightLabel: true },
+  { value: '0 kr.', label: 'At oprette en konto', color: '#202820' },
+  { value: '+15.000 kr.', label: 'Kan du spare op til årligt med Altid Mad', color: '#163223' },
 ]
 
 export default function Hero() {
@@ -29,19 +25,14 @@ export default function Hero() {
               style={{ color: '#163223' }}
             >
               <span className="block">Snart får danskerne</span>
-              <span className="block">bedre råd til hjemmet</span>
+              <span className="block" style={{ color: '#0f6e68' }}>bedre råd til mad</span>
             </h1>
 
             <p
               className={`mt-7 ${BODY} mx-auto lg:mx-0`}
               style={{ color: '#6f6a61', maxWidth: 620 }}
             >
-              {/* Desktop: two lines with the dash line forced onto its own
-                  line. Phones: one naturally flowing paragraph (the glued
-                  "i én løsning" tail keeps the wrap from orphaning a word). */}
-              <span className="lg:block">Altid Hjem samler hjemmets faste udgifter i én løsning</span>
-              {' '}
-              <span className="lg:block">– ét overblik, ét login, én regning. Altid.</span>
+              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. Du vælger, hvad I har lyst til. Resten kører automatisk. Altid.
             </p>
 
             <div id="venteliste" className="mt-8 w-full max-w-[600px] mx-auto lg:mx-0">
@@ -51,15 +42,15 @@ export default function Hero() {
             {/* Stats row */}
             <div className="mt-20 max-lg:mt-10 grid grid-cols-[auto_auto] justify-center gap-x-8 gap-y-6 lg:flex lg:flex-nowrap lg:justify-start lg:gap-x-[clamp(28px,5.2vw,100px)]">
               {STATS.map(s => (
-                <div key={s.label} className={`text-left max-lg:text-center whitespace-nowrap${s.desktopOnly ? ' hidden lg:block' : ''}`}>
+                <div key={s.label} className="text-left max-lg:text-center">
                   <div
-                    className="font-normal tabular-nums leading-none text-[clamp(22px,calc(20px+0.52vw),30px)]"
+                    className="font-normal tabular-nums leading-none text-[clamp(22px,calc(20px+0.52vw),30px)] whitespace-nowrap"
                     style={{ color: s.color }}
                   >
                     {s.value}
                   </div>
-                  {/* 12px below lg so both one-line labels fit side by side down to 360px. */}
-                  <div className={`mt-2.5 text-[clamp(13px,0.85vw,16px)] max-lg:text-[12px] leading-snug${s.tightLabel ? ' max-lg:tracking-[-0.01em]' : ''}`} style={{ color: '#6f6a61' }}>
+                  {/* 12px below lg so both labels fit side by side down to 360px. */}
+                  <div className="mt-2.5 text-[clamp(13px,0.85vw,16px)] max-lg:text-[12px] leading-snug max-w-[220px]" style={{ color: '#6f6a61' }}>
                     {s.label}
                   </div>
                 </div>

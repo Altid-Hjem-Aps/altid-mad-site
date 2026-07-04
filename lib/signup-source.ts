@@ -3,11 +3,13 @@
  * (allowlist). Nye kampagnesider tilføjes HER, ét sted, så klient og server
  * ikke kan drifte fra hinanden.
  */
-export const SIGNUP_SOURCES = ['forside', 'spiir-alternativ', 'elpriser', 'forsikring'] as const
+export const SIGNUP_SOURCES = ['altid-mad'] as const
 
 export type SignupSource = (typeof SIGNUP_SOURCES)[number]
 
-export const DEFAULT_SIGNUP_SOURCE: SignupSource = 'forside'
+// The Mad site tags every signup 'altid-mad' so the shared Supabase/Amplitude
+// backend (same as altidhjem.dk) can tell the two sites apart.
+export const DEFAULT_SIGNUP_SOURCE: SignupSource = 'altid-mad'
 
 /**
  * Allowlist-normalisering af klientens `source`-felt, så vilkårlige værdier
@@ -19,7 +21,7 @@ export function normalizeSignupSource(value: unknown): SignupSource {
     return value as SignupSource
   }
   if (value !== undefined && value !== null && value !== '') {
-    console.warn('waitlist: unknown signup source, falling back to forside:', String(value).slice(0, 64))
+    console.warn('waitlist: unknown signup source, falling back to altid-mad:', String(value).slice(0, 64))
   }
   return DEFAULT_SIGNUP_SOURCE
 }

@@ -15,27 +15,19 @@ type Item = { q: string; a: string }
 const ITEMS: Item[] = [
   {
     q: 'Hvad er Altid Hjem?',
-    a: 'Altid Hjem er en app, der samler hjemmets faste udgifter ét sted – strøm, mobil, forsikring, mad, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.',
+    a: 'Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.',
   },
   {
-    q: 'Hvornår lanceres Altid Hjem?',
-    a: 'Vi lancerer snart. Skriv dig på ventelisten, så får du besked, så snart appen er klar – og du er blandt de første, der kan komme i gang.',
+    q: 'Er Altid Mad en del af Altid Hjem?',
+    a: 'Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen. Når du skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem – med samme login og samme app.',
   },
   {
-    q: 'Hvor meget sparer jeg med Altid Hjem?',
-    a: 'Det afhænger af dine aftaler, men mange sparer langt over 1.000 kr. årligt alene på strøm. Hos Altid Energi har +15.000 kunder allerede sparet millioner – og med flere af hjemmets udgifter samlet vokser besparelsen.',
+    q: 'Hvor meget sparer jeg med Altid Mad?',
+    a: 'Baseret på data fra Spari forventer vi, at mange danske familier sparer mellem 10 og 20 % på dagligvarer – typisk 7.500-15.000 kr. om året, afhængigt af husstandens størrelse og indkøbsvaner.',
   },
   {
     q: 'Er det gratis at skrive sig på ventelisten?',
     a: 'Ja, det er helt gratis og uforpligtende. Du får besked, når appen er klar, og du kan til enhver tid afmelde dig igen.',
-  },
-  {
-    q: 'Hvilke tjenester kan jeg samle i appen?',
-    a: 'Fra start kan du samle strøm, mobil, forsikring, mad, elbilsopladning og alarm – nøje udvalgte tjenester, valgt på baggrund af kvalitet, pris og gennemsigtighed. Flere kommer til.',
-  },
-  {
-    q: 'Skal jeg selv opsige mine gamle aftaler?',
-    a: 'Nej, det klarer vi. Når du vælger en løsning gennem Altid Hjem, håndterer vi skiftet for dig, så du slipper for opsigelser og papirarbejde.',
   },
 ]
 

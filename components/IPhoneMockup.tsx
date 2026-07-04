@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import PhoneShell from './iphone/PhoneShell'
-import HomeScreen from './iphone/HomeScreen'
-import SubbrandsScreen from './iphone/SubbrandsScreen'
-import SmartTipsScreen from './iphone/SmartTipsScreen'
+import MealPlanScreen from './iphone/MealPlanScreen'
+import GroceryListScreen from './iphone/GroceryListScreen'
+import OffersScreen from './iphone/OffersScreen'
 import { CarouselPagination } from './useAutoCarousel'
 
 const SCREEN_COUNT = 3
@@ -153,9 +153,9 @@ export default function IPhoneMockup() {
   }
 
   const screens = [
-    (active: boolean) => <HomeScreen hovered={active} />,
-    (active: boolean) => <SubbrandsScreen hovered={active} />,
-    (active: boolean) => <SmartTipsScreen hovered={active} />,
+    (active: boolean) => <MealPlanScreen hovered={active} />,
+    (active: boolean) => <GroceryListScreen hovered={active} />,
+    (active: boolean) => <OffersScreen hovered={active} />,
   ]
 
   return (
@@ -171,7 +171,7 @@ export default function IPhoneMockup() {
             resetTimerRef.current = setTimeout(() => setHovered(false), 2800)
           }}
         >
-          {/* Back-left: Subbrands */}
+          {/* Back-left: grocery list */}
           <div
             className="absolute"
             style={{
@@ -190,11 +190,11 @@ export default function IPhoneMockup() {
             onMouseLeave={onPhoneLeave}
           >
             <PhoneShell variant="back" hovered={hovered}>
-              <SubbrandsScreen hovered={hovered} />
+              <GroceryListScreen hovered={hovered} />
             </PhoneShell>
           </div>
 
-          {/* Back-right: Smart tips */}
+          {/* Back-right: this week's offers */}
           <div
             className="absolute"
             style={{
@@ -213,11 +213,11 @@ export default function IPhoneMockup() {
             onMouseLeave={onPhoneLeave}
           >
             <PhoneShell variant="back" hovered={hovered}>
-              <SmartTipsScreen hovered={hovered} />
+              <OffersScreen hovered={hovered} />
             </PhoneShell>
           </div>
 
-          {/* Foreground: Hjem */}
+          {/* Foreground: the week's meal plan */}
           <div
             className="absolute"
             style={{
@@ -235,7 +235,7 @@ export default function IPhoneMockup() {
             onMouseLeave={onPhoneLeave}
           >
             <PhoneShell hovered={hovered}>
-              <HomeScreen hovered={hovered} />
+              <MealPlanScreen hovered={hovered} />
             </PhoneShell>
           </div>
         </div>

@@ -5,7 +5,7 @@ import Nav from '@/components/Nav'
 
 // Amplitude is a browser SDK with network side effects — mock it.
 vi.mock('@amplitude/analytics-browser', () => ({ track: vi.fn() }))
-vi.mock('@/components/Logo', () => ({ Logo: () => null }))
+vi.mock('@/components/Logo', () => ({ Logo: () => null, MadLogo: () => null }))
 
 // Nav navigates via the App Router off the front page — capture push calls.
 // usePathname (active-link highlighting) follows the stubbed window.location.

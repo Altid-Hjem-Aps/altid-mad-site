@@ -242,7 +242,7 @@ export default function FounderVideo() {
   }
 
   return (
-    <section className="relative overflow-hidden" style={{ background: '#193d23' }}>
+    <section className="relative overflow-hidden" style={{ background: '#0f6e68' }}>
       <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch">
 
         {/* Left: text + CTA */}
@@ -250,7 +250,7 @@ export default function FounderVideo() {
           className="flex flex-col justify-center py-16 lg:py-20 pr-6 sm:pr-10 lg:pr-14 max-w-[880px]"
           style={{ paddingLeft: fluid(140, 32) }}
         >
-          <p className={EYEBROW} style={{ color: '#90ff7c' }}>
+          <p className={EYEBROW} style={{ color: '#bfe6e0' }}>
             Mød grundlæggeren
           </p>
 
@@ -261,20 +261,19 @@ export default function FounderVideo() {
             className={`mt-6 ${H2} text-white`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Der er gebyrer overalt.<br />
-            Og det er noget af det,<br />
-            <span style={{ color: '#90ff7c' }}>vi danskere hader allermest.&rdquo;</span>
+            &ldquo;Spar op til <span style={{ color: '#bfe6e0' }}>15.000 kr</span><br />
+            på familiens indkøb.&rdquo;
           </h2>
 
           <p className={`mt-7 max-w-[520px] ${BODY} text-white`}>
-            Altid Hjem er udviklet af teamet bag Altid Energi. Nu tager vi samme opgør med skjulte gebyrer videre til resten af hjemmets aftaler.
+            Altid Mad hjælper familien med at spare penge på dagligvarer ved at finde tilbud, planlægge måltider og samle indkøbslisten automatisk.
           </p>
 
           <button
             type="button"
             onClick={handleCTA}
             className="mt-9 inline-flex w-fit items-center justify-center font-medium rounded-[20px] px-8 py-[18px] xl:p-0 xl:w-[clamp(200px,15.83vw,304px)] xl:h-[clamp(52px,3.65vw,70px)] text-[16px] transition-opacity hover:opacity-90"
-            style={{ background: '#90ff7c', color: '#003c16', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            style={{ background: '#bfe6e0', color: '#163223', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Skriv dig på ventelisten
           </button>
@@ -306,7 +305,7 @@ export default function FounderVideo() {
           <MuxPlayer
             playbackId={PLAYBACK_ID}
             streamType="on-demand"
-            accentColor="#90ff7c"
+            accentColor="#bfe6e0"
             poster={POSTER_URL}
             playsInline
             loop

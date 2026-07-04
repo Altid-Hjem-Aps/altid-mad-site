@@ -5,8 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/preview/'],
+      disallow: ['/api/'],
     },
-    sitemap: 'https://altidhjem.dk/sitemap.xml',
+    sitemap: 'https://altidmad.dk/sitemap.xml',
   }
 }

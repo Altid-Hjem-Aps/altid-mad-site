@@ -8,10 +8,10 @@ import { H2, EYEBROW, BUTTON_PRIMARY } from '@/lib/typography'
 type Step = { n: string; title: string; desc: React.ReactNode }
 
 const STEPS: Step[] = [
-  { n: '01', title: 'Tilmeld dig ventelisten gratis', desc: 'Skriv dit navn og din e-mail, og vi holder dig opdateret.' },
-  { n: '02', title: 'Få besked, når appen er klar', desc: 'Vi sender dig en e-mail, når appen er klar. Så du er blandt de første til at prøve Altid Hjem.' },
-  { n: '03', title: 'Vælg dine løsninger', desc: 'Sammenlign og vælg de tjenester, der passer til dit hjem.' },
-  { n: '04', title: 'Fuldt overblik', desc: <>Alle faste udgifter samlet ét sted, med ét login. <span style={{ color: '#163223' }}>Altid.</span></> },
+  { n: '01', title: 'Fortæl os om din familie', desc: 'Hvem er I, hvad kan I lide, hvor meget tid bruger I i køkkenet, og hvad er jeres ugentlige madbudget?' },
+  { n: '02', title: 'Vælg ugens måltider', desc: 'Få et udvalg af opskrifter tilpasset jeres præferencer, eller lad Altid Mad foreslå en madplan baseret på ugens bedste tilbud.' },
+  { n: '03', title: 'Få din indkøbsliste', desc: 'Automatisk genereret med prissammenligning på tværs af butikker. Du ser præcis hvad du sparer – og hvad der er billigst hvor.' },
+  { n: '04', title: 'Spar penge. Hver uge. Altid.', desc: 'Del listen med familien og køb ind. Glæd jer til at se, hvad det gør for madbudgettet, når I køber varerne, hvor de er billigst.' },
 ]
 
 // Hairline dividers ONLY between touching cards (no outer frame), as borders on
@@ -64,7 +64,7 @@ export default function HowItWorks() {
             Sådan virker det
           </p>
           <h2 className={H2} style={{ color: '#163223' }}>
-            Fire trin til fuldt overblik
+            Fire trin til automatisk madplan og indkøbsliste
           </h2>
         </div>
 
@@ -109,10 +109,10 @@ export default function HowItWorks() {
             type="button"
             onClick={handleCTA}
             className={`${BUTTON_PRIMARY} w-full px-5 lg:w-auto lg:px-[42px]`}
-            style={{ background: '#90ff7c', color: '#003c16' }}
+            style={{ background: '#bfe6e0', color: '#163223' }}
           >
             <span className="lg:hidden">Skriv dig gratis på ventelisten</span>
-            <span className="hidden lg:inline">Skriv dig på ventelisten og få ro på hjemmets udgifter</span>
+            <span className="hidden lg:inline">Skriv dig på ventelisten og få ro på madbudgettet</span>
           </button>
         </div>
 
