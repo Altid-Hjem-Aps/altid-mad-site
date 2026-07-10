@@ -228,7 +228,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
 
   if (isDark) {
     if (duplicate) return <SuccessCard bare={embedded} heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
-    if (view === 'success') return <SuccessCard bare={embedded} inviteUrl={signupId ? `https://altidhjem.dk/?ref=${signupId}` : undefined} />
+    if (view === 'success') return <SuccessCard bare={embedded} inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
     if (view === 'questions') {
       return (
@@ -317,7 +317,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   // ─── Light variant (Hero) ─────────────────────────────────────────────────
 
   if (duplicate) return <SuccessCard variant="cream" heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
-  if (view === 'success') return <SuccessCard variant="cream" inviteUrl={signupId ? `https://altidhjem.dk/?ref=${signupId}` : undefined} />
+  if (view === 'success') return <SuccessCard variant="cream" inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
   if (view === 'questions') {
     return (
