@@ -13,24 +13,10 @@ import { H2, EYEBROW, BODY } from '@/lib/typography'
 // phone's whole choreography, so pause/resume freezes scenes, pops and the
 // pagination pill in lockstep (the ProblemSolved pattern, kept verbatim).
 
-export const TEAL = '#0f6e68'
-export const MINT = '#bfe6e0'
-export const FOREST = '#163223'
-export const MUTED = '#6f6a61'
-export const HAIRLINE = 'rgba(15,110,104,0.12)'
-
-export const ACCENT = {
-  blue: { wash: 'rgba(47,143,208,0.13)', ink: '#1c567e', dot: '#2f8fd0' },
-  amber: { wash: 'rgba(232,139,47,0.15)', ink: '#7d430e', dot: '#e88b2f' },
-  brand: { wash: 'rgba(15,110,104,0.1)', ink: TEAL, dot: TEAL },
-}
-
-// The savings tone: a mid-teal that reads clearly on the beige screen — used
-// for "+X kr." savings figures across the phone mockups.
-export const SAVE_TEAL = '#3d9187'
-
-export const EASE_EXPO = [0.16, 1, 0.3, 1] as const
-export const EASE_QUINT = [0.22, 1, 0.36, 1] as const
+// Tokens live in problemTokens.ts (kept out of this framer-heavy module so
+// server-rendered consumers stay light); re-exported for the flow components.
+export { TEAL, MINT, FOREST, MUTED, HAIRLINE, ACCENT, SAVE_TEAL, EASE_EXPO, EASE_QUINT } from './problemTokens'
+import { TEAL, MINT, FOREST, MUTED, HAIRLINE, ACCENT, SAVE_TEAL, EASE_EXPO, EASE_QUINT } from './problemTokens'
 
 const TICK_MS = 200
 
@@ -765,7 +751,7 @@ export default function QuestionSection({
           }
         >
           {kicker && <motion.p className={EYEBROW} style={{ color: TEAL }} {...rise(0)}>{kicker}</motion.p>}
-          <motion.h2 className={`${H2} ${kicker ? 'mt-5' : ''} text-balance lg:max-w-[560px]`} style={{ color: FOREST }} {...rise(0.1)}>
+          <motion.h2 className={`${H2} ${kicker ? 'mt-5' : ''} [text-wrap:pretty] lg:[text-wrap:balance] lg:max-w-[560px]`} style={{ color: FOREST }} {...rise(0.1)}>
             {question}
           </motion.h2>
           <motion.p className={`${BODY} mt-6 text-pretty lg:max-w-[560px]`} style={{ color: MUTED }} {...rise(0.2)}>
