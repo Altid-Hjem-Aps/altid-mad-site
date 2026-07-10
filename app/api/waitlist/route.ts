@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: duplicateSignupMessage(existing?.source ?? null),
-          ...(existing ? { inviteUrl: `https://altidhjem.dk/?ref=${encodeURIComponent(existing.publicId)}` } : {}),
+          ...(existing ? { inviteUrl: `https://altidmad.dk/?ref=${encodeURIComponent(existing.publicId)}` } : {}),
         },
         { status: 409 },
       )
@@ -93,6 +93,10 @@ export async function POST(req: NextRequest) {
       }
 
       const unsubscribeUrl = token ? `https://altidhjem.dk/api/unsubscribe?token=${token}` : ''
+      // The EMAIL's invite link stays on altidhjem.dk: send-email derives the
+      // share-page button from it (/?ref= -> /inviter?ref=), and /inviter only
+      // exists on the Hjem site. The links the SITE shows (success card, 409
+      // duplicate card) point at altidmad.dk — both domains capture ?ref.
       const inviteUrl = `https://altidhjem.dk/?ref=${encodeURIComponent(userId)}`
 
       // Welcome email WITH the personal invite link. It needs a working
