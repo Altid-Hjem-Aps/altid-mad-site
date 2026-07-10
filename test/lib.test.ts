@@ -13,3 +13,25 @@ describe('fluid', () => {
     expect(min).toBeLessThanOrEqual(max)
   })
 })
+
+describe('duplicateSignupMessage', () => {
+  it('keeps the plain message for signups made on the Mad site', async () => {
+    const { duplicateSignupMessage } = await import('@/lib/copy')
+    expect(duplicateSignupMessage('altid-mad')).toBe('Du er allerede skrevet op!')
+    expect(duplicateSignupMessage('altid-mad-exit')).toBe('Du er allerede skrevet op!')
+  })
+
+  it('tells Hjem signups they are already covered', async () => {
+    const { duplicateSignupMessage } = await import('@/lib/copy')
+    const covered = 'Du er allerede skrevet op til Altid Hjem og står derfor også på ventelisten til Altid Mad.'
+    expect(duplicateSignupMessage('forside')).toBe(covered)
+    expect(duplicateSignupMessage('exit-intent')).toBe(covered)
+  })
+
+  it('treats unknown history (no mirror row / null source) as a Hjem signup', async () => {
+    const { duplicateSignupMessage } = await import('@/lib/copy')
+    const covered = 'Du er allerede skrevet op til Altid Hjem og står derfor også på ventelisten til Altid Mad.'
+    expect(duplicateSignupMessage(null)).toBe(covered)
+    expect(duplicateSignupMessage(undefined)).toBe(covered)
+  })
+})
