@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { animate } from 'framer-motion'
 
 // The hero's "+15.000 kr." stat counts up on load — the altidhjem.dk counter
 // minus the burst: it climbs, lands exactly on 15.000 and stops. An invisible
@@ -21,13 +20,19 @@ export default function HeroStatCounter() {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate arm-then-animate reset (same pattern as Savings)
     setProg(0)
-    const controls = animate(0, 1, {
-      duration: 1.9,
-      delay: 0.35,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => setProg(v),
-    })
-    return () => controls.stop()
+    // Hand-rolled ease-out count-up (approximates framer's [0.16,1,0.3,1])
+    // so the hero doesn't pull framer-motion into the first-load bundle.
+    const DURATION = 1900
+    const DELAY = 350
+    let raf = 0
+    const start = performance.now() + DELAY
+    const tick = (now: number) => {
+      const t = Math.min(Math.max((now - start) / DURATION, 0), 1)
+      setProg(t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   // Count in steps of 100 but land EXACTLY on the target.
