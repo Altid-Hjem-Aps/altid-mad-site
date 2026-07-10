@@ -4,10 +4,11 @@ import HeroStatCounter from '@/components/HeroStatCounter'
 import { H1, BODY } from '@/lib/typography'
 
 // Stats from the Mad CVI frame (node 44:1060) — left column below the CTA.
-// The savings stat counts up on load (HeroStatCounter).
+// The savings stat counts up on load (HeroStatCounter). "0 kr." is
+// desktop-only; mobile shows just the centered savings counter.
 const STATS = [
-  { value: '0 kr.', label: 'at oprette en konto', color: '#202820', oneLine: false },
-  { value: 'counter' as const, label: 'kan du spare op til årligt med Altid Mad', color: '#163223', oneLine: true },
+  { value: '0 kr.', label: 'at oprette en konto', color: '#202820', oneLine: false, desktopOnly: true },
+  { value: 'counter' as const, label: 'kan du spare op til årligt med Altid Mad', color: '#163223', oneLine: true, desktopOnly: false },
 ]
 
 export default function Hero() {
@@ -34,24 +35,25 @@ export default function Hero() {
               className={`mt-7 ${BODY} lg:text-[18px] mx-auto lg:mx-0`}
               style={{ color: '#6f6a61', maxWidth: 620 }}
             >
-              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. <span style={{ color: '#163223' }}>Altid.</span>
+              <span className="max-lg:hidden">Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen, så du kan spare penge året rundt.</span>
+              <span className="lg:hidden">Altid Mad laver din madplan, finder ugens bedste tilbud og skriver indkøbssedlen, så du sparer penge året rundt.</span>{' '}
+              <span style={{ color: '#163223' }}>Altid.</span>
             </p>
 
             <div id="venteliste" className="mt-8 w-full max-w-[600px] mx-auto lg:mx-0">
               <WaitlistForm variant="light" />
             </div>
 
-            {/* Stats row */}
-            <div className="mt-20 max-lg:mt-10 grid grid-cols-[auto_auto] justify-center gap-x-8 gap-y-6 lg:flex lg:flex-nowrap lg:justify-start lg:gap-x-[clamp(28px,5.2vw,100px)]">
+            {/* Stats row — single centered stat below lg, both side by side on desktop */}
+            <div className="mt-20 max-lg:mt-10 flex justify-center lg:justify-start lg:gap-x-[clamp(28px,5.2vw,100px)]">
               {STATS.map(s => (
-                <div key={s.label} className="text-left max-lg:text-center">
+                <div key={s.label} className={`text-left max-lg:text-center ${s.desktopOnly ? 'max-lg:hidden' : ''}`}>
                   <div
                     className="font-normal tabular-nums leading-none text-[clamp(22px,calc(20px+0.52vw),30px)] whitespace-nowrap"
                     style={{ color: s.color }}
                   >
                     {s.value === 'counter' ? <HeroStatCounter /> : s.value}
                   </div>
-                  {/* 12px below lg so both labels fit side by side down to 360px. */}
                   <div
                     className={`mt-2.5 text-[clamp(13px,0.85vw,16px)] max-lg:text-[12px] leading-snug ${s.oneLine ? 'whitespace-nowrap' : 'max-w-[220px]'}`}
                     style={{ color: '#6f6a61' }}

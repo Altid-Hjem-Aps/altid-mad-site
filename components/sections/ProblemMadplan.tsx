@@ -965,7 +965,6 @@ const SCENES: FlowScene[] = [
 export default function ProblemMadplan() {
   return (
     <QuestionSection
-      kicker="Første spørgsmål"
       question="Hvad skal vi have til aftensmad?"
       answer="Altid Mad løser det automatisk med en skræddersyet madplan og masser af inspiration, tilpasset præcis jeres smag, hverdag og familiens størrelse. I vælger, hvad I kan lide, og appen bygger ugens madplan for jer."
       chips={['Madplan på 5 minutter', 'Tilpasset din familie']}

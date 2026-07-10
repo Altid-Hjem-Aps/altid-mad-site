@@ -189,7 +189,7 @@ export default function Services() {
           Tjenesterne
         </p>
         <h2 className={`${H2} text-center text-white`}>
-          Fordelene, du har ventet på
+          Fordelene,<br className="sm:hidden" /> du har ventet på
         </h2>
 
         <div

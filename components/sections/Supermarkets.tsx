@@ -53,7 +53,7 @@ export default function Supermarkets() {
         onPointerDown={cancelGlide}
         onWheel={cancelGlide}
         onTouchStart={cancelGlide}
-        className="mt-8 flex items-center gap-[clamp(40px,7vw,140px)] overflow-x-auto snap-x snap-mandatory pb-6 px-[max(10vw,calc((100vw-320px)/2))] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-8 flex items-center gap-[clamp(40px,7vw,140px)] overflow-x-auto snap-x snap-mandatory pb-6 px-10 sm:px-[max(10vw,calc((100vw-320px)/2))] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {LOOP.map((c, i) => {
           // Clone sets exist only for the seamless loop — hide them from AT.
@@ -65,7 +65,9 @@ export default function Supermarkets() {
               // Cell width + gap must keep one 5-logo cycle wider than the
               // viewport at 1920, so the tripled loop never shows the same
               // logo twice at once (stride ≈ 320+140 = 460px → ~4.2 visible).
-              className="snap-center shrink-0 flex items-center justify-center min-w-[clamp(160px,16vw,320px)]"
+              // Below sm the cell spans 100vw minus a gap per side, so exactly
+              // one logo is in view (neighbours land outside the viewport).
+              className="snap-center shrink-0 flex items-center justify-center min-w-[calc(100vw-80px)] sm:min-w-[clamp(160px,16vw,320px)]"
               style={reveal(i)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
