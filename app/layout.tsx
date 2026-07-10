@@ -24,10 +24,10 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://altidmad.dk'),
   alternates: { canonical: './' },
   title: 'Altid Mad – Skriv dig på ventelisten',
-  description: 'Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbslisten – så familien sparer penge på dagligvarer. Altid.',
+  description: 'Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen – så familien sparer penge på dagligvarer. Altid.',
   openGraph: {
     title: 'Altid Mad – Skriv dig på ventelisten',
-    description: 'Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbslisten – så familien sparer penge på dagligvarer. Altid.',
+    description: 'Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen – så familien sparer penge på dagligvarer. Altid.',
     url: 'https://altidmad.dk',
     siteName: 'Altid Mad',
     locale: 'da_DK',

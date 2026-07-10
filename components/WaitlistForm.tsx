@@ -238,7 +238,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
             </div>
           </div>
           <div className="flex flex-col gap-2.5">
-            <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#90ff7c', color: '#163223' }}>
+            <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#bfe6e0', color: '#163223' }}>
               {loading ? 'Sender...' : 'Indsend'}
             </button>
             <button type="button" onClick={() => { amplitude.track('Waitlist Step 2 Skipped'); setView('success') }} className="w-full py-3 rounded-[20px] text-sm font-normal border" style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)' }}>
@@ -279,7 +279,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
           </div>
         </div>
         {error && <p className="text-sm mb-3 text-center" style={{ color: '#ff8080' }}>{error}</p>}
-        <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#90ff7c', color: '#163223' }}>
+        <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#bfe6e0', color: '#163223' }}>
           {loading ? 'Sender...' : 'Skriv mig på ventelisten'}
         </button>
         <p className={`${FINE_PRINT} text-center mt-3`} style={{ color: 'rgba(255,255,255,0.62)' }}>

@@ -3,7 +3,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion'
 import PhoneShell, { TabBar, HomeIndicator } from '@/components/iphone/PhoneShell'
-import { fluid } from '@/lib/fluid'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
 // Shared kit for the two "Problemet, vi løser automatisk" sections. Each
@@ -636,7 +635,7 @@ function FlowTimeline({
 export interface QuestionSectionProps {
   question: string
   answer: string
-  /** The small line above the heading (e.g. "Første spørgsmål"). */
+  /** Optional small line above the heading — omitted, no eyebrow renders. */
   kicker?: string
   /** Proof pills under the answer — the storyboard's white chips. */
   chips: string[]
@@ -651,7 +650,7 @@ export interface QuestionSectionProps {
 export default function QuestionSection({
   question,
   answer,
-  kicker = 'Problemet, vi løser automatisk',
+  kicker,
   chips,
   mirror = false,
   centered = false,
@@ -714,7 +713,7 @@ export default function QuestionSection({
       <section className="relative overflow-hidden" style={{ background: '#ffffff' }}>
         <div className="mx-auto max-w-6xl px-4 sm:px-8 py-[clamp(56px,6.5vw,112px)]">
           <div className="mx-auto text-center" style={{ maxWidth: 680 }}>
-            <p className={EYEBROW} style={{ color: TEAL }}>{kicker}</p>
+            {kicker && <p className={EYEBROW} style={{ color: TEAL }}>{kicker}</p>}
             <h2 className={`${H2} mt-5 text-balance`} style={{ color: FOREST }}>{question}</h2>
             <p className={`${BODY} mt-6 mx-auto text-pretty`} style={{ color: MUTED, maxWidth: 620 }}>{answer}</p>
             <div ref={chipsRef} className="mt-8 flex flex-wrap justify-center gap-3">
@@ -754,19 +753,25 @@ export default function QuestionSection({
   return (
     <section ref={sectionRef} className="relative overflow-hidden" style={{ background: '#ffffff' }}>
       <div className="max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-y-12 lg:gap-x-[clamp(40px,5vw,100px)] py-[clamp(56px,6.5vw,112px)]">
-        {/* Copy — pushed toward the outer edge like the founder section. */}
+        {/* Copy — pushed toward the outer edge like the founder section.
+            Below lg both sections share the same 24px margin (the mirror
+            section's) and the text spans the full width, like the Trust
+            boxes; the fluid desktop indents apply from lg up. */}
         <div
-          className={mirror ? 'flex flex-col pl-6 sm:pl-10 lg:pl-0 lg:order-2' : 'flex flex-col pr-6 sm:pr-10 lg:pr-0'}
-          style={mirror ? { paddingRight: fluid(140, 24) } : { paddingLeft: fluid(240, 32) }}
+          className={
+            mirror
+              ? 'flex flex-col px-6 sm:px-10 lg:pl-0 lg:order-2 lg:pr-[clamp(1.5rem,7.292vw,8.75rem)]'
+              : 'flex flex-col px-6 sm:px-10 lg:pr-0 lg:pl-[clamp(2rem,12.500vw,15rem)]'
+          }
         >
-          <motion.p className={EYEBROW} style={{ color: TEAL }} {...rise(0)}>{kicker}</motion.p>
-          <motion.h2 className={`${H2} mt-5 text-balance`} style={{ color: FOREST, maxWidth: 560 }} {...rise(0.1)}>
+          {kicker && <motion.p className={EYEBROW} style={{ color: TEAL }} {...rise(0)}>{kicker}</motion.p>}
+          <motion.h2 className={`${H2} ${kicker ? 'mt-5' : ''} text-balance lg:max-w-[560px]`} style={{ color: FOREST }} {...rise(0.1)}>
             {question}
           </motion.h2>
-          <motion.p className={`${BODY} mt-6 text-pretty`} style={{ color: MUTED, maxWidth: 560 }} {...rise(0.2)}>
+          <motion.p className={`${BODY} mt-6 text-pretty lg:max-w-[560px]`} style={{ color: MUTED }} {...rise(0.2)}>
             {answer}
           </motion.p>
-          <div ref={chipsRef} className="mt-8 flex flex-wrap gap-3">
+          <div ref={chipsRef} className="mt-8 max-lg:hidden flex flex-wrap gap-3">
             {chips.map((c, i) => (
               <motion.span
                 key={c}
