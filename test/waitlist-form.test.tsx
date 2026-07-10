@@ -127,13 +127,13 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
           Promise.resolve({
             success: false,
             error: 'Du er allerede skrevet op!',
-            inviteUrl: 'https://altidhjem.dk/?ref=abc-123',
+            inviteUrl: 'https://altidmad.dk/?ref=abc-123',
           }),
       }),
     )
     fillAndSubmitDark()
     await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
-    expect(screen.getByDisplayValue('https://altidhjem.dk/?ref=abc-123')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('https://altidmad.dk/?ref=abc-123')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Kopiér' })).toBeInTheDocument()
   })
 
@@ -144,13 +144,13 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
       vi.fn().mockResolvedValue({
         ok: false,
         status: 409,
-        json: () => Promise.resolve({ success: false, error: hjemMsg, inviteUrl: 'https://altidhjem.dk/?ref=xyz' }),
+        json: () => Promise.resolve({ success: false, error: hjemMsg, inviteUrl: 'https://altidmad.dk/?ref=xyz' }),
       }),
     )
     fillAndSubmitDark()
     await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
     expect(screen.getByText(hjemMsg)).toBeInTheDocument()
-    expect(screen.getByDisplayValue('https://altidhjem.dk/?ref=xyz')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('https://altidmad.dk/?ref=xyz')).toBeInTheDocument()
   })
 
   it('keeps the plain error text when the API has no invite link for them', async () => {
