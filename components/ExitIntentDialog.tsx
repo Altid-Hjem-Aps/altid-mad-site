@@ -200,6 +200,7 @@ export default function ExitIntentDialog({ onClose }: { onClose: () => void }) {
             <WaitlistForm
               variant="dark"
               source="altid-mad-exit"
+              ctaColor="#bfe6e0"
               embedded
               onSignup={() => {
                 converted.current = true
