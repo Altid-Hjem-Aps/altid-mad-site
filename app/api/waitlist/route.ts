@@ -93,11 +93,11 @@ export async function POST(req: NextRequest) {
       }
 
       const unsubscribeUrl = token ? `https://altidhjem.dk/api/unsubscribe?token=${token}` : ''
-      // The EMAIL's invite link stays on altidhjem.dk: send-email derives the
-      // share-page button from it (/?ref= -> /inviter?ref=), and /inviter only
-      // exists on the Hjem site. The links the SITE shows (success card, 409
-      // duplicate card) point at altidmad.dk — both domains capture ?ref.
-      const inviteUrl = `https://altidhjem.dk/?ref=${encodeURIComponent(userId)}`
+      // Mad signups get Mad links everywhere: the welcome email's share-page
+      // button is derived from this (/?ref= -> /inviter?ref=), and the site
+      // has its own /inviter page. Both domains capture ?ref into the shared
+      // referral flow, so friends can land on either site and still count.
+      const inviteUrl = `https://altidmad.dk/?ref=${encodeURIComponent(userId)}`
 
       // Welcome email WITH the personal invite link. It needs a working
       // unsubscribe link, so if we couldn't get a token (Supabase hiccup), fall
