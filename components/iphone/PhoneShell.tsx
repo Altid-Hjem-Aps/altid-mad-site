@@ -178,7 +178,7 @@ function StatusBar() {
   )
 }
 
-export function TabBar({ active }: { active: 'hjem' | 'forbrug' | 'sparetips' | 'profil' }) {
+export function TabBar({ active }: { active: 'hjem' | 'mad' | 'sparetips' | 'profil' }) {
   return (
     <div
       className="mt-auto shrink-0 flex items-center justify-around px-6 pt-2 pb-1"
@@ -187,10 +187,15 @@ export function TabBar({ active }: { active: 'hjem' | 'forbrug' | 'sparetips' | 
       <Tab label="Hjem" isActive={active === 'hjem'}>
         <path d="M3 12L12 4L21 12V21H15V15H9V21H3V12Z" fill="currentColor" />
       </Tab>
-      <Tab label="Forbrug" isActive={active === 'forbrug'}>
-        <rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor" />
-        <rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor" />
-        <rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor" />
+      <Tab label="Mad" isActive={active === 'mad'}>
+        {/* The Altid Mad bottle-and-fruit glyph from icon-mad.svg — fruit
+            filled solid so the active state reads clearly, sized to match
+            the other tab glyphs (18 of the 24 grid). */}
+        <g transform="translate(12,12) scale(0.71) translate(-27.18,-26.58)" fill="currentColor">
+          <circle cx="32.31" cy="31.71" r="7.55" />
+          <path d="M32.3115 23.1006H37.7471C37.7471 21.5907 36.5392 20.3828 35.0293 20.3828C33.5194 20.3828 32.3115 21.4397 32.3115 22.9496V17.665C30.8016 17.665 29.5938 18.8729 29.5938 20.3828C29.5938 21.8927 30.8016 23.1006 32.3115 23.1006Z" />
+          <path d="M23.2514 34.8778H16.155C15.853 34.8778 15.853 34.8778 15.853 34.5759V24.6107C15.853 23.8558 15.853 23.1008 16.306 22.3459L18.8728 16.7594H22.4965L25.0632 22.3459C25.3652 23.1008 25.5162 23.8558 25.5162 24.6107V25.3657C25.9692 24.9127 26.5731 24.4597 27.0261 24.1578C27.0261 23.2518 26.7241 22.4969 26.4221 21.742L24.1573 16.7594H25.2142C25.6672 16.7594 26.1202 16.3064 26.1202 15.8535V14.7965C26.1202 14.3436 25.6672 13.8906 25.2142 13.8906H16.7589C16.306 13.8906 15.853 14.3436 15.853 14.7965V15.8535C15.853 16.3064 16.306 16.7594 16.7589 16.7594H17.3629L15.0981 21.742C14.6451 22.6479 14.4941 23.5538 14.4941 24.6107V34.5759C14.4941 35.6328 15.2491 36.3877 16.306 36.3877H24.1573C24.1573 35.9348 23.7044 35.3308 23.5534 34.8778H23.4024H23.2514Z" />
+        </g>
       </Tab>
       <Tab label="Sparetips" isActive={active === 'sparetips'}>
         <path d="M12 2L9 9H2L7.5 13.5L5.5 21L12 16.5L18.5 21L16.5 13.5L22 9H15L12 2Z" fill="currentColor" />

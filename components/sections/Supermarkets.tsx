@@ -11,17 +11,24 @@ import { EYEBROW } from '@/lib/typography'
 type Chain = {
   src: string
   alt: string
-  /** Rendered height in px — the source PNGs have very different aspects, so
+  /** Rendered height in px — the sources have very different aspects, so
    *  each logo gets its own height to even out the visual weight. */
   height: number
+  /** Netto's lockup is wordmark + the scottie-dog disc; the disc rides along
+   *  as a second image at its own height. */
+  disc?: { src: string; height: number }
 }
 
+// Wordmarks are the chains' own SVGs (bilka.dk / foetex.dk site assets, the
+// official Netto 2019 wordmark, REMA 1000's outlined one-liner) — crisp at
+// any size, viewBoxes trimmed to the artwork so nothing renders cut off.
+// nemlig.com has no public vector; its 600px PNG holds up at this size.
 const CHAINS: Chain[] = [
-  { src: '/supermarkets/netto.png', alt: 'Netto', height: 44 },
-  { src: '/supermarkets/rema1000.png', alt: 'REMA 1000', height: 40 },
-  { src: '/supermarkets/bilka.png', alt: 'Bilka', height: 40 },
-  { src: '/supermarkets/nemlig.png', alt: 'nemlig.com', height: 36 },
-  { src: '/supermarkets/foetex.png', alt: 'føtex', height: 84 },
+  { src: '/supermarkets/netto-wordmark.svg', alt: 'Netto', height: 42, disc: { src: '/logos/netto.png', height: 54 } },
+  { src: '/supermarkets/rema1000.svg', alt: 'REMA 1000', height: 50 },
+  { src: '/supermarkets/bilka.svg', alt: 'Bilka', height: 50 },
+  { src: '/supermarkets/nemlig.png', alt: 'nemlig.com', height: 46 },
+  { src: '/supermarkets/foetex.svg', alt: 'føtex', height: 104 },
 ]
 
 // The track renders the logos three times so the carousel can loop seamlessly
@@ -46,7 +53,7 @@ export default function Supermarkets() {
         onPointerDown={cancelGlide}
         onWheel={cancelGlide}
         onTouchStart={cancelGlide}
-        className="mt-8 flex items-center gap-[clamp(40px,5vw,96px)] overflow-x-auto snap-x snap-mandatory pb-6 px-[max(10vw,calc((100vw-320px)/2))] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-8 flex items-center gap-[clamp(40px,7vw,140px)] overflow-x-auto snap-x snap-mandatory pb-6 px-[max(10vw,calc((100vw-320px)/2))] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {LOOP.map((c, i) => {
           // Clone sets exist only for the seamless loop — hide them from AT.
@@ -55,7 +62,10 @@ export default function Supermarkets() {
             <div
               key={`${c.alt}-${i}`}
               aria-hidden={clone || undefined}
-              className="snap-center shrink-0 flex items-center justify-center min-w-[160px]"
+              // Cell width + gap must keep one 5-logo cycle wider than the
+              // viewport at 1920, so the tripled loop never shows the same
+              // logo twice at once (stride ≈ 320+140 = 460px → ~4.2 visible).
+              className="snap-center shrink-0 flex items-center justify-center min-w-[clamp(160px,16vw,320px)]"
               style={reveal(i)}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,6 +76,17 @@ export default function Supermarkets() {
                 decoding="async"
                 style={{ height: c.height, width: 'auto' }}
               />
+              {c.disc && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={c.disc.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="ml-2.5"
+                  style={{ height: c.disc.height, width: 'auto', borderRadius: '50%' }}
+                />
+              )}
             </div>
           )
         })}

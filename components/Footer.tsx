@@ -43,15 +43,17 @@ const SocialLink = ({ href, label }: { href: string; label: string }) => (
 
 const Copyright = () => (
   <>
-    © 2026 Altid Hjem · Skabt af teamet bag{' '}
+    © 2026 Altid Mad · En del af{' '}
+    {/* Always underlined — colour alone can't distinguish the link from the
+        surrounding copyright text (Lighthouse link-in-text-block). */}
     <a
-      href="https://altidenergi.dk"
+      href="https://www.altidhjem.dk"
       target="_blank"
       rel="noopener noreferrer"
-      className="underline-offset-2 hover:underline"
+      className="underline underline-offset-2"
       style={linkStyle}
     >
-      Altid Energi
+      Altid Hjem
     </a>
   </>
 )

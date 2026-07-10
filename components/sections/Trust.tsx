@@ -66,7 +66,7 @@ export default function Trust() {
 
           {/* Mobile: centered wordmark; the dot line hangs on the seam below. */}
           <div className="lg:hidden mt-10 flex justify-center">
-            <MadLogo size={48} />
+            <MadLogo className="h-12 w-auto" />
           </div>
 
           {/* Mobile: vertical dot line straddling the seam — the middle dot
@@ -100,7 +100,7 @@ export default function Trust() {
 
       {/* Desktop: mad → dots → hjem bridged across the seam, at the bottom. */}
       <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 bottom-[clamp(44px,4.8vw,92px)] items-center gap-[clamp(20px,2.2vw,34px)]">
-        <MadLogo size={52} />
+        <MadLogo className="h-[clamp(38px,3.2vw,56px)] w-auto" />
         <Dots />
         <Logo variant="forest" className="h-[clamp(38px,3.2vw,56px)] w-auto" />
       </div>

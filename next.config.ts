@@ -1,17 +1,27 @@
 import type { NextConfig } from "next";
 
+// STATIC_EXPORT=1 builds a fully static site (for the GitHub Pages preview at
+// thorfraaltid.github.io) — no API routes, no redirects; the waitlist form
+// can't submit there.
+const isExport = process.env.STATIC_EXPORT === "1";
+
 const nextConfig: NextConfig = {
-  async redirects() {
-    return [
-      // SEO-siden flyttede til søgeords-slug (12. jun 2026) — 301 bevarer
-      // evt. indekserede /elpriser-links og delte URL'er.
-      {
-        source: "/elpriser",
-        destination: "/hvornar-er-strommen-billigst",
-        permanent: true,
-      },
-    ];
-  },
+  ...(isExport ? { output: "export" as const } : {}),
+  ...(isExport
+    ? {}
+    : {
+        async redirects() {
+          return [
+            // SEO-siden flyttede til søgeords-slug (12. jun 2026) — 301 bevarer
+            // evt. indekserede /elpriser-links og delte URL'er.
+            {
+              source: "/elpriser",
+              destination: "/hvornar-er-strommen-billigst",
+              permanent: true,
+            },
+          ];
+        },
+      }),
 };
 
 export default nextConfig;

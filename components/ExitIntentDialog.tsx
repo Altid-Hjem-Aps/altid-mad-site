@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'framer-motion'
 import * as amplitude from '@amplitude/analytics-browser'
 import WaitlistForm from '@/components/WaitlistForm'
-import { SAVINGS_DISCLAIMER } from '@/lib/copy'
 import PhoneShell from '@/components/iphone/PhoneShell'
 import MealPlanScreen from '@/components/iphone/MealPlanScreen'
+import GroceryListScreen from '@/components/iphone/GroceryListScreen'
+import OffersScreen from '@/components/iphone/OffersScreen'
 
 // The exit-intent dialog BODY — code-split from the trigger
 // (ExitIntentModal.tsx) so framer-motion stays out of every page's initial
@@ -14,6 +15,40 @@ import MealPlanScreen from '@/components/iphone/MealPlanScreen'
 // phone (the hero mockup's foreground screen) right.
 
 const FOREST = '#163223'
+
+
+// The dialog's phone slides between the hero's three screens (meal plan →
+// grocery list → Personlig AI), the same track mechanic as the hero's mobile
+// carousel — decorative, no pagination. Reduced motion holds the meal plan.
+function ExitPhoneCarousel() {
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => setIndex(i => (i + 1) % 3), 4500)
+    return () => clearInterval(id)
+  }, [])
+  return (
+    <PhoneShell hovered softShadow>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div
+          style={{
+            display: 'flex',
+            height: '100%',
+            width: '300%',
+            transform: `translateX(${-index * (100 / 3)}%)`,
+            transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          {[MealPlanScreen, GroceryListScreen, OffersScreen].map((Screen, i) => (
+            <div key={i} style={{ width: `${100 / 3}%`, flexShrink: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Screen hovered />
+            </div>
+          ))}
+        </div>
+      </div>
+    </PhoneShell>
+  )
+}
 
 export default function ExitIntentDialog({ onClose }: { onClose: () => void }) {
   const prefersReducedMotion = useReducedMotion()
@@ -158,9 +193,6 @@ export default function ExitIntentDialog({ onClose }: { onClose: () => void }) {
             <h2 id="exit-intent-heading" className="text-[clamp(24px,3vw,32px)] font-normal leading-[1.15] text-white mb-4 max-lg:pr-10">
               Gå ikke glip af besparelser på madbudgettet
             </h2>
-            <p className="text-[16px] font-semibold text-white mb-2">
-              Gør som over 1.000 andre danskere
-            </p>
             <p className="text-[16px] leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
               Skriv dig på ventelisten til Altid Mad, og få madplan, tilbud og indkøbsliste samlet ét sted – så familien sparer penge på dagligvarer.
             </p>
@@ -176,24 +208,14 @@ export default function ExitIntentDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
 
-          {/* The Mad meal-plan phone (the hero mockup's foreground screen) on
-              a soft paper-white (deliberately between the homepage's pure
-              white and the cream tokens — pure white glares next to the
-              forest panel). Desktop only: below lg the column would push the
-              form below the fold. */}
+          {/* The hero mockup's three screens cycling in ONE phone (the
+              mobile-hero behaviour) on a soft paper-white (deliberately
+              between the homepage's pure white and the cream tokens — pure
+              white glares next to the forest panel). Desktop only: below lg
+              the column would push the form below the fold. */}
           <div aria-hidden className="hidden lg:block relative overflow-hidden pointer-events-none" style={{ background: '#fbf9f3', borderLeft: '1px solid rgba(255,255,255,0.07)', minHeight: 620 }}>
-            {/* Same legal fine print as the WhatIs section — rendered BEFORE
-                the stage so the phone paints over it, and small enough for
-                two lines. Panel and stage keep their exact size/placement. */}
-            <div className="absolute bottom-0 left-0 right-0 px-6 pb-4 text-center">
-              <p className="text-[8px] font-normal leading-relaxed" style={{ color: '#6f6a61' }}>
-                {SAVINGS_DISCLAIMER}
-              </p>
-            </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <PhoneShell hovered softShadow>
-                <MealPlanScreen hovered />
-              </PhoneShell>
+              <ExitPhoneCarousel />
             </div>
           </div>
         </div>

@@ -1,11 +1,13 @@
 import WaitlistForm from '@/components/WaitlistForm'
 import IPhoneMockup from '@/components/IPhoneMockup'
+import HeroStatCounter from '@/components/HeroStatCounter'
 import { H1, BODY } from '@/lib/typography'
 
 // Stats from the Mad CVI frame (node 44:1060) — left column below the CTA.
+// The savings stat counts up on load (HeroStatCounter).
 const STATS = [
-  { value: '0 kr.', label: 'At oprette en konto', color: '#202820' },
-  { value: '+15.000 kr.', label: 'Kan du spare op til årligt med Altid Mad', color: '#163223' },
+  { value: '0 kr.', label: 'at oprette en konto', color: '#202820', oneLine: false },
+  { value: 'counter' as const, label: 'kan du spare op til årligt med Altid Mad', color: '#163223', oneLine: true },
 ]
 
 export default function Hero() {
@@ -32,7 +34,7 @@ export default function Hero() {
               className={`mt-7 ${BODY} lg:text-[18px] mx-auto lg:mx-0`}
               style={{ color: '#6f6a61', maxWidth: 620 }}
             >
-              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. Du vælger, hvad I har lyst til. Resten kører automatisk. <span style={{ color: '#163223' }}>Altid.</span>
+              Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. <span style={{ color: '#163223' }}>Altid.</span>
             </p>
 
             <div id="venteliste" className="mt-8 w-full max-w-[600px] mx-auto lg:mx-0">
@@ -47,10 +49,13 @@ export default function Hero() {
                     className="font-normal tabular-nums leading-none text-[clamp(22px,calc(20px+0.52vw),30px)] whitespace-nowrap"
                     style={{ color: s.color }}
                   >
-                    {s.value}
+                    {s.value === 'counter' ? <HeroStatCounter /> : s.value}
                   </div>
                   {/* 12px below lg so both labels fit side by side down to 360px. */}
-                  <div className="mt-2.5 text-[clamp(13px,0.85vw,16px)] max-lg:text-[12px] leading-snug max-w-[220px]" style={{ color: '#6f6a61' }}>
+                  <div
+                    className={`mt-2.5 text-[clamp(13px,0.85vw,16px)] max-lg:text-[12px] leading-snug ${s.oneLine ? 'whitespace-nowrap' : 'max-w-[220px]'}`}
+                    style={{ color: '#6f6a61' }}
+                  >
                     {s.label}
                   </div>
                 </div>
