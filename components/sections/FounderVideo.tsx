@@ -7,27 +7,46 @@ import dynamic from 'next/dynamic'
 import { fluid } from '@/lib/fluid'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
-const PLAYBACK_ID = 'DyDNFoKamidSWoQJTmOPUc02utl7gORPYm7HycdeFZVU'
+// The Altid Mad founder video exists as two Mux assets: a 16:9 master for
+// the sm+ frames and a dedicated 1:1 cut for the phone frame, so phones get
+// the real square edit instead of a centre-crop of the wide one.
+const PLAYBACK_ID_WIDE = 'A01Fuk2X9sobmFQEwkkYgCtrm8xoaN4LZoGP4MdimSa00'
+const PLAYBACK_ID_SQUARE = 'p9VDiEQ01T9kj1X1JA00K3IWZ7TX91tG3sgAghtD3xiro'
+// Exact complement of Tailwind's `sm` (min-width: 640px), which drives the
+// frame aspect and the skeleton's poster pick. Querying min-width (not
+// max-width: 639px) keeps fractional viewport widths like 639.5px — desktop
+// zoom, iPadOS split view — in the same bucket as the CSS.
+const WIDE_QUERY = '(min-width: 640px)'
 const POSTER_TIME = 8
-const POSTER_URL = `https://image.mux.com/${PLAYBACK_ID}/thumbnail.jpg?time=${POSTER_TIME}&fit_mode=preserve`
+const posterUrl = (id: string) => `https://image.mux.com/${id}/thumbnail.jpg?time=${POSTER_TIME}&fit_mode=preserve`
 
 const MuxPlayer = dynamic(() => import('@mux/mux-player-react'), {
   ssr: false,
   loading: () => <PlayerSkeleton />,
 })
 
-// Skeleton renders the real Mux poster as a plain <img> so users see the
+// Skeleton renders the real Mux posters as plain <img>s so users see the
 // founder while @mux/mux-player-react's chunk loads (or if it fails entirely).
+// Both ratios are in the markup with CSS picking one — the skeleton is also
+// server-rendered, where the viewport is unknown.
 function PlayerSkeleton() {
   return (
     <div className="absolute inset-0" style={{ background: 'rgba(15,55,30,0.06)' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={POSTER_URL}
+        src={posterUrl(PLAYBACK_ID_SQUARE)}
         alt="Werner Valeur"
         loading="lazy"
         decoding="async"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover sm:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={posterUrl(PLAYBACK_ID_WIDE)}
+        alt="Werner Valeur"
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover hidden sm:block"
       />
     </div>
   )
@@ -46,6 +65,27 @@ type PlayerEl = HTMLElement & {
 export default function FounderVideo() {
   const router = useRouter()
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Serve the asset matching the frame the player sits in (square below
+  // Tailwind's sm breakpoint). Ambient mode follows the live viewport — a
+  // muted looping restart on the rare breakpoint cross is invisible. Sound
+  // mode never swaps sources (that would restart playback mid-watch); its
+  // one dangerous leftover — a square asset in a frame that has since gone
+  // wide, where cover-fit would crop away the bottom-anchored burned-in
+  // subtitles — falls back to contain instead (squareInWideFrame). The wide
+  // asset in a square frame keeps cover: that trims the sides, subtitles
+  // are centred, same as the old single-asset behaviour. SSR and
+  // matchMedia-less environments default to the wide master (the player is
+  // ssr:false; the server-rendered skeleton carries both posters,
+  // CSS-picked).
+  const [playbackId, setPlaybackId] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function' && !window.matchMedia(WIDE_QUERY).matches
+      ? PLAYBACK_ID_SQUARE
+      : PLAYBACK_ID_WIDE
+  )
+  const [squareInWideFrame, setSquareInWideFrame] = useState(false)
+  const playbackIdRef = useRef(playbackId)
+  playbackIdRef.current = playbackId
 
   // Two modes: ambient (muted autoplay when scrolled into view) and sound mode
   // — pressing the video restarts it from 0:00 with sound on. After that the
@@ -80,6 +120,23 @@ export default function FounderVideo() {
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
       if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
     }
+  }, [])
+
+  // Keep the served asset in step with the viewport (see the playbackId
+  // comment above for the ambient-vs-sound-mode rules).
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mql = window.matchMedia(WIDE_QUERY)
+    const sync = () => {
+      if (soundModeRef.current) {
+        setSquareInWideFrame(playbackIdRef.current === PLAYBACK_ID_SQUARE && mql.matches)
+      } else {
+        setPlaybackId(mql.matches ? PLAYBACK_ID_WIDE : PLAYBACK_ID_SQUARE)
+        setSquareInWideFrame(false)
+      }
+    }
+    mql.addEventListener('change', sync)
+    return () => mql.removeEventListener('change', sync)
   }, [])
 
   const getPlayer = () => wrapperRef.current?.querySelector('mux-player') as PlayerEl | null
@@ -261,7 +318,7 @@ export default function FounderVideo() {
             className={`mt-6 ${H2} text-white`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Spar op til <span style={{ color: '#bfe6e0' }}>15.000 kr</span><br />
+            &ldquo;Spar op til <span style={{ color: '#bfe6e0' }}>15.000 kr.</span><br />
             på familiens indkøb.&rdquo;
           </h2>
 
@@ -296,17 +353,15 @@ export default function FounderVideo() {
             if (e.clientY > r.bottom - 60) return
             toggleFullscreen()
           }}
-          // Phones get a 1:1 frame — the 16:9 source is centre-cropped by the
-          // player's object-fit:cover, which keeps the (centred) subtitles and
-          // trims the sides. Tablets show the full 16:9; desktop fills the
-          // right half as before.
+          // Phones get a 1:1 frame fed by the square asset; tablets show the
+          // full 16:9; desktop fills the right half as before.
           className="relative w-full aspect-square sm:aspect-video lg:aspect-auto lg:h-full lg:min-h-[460px] self-stretch"
         >
           <MuxPlayer
-            playbackId={PLAYBACK_ID}
+            playbackId={playbackId}
             streamType="on-demand"
             accentColor="#bfe6e0"
-            poster={POSTER_URL}
+            poster={posterUrl(playbackId)}
             playsInline
             loop
             muted
@@ -314,13 +369,18 @@ export default function FounderVideo() {
             // covers first paint — preload="auto" would buffer HLS segments for
             // every visitor, including those who never scroll here.
             preload="metadata"
-            metadata={{ video_title: 'Altid Hjem — Werner Valeur', video_id: 'founder-manifesto' }}
+            metadata={{
+              video_title: 'Altid Mad — Werner Valeur',
+              // Ratio-specific id so Mux Data separates phone (1:1) from
+              // desktop (16:9) plays.
+              video_id: playbackId === PLAYBACK_ID_SQUARE ? 'founder-mad-1x1' : 'founder-mad-16x9',
+            }}
             style={{
               position: 'absolute',
               inset: 0,
               width: '100%',
               height: '100%',
-              '--media-object-fit': 'cover',
+              '--media-object-fit': squareInWideFrame ? 'contain' : 'cover',
               display: 'block',
               // Touch + sound mode: chrome only while "controlsVisible" (tap
               // toggled, auto-hides) — never inside fullscreen.

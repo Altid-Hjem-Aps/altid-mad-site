@@ -1,0 +1,33 @@
+<!-- @dsCard group="Motion" name="Pagination og motion" -->
+<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Afacad:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{
+  --forest:#163223; --forest-2:#193d23; --cream:#fdfaf4; --teal:#0f6e68;
+  --mint:#bfe6e0; --muted:#6f6a61; --signal:#90ff7c; --signal-ink:#003c16;
+  --hairline:rgba(15,110,104,0.12); --card-border:#ece7db;
+  --amber:#e88b2f; --amber-wash:rgba(232,139,47,0.15); --amber-ink:#7d430e;
+  --blue:#2f8fd0; --blue-wash:rgba(47,143,208,0.13); --blue-ink:#1c567e;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Onest',system-ui,sans-serif;background:var(--cream);color:var(--forest);padding:28px}
+h1.ds{font-size:15px;font-weight:600;margin-bottom:4px}
+p.ds{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.lbl{font-size:10.5px;color:var(--muted);margin-top:6px}
+code{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+</style><style>
+.dots{display:flex;align-items:center;gap:0}
+.dotBtn{min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:0;background:none}
+.pill{position:relative;overflow:hidden;border-radius:999px;height:9px;background:rgba(22,50,35,.2);display:block}
+.fill{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--forest);animation:prog 5s linear infinite}
+@keyframes prog{from{width:0}to{width:100%}}
+.mono{font-family:ui-monospace,monospace;font-size:11px;line-height:1.9;color:var(--forest)}
+</style><title>Altid Mad — pagination & motion</title></head>
+<body><h1 class="ds">Altid Mad — pagination & motion</h1><p class="ds">Fra useAutoCarousel.tsx og lib/motion.ts.</p>
+<div class="dots"><button class="dotBtn"><span class="pill" style="width:52px"><span class="fill"></span></span></button><button class="dotBtn"><span class="pill" style="width:9px"></span></button><button class="dotBtn"><span class="pill" style="width:9px"></span></button><button class="ctrl" style="width:30px;height:30px;border-radius:999px;border:0;background:rgba(22,50,35,.1);margin-left:12px">❚❚</button></div>
+<div class="lbl" style="margin-bottom:22px">Apple-gallery pagination · aktiv prik = pill der fyldes over autoMs · pause/afspil · genbruges af ALLE karruseller og de animerede kort</div>
+<h1 class="ds">Motion-tokens</h1>
+<p class="mono">REVEAL_SPRING&nbsp;&nbsp;cubic-bezier(0.34, 1.2, 0.64, 1) · kort-reveals<br>
+EASE_EXPO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cubic-bezier(0.16, 1, 0.3, 1) · entrances<br>
+EASE_QUINT&nbsp;&nbsp;&nbsp;&nbsp;cubic-bezier(0.22, 1, 0.36, 1) · exits (~72% af entrance)<br>
+Aldrig bounce/elastic · scroll-reveals via IntersectionObserver (rootMargin −20%)<br>
+prefers-reduced-motion stopper AL bevægelse (statisk slut-tilstand vises)</p></body></html>

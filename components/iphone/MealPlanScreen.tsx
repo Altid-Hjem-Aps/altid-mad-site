@@ -8,14 +8,25 @@ type Props = { hovered: boolean }
 const TEAL = '#0f6e68'
 const MINT = '#bfe6e0'
 
-// Mon–Fri meal plan. Thursday is the interactive row: on hover Altid Mad
-// swaps the dish for the week's offer and the saving ticks up in the header.
-const DAYS = [
-  { day: 'Man', dish: 'Kylling i karry', price: '52 kr.', offer: true },
-  { day: 'Tir', dish: 'Pasta med grønt', price: '38 kr.', offer: false },
-  { day: 'Ons', dish: 'Laksewok med nudler', price: '64 kr.', offer: true },
-  { day: 'Tor', dish: 'Boller i karry', price: '55 kr.', offer: false, swap: { dish: 'Chili con carne', price: '41 kr.' } },
-  { day: 'Fre', dish: 'Hjemmelavet pizza', price: '46 kr.', offer: false },
+// Mon–Fri meal plan mirroring the madplan flow's week — same dishes and food
+// photos. Three rows carry a Tilbud badge (matching the header's "3 retter på
+// tilbud"); Thursday is the interactive row: on hover Altid Mad swaps the
+// dish for a fourth offer and the saving ticks up in the header.
+type Day = {
+  day: string
+  dish: string
+  img: string
+  price: string
+  offer?: boolean
+  tag?: { label: string; bg: string; ink: string }
+  swap?: { dish: string; img: string; price: string }
+}
+const DAYS: Day[] = [
+  { day: 'Man', dish: 'Kylling i karry', img: '/food/kylling-karry.jpg', price: '52 kr.', offer: true },
+  { day: 'Tir', dish: 'Pasta med grønt', img: '/food/pasta-groent.jpg', price: '38 kr.', offer: true },
+  { day: 'Ons', dish: 'Laksewok', img: '/food/laksewok.jpg', price: '64 kr.', offer: true },
+  { day: 'Tor', dish: 'Vegetarlasagne', img: '/food/lasagne.jpg', price: '55 kr.', tag: { label: 'Mindre kød', bg: 'rgba(15,110,104,0.1)', ink: TEAL }, swap: { dish: 'Chili con carne', img: '/food/chili-con-carne.jpg', price: '41 kr.' } },
+  { day: 'Fre', dish: 'Pizzafredag', img: '/food/pizzafredag.jpg', price: '46 kr.', tag: { label: 'Favorit', bg: 'rgba(15,110,104,0.1)', ink: TEAL } },
 ]
 
 export default function MealPlanScreen({ hovered }: Props) {
@@ -39,7 +50,7 @@ export default function MealPlanScreen({ hovered }: Props) {
         <div>
           <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', marginBottom: 1 }}>Ugens besparelse</p>
           <p className="font-bold text-white" style={{ fontSize: 20, lineHeight: 1 }}>
-            <Slot from="248" to="312" hovered={hovered} h={24} />
+            <Slot from="298" to="312" hovered={hovered} h={24} />
             <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.6 }}> kr.</span>
           </p>
         </div>
@@ -54,7 +65,7 @@ export default function MealPlanScreen({ hovered }: Props) {
             animation: hovered ? 'badge-glow 1.4s ease 2' : 'none',
           }}
         >
-          {hovered ? '2 retter på tilbud' : 'vs. normalpris'}
+          {hovered ? '4 retter på tilbud' : '3 retter på tilbud'}
         </span>
       </div>
 
@@ -65,7 +76,7 @@ export default function MealPlanScreen({ hovered }: Props) {
           return (
             <div
               key={d.day}
-              className="flex items-center gap-2.5 px-3.5 py-[7px]"
+              className="flex items-center gap-[3px] px-2.5 py-[7px]"
               style={{
                 borderBottom: i < DAYS.length - 1 ? '1px solid rgba(15,110,104,0.06)' : 'none',
                 background: swapped ? 'rgba(191,230,224,0.28)' : 'transparent',
@@ -74,30 +85,61 @@ export default function MealPlanScreen({ hovered }: Props) {
             >
               <span
                 className="shrink-0 flex items-center justify-center font-bold"
-                style={{ width: 26, height: 26, borderRadius: 9, fontSize: 8, background: 'rgba(191,230,224,0.5)', color: TEAL }}
+                style={{ width: 21, height: 21, borderRadius: 7, fontSize: 7.5, background: 'rgba(191,230,224,0.5)', color: TEAL }}
               >
                 {d.day}
               </span>
-              <span className="flex-1 font-semibold" style={{ fontSize: 10, color: 'var(--text-dark)' }}>
+              {/* Dish photo — Thursday crossfades to the offer dish on hover. */}
+              <span className="relative shrink-0" style={{ width: 21, height: 21 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={d.img}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ borderRadius: 7, opacity: swapped ? 0 : 1, transition: 'opacity 0.45s ease' }}
+                />
+                {d.swap && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={d.swap.img}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ borderRadius: 7, opacity: swapped ? 1 : 0, transition: 'opacity 0.45s ease' }}
+                  />
+                )}
+              </span>
+              <span className="flex-1 min-w-0 truncate font-semibold" style={{ fontSize: 9.5, color: 'var(--text-dark)', paddingLeft: 2 }}>
                 {d.swap ? <Slot from={d.dish} to={d.swap.dish} hovered={hovered} h={14} /> : d.dish}
               </span>
               {(d.offer || swapped) && (
                 <span
                   style={{
-                    fontSize: 7,
+                    fontSize: 6.5,
                     fontWeight: 700,
-                    padding: '2px 5px',
+                    padding: '2px 4px',
                     borderRadius: 6,
                     background: MINT,
                     color: TEAL,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
                   }}
                 >
                   Tilbud
                 </span>
               )}
-              <span style={{ fontSize: 9, color: 'var(--text-light)', minWidth: 32, textAlign: 'right' }}>
+              {d.tag && !swapped && (
+                <span
+                  style={{
+                    fontSize: 6.5,
+                    fontWeight: 700,
+                    padding: '2px 4px',
+                    borderRadius: 6,
+                    background: d.tag.bg,
+                    color: d.tag.ink,
+                  }}
+                >
+                  {d.tag.label}
+                </span>
+              )}
+              <span style={{ fontSize: 9, color: 'var(--text-light)', minWidth: 24, textAlign: 'right' }}>
                 {d.swap ? <Slot from={d.price} to={d.swap.price} hovered={hovered} h={12} /> : d.price}
               </span>
             </div>

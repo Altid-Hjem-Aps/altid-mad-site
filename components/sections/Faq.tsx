@@ -14,16 +14,16 @@ type Item = { q: string; a: string }
 
 const ITEMS: Item[] = [
   {
-    q: 'Hvad er Altid Hjem?',
-    a: 'Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.',
-  },
-  {
     q: 'Er Altid Mad en del af Altid Hjem?',
     a: 'Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen. Når du skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem – med samme login og samme app.',
   },
   {
+    q: 'Hvad er Altid Hjem?',
+    a: 'Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.',
+  },
+  {
     q: 'Hvor meget sparer jeg med Altid Mad?',
-    a: 'Baseret på data fra Spari forventer vi, at mange danske familier sparer mellem 10 og 20 % på dagligvarer – typisk 7.500-15.000 kr. om året, afhængigt af husstandens størrelse og indkøbsvaner.',
+    a: 'Altid Mad Q2-rapporten viser, at prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den dyreste kæde – det svarer til en besparelse på op til 11.305 kr. om året for en familie. Køber du hver vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.',
   },
   {
     q: 'Er det gratis at skrive sig på ventelisten?',

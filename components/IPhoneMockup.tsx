@@ -161,9 +161,12 @@ export default function IPhoneMockup() {
   return (
     <div ref={containerRef} className="flex justify-center w-full">
       {showSidePhones ? (
-        /* Desktop: three phones fan out on hover */
+        /* Desktop: three phones fan out on hover. Decorative — without
+           aria-hidden the Personlig AI screen's questions would read to
+           screen readers as prompts with no way to answer. */
         <div
           className="relative w-[580px]"
+          aria-hidden
           style={{ height: 580 }}
           onTouchStart={() => setHovered(true)}
           onTouchEnd={() => {
@@ -240,8 +243,10 @@ export default function IPhoneMockup() {
           </div>
         </div>
       ) : (
-        /* Mobile: single phone, screens slide inside */
+        /* Mobile: single phone, screens slide inside. The phone is decorative
+           (see the desktop note); the pagination below stays exposed. */
         <div className="flex flex-col items-center">
+          <div aria-hidden>
           <PhoneShell hovered={hovered} softShadow>
             <div
               style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
@@ -274,6 +279,7 @@ export default function IPhoneMockup() {
               </div>
             </div>
           </PhoneShell>
+          </div>
 
           {/* Same Apple-style pagination as Blog/Testimonials */}
           <div style={{ marginTop: 28 }}>

@@ -132,8 +132,9 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
     window.dispatchEvent(new CustomEvent('expand-waitlist'))
   }
 
-  function linkColor(tone: LinkTone) {
-    // The active item stays white — the mint dot below it is the marker.
+  function linkColor(tone: LinkTone, active = false) {
+    // The active item matches its marker dot — mint label over the mint dot.
+    if (active) return MINT
     if (tone === 'home' || tone === 'live') return '#fff'
     return MUTED
   }
@@ -160,7 +161,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
                 target={external ? '_blank' : undefined}
                 rel={external ? 'noopener noreferrer' : undefined}
                 className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-                style={{ color: linkColor(tone) }}
+                style={{ color: linkColor(tone, active) }}
               >
                 {label}
               </a>
@@ -256,7 +257,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
             </>
           )
           const rowClass = 'flex items-center gap-2 py-3.5 text-[17px] font-medium'
-          const rowStyle = { color: linkColor(tone), borderBottom: '1px solid rgba(255,255,255,0.06)' }
+          const rowStyle = { color: linkColor(tone, active), borderBottom: '1px solid rgba(255,255,255,0.06)' }
           return (
             <li key={label}>
               {tone === 'soon' ? (
@@ -296,7 +297,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
   const navInner = (
     <>
       <a href="/" aria-label="Altid Mad – forside" className="shrink-0">
-        <MadLogo size={44} />
+        <MadLogo className="h-11 w-auto" />
       </a>
       {desktopMenu}
       {burger}

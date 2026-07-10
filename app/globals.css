@@ -56,6 +56,10 @@ body {
   50% { box-shadow: 0 0 0 9px rgba(143,203,194,0); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  [style*="pulse-glow"] { animation: none !important; }
+}
+
 /* Trust section connector dots — a LOADING indicator: dots pop on crisply one
    by one (each to its own --dot-max: 20/40/60/80/100%) and stay lit, building
    the gradient bar; the full bar holds briefly, then clears in the same 1→5
@@ -106,4 +110,75 @@ body {
 @keyframes modal-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Piggy-bank benefit icon (Services): a coin drops into the slot once per
+   cycle — falls in during the first ~0.8s, vanishes AT the slot line, and the
+   pig answers with a small gulp-bounce; the rest of the cycle is quiet. */
+.pig-coin {
+  animation: coin-drop 4.5s ease-in infinite;
+}
+@keyframes coin-drop {
+  0%       { transform: translateY(-13px); opacity: 0; }
+  5%       { opacity: 1; }
+  15%      { transform: translateY(0); opacity: 1; }
+  19%      { transform: translateY(2px); opacity: 0; }
+  100%     { transform: translateY(2px); opacity: 0; }
+}
+.pig-body {
+  animation: pig-gulp 4.5s ease-in-out infinite;
+}
+@keyframes pig-gulp {
+  0%, 16%  { transform: none; }
+  21%      { transform: scale(1.07); }
+  27%      { transform: scale(0.985); }
+  33%, 100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pig-coin { animation: none; opacity: 0; }
+  .pig-body { animation: none; }
+}
+
+/* Checklist icon ("Automatisk indkøbsliste"): the ticks and lines pop in
+   top-to-bottom (staggered per element in Services.tsx), then reset. 4s. */
+.chk {
+  animation: check-pop 4s ease-in-out infinite;
+}
+@keyframes check-pop {
+  0%       { opacity: 0; transform: scale(0.4); }
+  6%       { opacity: 1; transform: scale(1.18); }
+  12%      { opacity: 1; transform: scale(1); }
+  84%      { opacity: 1; transform: scale(1); }
+  92%      { opacity: 0; transform: scale(0.4); }
+  100%     { opacity: 0; transform: scale(0.4); }
+}
+
+/* Cloche icon ("Ugens tilbud på et sølvfad"): the lid lifts to reveal,
+   holds, and lowers. 3.8s cycle. */
+.cloche-lid {
+  animation: cloche-lift 3.8s ease-in-out infinite;
+}
+@keyframes cloche-lift {
+  0%, 20%   { transform: none; }
+  40%       { transform: translateY(-3.5px); }
+  64%       { transform: translateY(-3.5px); }
+  84%       { transform: none; }
+  100%      { transform: none; }
+}
+
+/* Family icon ("Tilpasset din familie"): a soft bob passes across the three
+   figures (staggered per figure in Services.tsx), then rests. 4.2s cycle. */
+.fam {
+  animation: fam-bob 4.2s ease-in-out infinite;
+}
+@keyframes fam-bob {
+  0%, 14%   { transform: none; }
+  30%       { transform: translateY(-2px); }
+  46%       { transform: none; }
+  100%      { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chk, .cloche-lid, .fam { animation: none; }
+  .chk { opacity: 1; }
 }

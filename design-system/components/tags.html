@@ -1,0 +1,42 @@
+<!-- @dsCard group="Tags" name="Tags og chips" -->
+<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Afacad:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{
+  --forest:#163223; --forest-2:#193d23; --cream:#fdfaf4; --teal:#0f6e68;
+  --mint:#bfe6e0; --muted:#6f6a61; --signal:#90ff7c; --signal-ink:#003c16;
+  --hairline:rgba(15,110,104,0.12); --card-border:#ece7db;
+  --amber:#e88b2f; --amber-wash:rgba(232,139,47,0.15); --amber-ink:#7d430e;
+  --blue:#2f8fd0; --blue-wash:rgba(47,143,208,0.13); --blue-ink:#1c567e;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Onest',system-ui,sans-serif;background:var(--cream);color:var(--forest);padding:28px}
+h1.ds{font-size:15px;font-weight:600;margin-bottom:4px}
+p.ds{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.lbl{font-size:10.5px;color:var(--muted);margin-top:6px}
+code{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+</style><style>
+.chipMad{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px 4px 6px;font:600 11px 'Onest';background:var(--teal);color:#fff}
+.star{width:15px;height:15px;border-radius:999px;background:var(--mint);display:inline-flex;align-items:center;justify-content:center;color:var(--teal);font-size:9px}
+.tag{display:inline-block;border-radius:6px;padding:3px 6px;font:700 10px 'Onest'}
+.store{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:3px 7px;font:700 9px 'Onest';background:rgba(15,110,104,.07);color:var(--teal)}
+.dot{width:5px;height:5px;border-radius:999px;display:inline-block}
+.day{display:inline-flex;align-items:center;justify-content:center;width:34px;height:26px;border-radius:8px;font:600 11px 'Onest';background:rgba(191,230,224,.45);color:var(--teal)}
+.deal{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 16px;font:600 12px 'Onest';background:rgba(191,230,224,.45);color:var(--teal)}
+.soon{font:500 14px 'Onest';color:#6f6a61;opacity:.6}
+.soonSub{display:block;font:500 8px 'Onest';letter-spacing:.08em;text-transform:uppercase;color:#6f6a61}
+</style><title>Altid Mad — tags & chips</title></head>
+<body><h1 class="ds">Altid Mad — tags & chips</h1><p class="ds">Alle accenter er semantiske: mint=tilbud/positiv, blå=tid/info, amber=budget/promo. Farve følges altid af tekst.</p>
+<div class="row" style="align-items:center">
+  <div><span class="chipMad"><span class="star">★</span>Altid Mad</span><div class="lbl">Brand-chip · én pr. flade</div></div>
+  <div><span class="tag" style="background:var(--mint);color:var(--teal);text-transform:uppercase;letter-spacing:.04em">Tilbud</span><div class="lbl">Tilbud · mint</div></div>
+  <div><span class="tag" style="background:var(--blue-wash);color:var(--blue-ink)">20 min</span><div class="lbl">Tid · blå</div></div>
+  <div><span class="tag" style="background:var(--amber-wash);color:var(--amber-ink)">Budget</span><div class="lbl">Budget/promo · amber</div></div>
+  <div><span class="tag" style="background:rgba(15,110,104,.1);color:var(--teal)">Favorit</span><div class="lbl">Brand-positiv · teal-wash</div></div>
+  <div><span class="tag" style="background:rgba(15,110,104,.1);color:var(--teal)">−31%</span><div class="lbl">Besparelse = positiv → ALDRIG rød</div></div>
+</div>
+<div class="row" style="margin-top:18px;align-items:center">
+  <div><span class="store"><span class="dot" style="background:var(--amber)"></span>Netto</span> <span class="store"><span class="dot" style="background:var(--blue)"></span>Bilka</span> <span class="store"><span class="dot" style="background:var(--teal)"></span>REMA 1000</span><div class="lbl">Butikschips · farveprik + label (aldrig farve alene)</div></div>
+  <div><span class="day">Man</span><div class="lbl">Dag-chip</div></div>
+  <div><span class="deal">✓ Madplan klar på 5 minutter</span><div class="lbl">Status-pill · mint-wash</div></div>
+  <div><span class="soon">Alarm<span class="soonSub">Kommer snart</span></span><div class="lbl">Nav “Kommer snart” · inaktiv, intet link</div></div>
+</div></body></html>

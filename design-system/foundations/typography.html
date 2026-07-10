@@ -1,0 +1,35 @@
+<!-- @dsCard group="Type" name="Typografi" -->
+<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Onest:wght@300..800&family=Afacad:wght@400;500&display=swap" rel="stylesheet"><style>
+:root{
+  --forest:#163223; --forest-2:#193d23; --cream:#fdfaf4; --teal:#0f6e68;
+  --mint:#bfe6e0; --muted:#6f6a61; --signal:#90ff7c; --signal-ink:#003c16;
+  --hairline:rgba(15,110,104,0.12); --card-border:#ece7db;
+  --amber:#e88b2f; --amber-wash:rgba(232,139,47,0.15); --amber-ink:#7d430e;
+  --blue:#2f8fd0; --blue-wash:rgba(47,143,208,0.13); --blue-ink:#1c567e;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Onest',system-ui,sans-serif;background:var(--cream);color:var(--forest);padding:28px}
+h1.ds{font-size:15px;font-weight:600;margin-bottom:4px}
+p.ds{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.lbl{font-size:10.5px;color:var(--muted);margin-top:6px}
+code{font-family:ui-monospace,monospace;font-size:10px;color:var(--muted)}
+</style><style>
+.h1{font-weight:400;line-height:1.08;letter-spacing:-0.02em;font-size:clamp(32px,calc(19.76px + 3.137vw),80px)}
+.h2{font-weight:400;line-height:1.15;font-size:clamp(28px,calc(22.4px + 1.44vw),50px)}
+.eyebrow{font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:1.6px;color:var(--teal)}
+.body{font-size:16px;line-height:1.8;color:var(--muted);max-width:62ch}
+.btnT{font-size:16px;font-weight:500}
+.fine{font-size:12px;line-height:1.6;color:var(--muted)}
+.sub{font-family:'Afacad',sans-serif;font-size:22px;color:var(--teal)}
+.spec{margin:18px 0 4px}
+</style><title>Altid Mad — typografi</title></head>
+<body><h1 class="ds">Altid Mad — typografi</h1><p class="ds">Onest overalt (aldrig fed over 500 i display); Afacad kun til subbrand-ordet. Fluid ramps ankret 390px → 1920px (lib/typography.ts).</p>
+<p class="eyebrow spec">Eyebrow · Onest 500 · 13px · tracking 1.6px</p>
+<div class="h1">Snart får danskerne<br>bedre råd til mad</div><code>H1 · Onest 400 · clamp(32px → 80px) · lh 1.08 · ls −0.02em</code>
+<div class="h2 spec">Fordelene, du har ventet på</div><code>H2 · Onest 400 · clamp(28px → 50px) · lh 1.15</code>
+<p class="body spec">Altid Mad samler automatisk din madplan, finder de bedste tilbud og genererer indkøbssedlen, så du kan spare penge året rundt. Resten kører automatisk. <strong style="color:var(--forest)">Altid.</strong></p><code>Body · Onest 400 · 16px · lh 1.8 · muted; afsluttende "Altid." i forest 500</code>
+<p class="btnT spec">Skriv dig på ventelisten</p><code>Button · Onest 500 · 16px</code>
+<p class="fine spec">Gratis. Ingen spam. Altid.</p><code>Fine print · 12px</code>
+<p class="sub spec">mad</p><code>Subbrand-ord · Afacad · bruges kun i logo-lockups</code>
+</body></html>

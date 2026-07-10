@@ -1,5 +1,10 @@
 import { getResend, FROM_EMAIL } from './resend'
 
+// Mad-branded sender for the welcome email only. Everything else (progress
+// emails to referrers, release blasts) stays on the shared Altid Hjem sender,
+// since those recipients are in the regular Altid Hjem flow.
+const MAD_FROM_EMAIL = 'Altid Mad <hej@altidhjem.dk>'
+
 // 2026-05-27 at 10:00 CEST = 08:00 UTC
 const RELEASE_SEND_TIME = new Date('2026-05-27T08:00:00Z')
 
@@ -69,8 +74,9 @@ export async function sendWaitlistConfirmation(
 }
 
 /**
- * PHASE 2 welcome email — includes their personal invite link so the referral
- * loop starts from the email too. Not wired up yet (kept ready for the flip).
+ * Welcome email — includes their personal invite link so the referral loop
+ * starts from the email too. Mad-branded template; the rest of the referral
+ * flow (progress emails, /inviter page) stays on the shared Altid Hjem setup.
  */
 export async function sendReferralWelcome(
   name: string,
@@ -78,11 +84,11 @@ export async function sendReferralWelcome(
   vars: { inviteUrl: string; unsubscribeUrl: string },
 ) {
   return getResend().emails.send({
-    from: FROM_EMAIL,
+    from: MAD_FROM_EMAIL,
     to: email,
     headers: listUnsubHeaders(vars.unsubscribeUrl),
     template: {
-      id: 'referral-queue-jump',
+      id: 'mad-referral-welcome',
       variables: {
         first_name: firstName(name),
         invite_url: vars.inviteUrl,
