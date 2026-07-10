@@ -12,6 +12,14 @@ const nextConfig: NextConfig = {
     : {
         async redirects() {
           return [
+            // Canonical host: www serves the same content as the apex, so 301
+            // it to https://altidmad.dk (metadata already assumes the apex).
+            {
+              source: "/:path*",
+              has: [{ type: "host" as const, value: "www.altidmad.dk" }],
+              destination: "https://altidmad.dk/:path*",
+              permanent: true,
+            },
             // SEO-siden flyttede til søgeords-slug (12. jun 2026) — 301 bevarer
             // evt. indekserede /elpriser-links og delte URL'er.
             {

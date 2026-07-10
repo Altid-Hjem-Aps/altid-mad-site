@@ -2,7 +2,8 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { sendWaitlistConfirmation, sendReferralWelcome, scheduleReleaseEmail, sendReferralProgress } from '@/lib/send-email'
 import { sendWaitlistConfirmationSms } from '@/lib/send-sms'
 import { trackServer, identifyServer } from '@/lib/amplitude.server'
-import { recordReferral, mirrorSignup, getReferrerProgress, getUnsubToken, isUnsubscribed, checkRateLimit, getQueuePosition } from '@/lib/db'
+import { recordReferral, mirrorSignup, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, getQueuePosition } from '@/lib/db'
+import { duplicateSignupMessage } from '@/lib/copy'
 import { syncContactTags, addAudienceContact } from '@/lib/resend'
 import { normalizeSignupSource } from '@/lib/signup-source'
 import { assertSurveyTokenConfigured, signSurveyToken, verifySurveyToken } from '@/lib/survey-token'
@@ -49,8 +50,21 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json().catch(() => ({}))
 
-    if (res.status === 409)
-      return NextResponse.json({ success: false, error: 'Du er allerede skrevet op!' }, { status: 409 })
+    if (res.status === 409) {
+      // Tell Hjem signups they are already covered instead of a bare "already
+      // signed up" — the two sites share one waitlist. Include their referral
+      // link (public_id doubles as the public referral code) so a duplicate
+      // signup can still invite friends and move up the queue.
+      const existing = await getSignupByEmail(String(email))
+      return NextResponse.json(
+        {
+          success: false,
+          error: duplicateSignupMessage(existing?.source ?? null),
+          ...(existing ? { inviteUrl: `https://altidhjem.dk/?ref=${encodeURIComponent(existing.publicId)}` } : {}),
+        },
+        { status: 409 },
+      )
+    }
     if (!res.ok)
       return NextResponse.json({ success: false, error: data.message ?? 'Noget gik galt' }, { status: res.status })
 

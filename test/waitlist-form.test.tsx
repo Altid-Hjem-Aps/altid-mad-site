@@ -115,3 +115,55 @@ describe('WaitlistForm step 1 failure paths', () => {
     await waitFor(() => expect(screen.getByText('Fortæl os lidt om dig.')).toBeInTheDocument())
   })
 })
+
+describe('duplicate signup with recovered referral link (409 + inviteUrl)', () => {
+  it('shows the share card with their invite link instead of a dead-end error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: 'Du er allerede skrevet op!',
+            inviteUrl: 'https://altidhjem.dk/?ref=abc-123',
+          }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
+    expect(screen.getByDisplayValue('https://altidhjem.dk/?ref=abc-123')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Kopiér' })).toBeInTheDocument()
+  })
+
+  it('uses the longer Hjem message as the card body when the API sends it', async () => {
+    const hjemMsg = 'Du er allerede skrevet op til Altid Hjem og står derfor også på ventelisten til Altid Mad.'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () => Promise.resolve({ success: false, error: hjemMsg, inviteUrl: 'https://altidhjem.dk/?ref=xyz' }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
+    expect(screen.getByText(hjemMsg)).toBeInTheDocument()
+    expect(screen.getByDisplayValue('https://altidhjem.dk/?ref=xyz')).toBeInTheDocument()
+  })
+
+  it('keeps the plain error text when the API has no invite link for them', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () => Promise.resolve({ success: false, error: 'Du er allerede skrevet op!' }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: 'Kopiér' })).toBeNull()
+  })
+})

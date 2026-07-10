@@ -179,6 +179,39 @@ export async function mirrorSignup(
   return (data as { unsub_token?: string } | null)?.unsub_token ?? null
 }
 
+/**
+ * Look up an existing signup by email: which site it came from (phrases the
+ * duplicate message) and its public_id (rebuilds their referral link so a
+ * duplicate signup still gets something actionable). Fail-safe: any error
+ * returns null so the 409 response itself can never break on a Supabase
+ * hiccup, and the whole lookup races a 2s timeout so a hung connection
+ * can't stall the 409 response (which used to return instantly). Oldest
+ * row wins (that is the original signup).
+ */
+export async function getSignupByEmail(
+  email: string,
+): Promise<{ publicId: string; source: string | null } | null> {
+  try {
+    const query = getClient()
+      .from('signup')
+      .select('public_id, signup_source')
+      .eq('email', String(email).toLowerCase().trim())
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000))
+    const result = await Promise.race([query, timeout])
+    if (!result) return null
+    const { data, error } = result
+    if (error || !data) return null
+    const row = data as { public_id?: string | null; signup_source?: string | null }
+    if (!row.public_id) return null
+    return { publicId: row.public_id, source: row.signup_source ?? null }
+  } catch {
+    return null
+  }
+}
+
 /** Look up a signup's unsubscribe token by public_id (for building email links). */
 export async function getUnsubToken(publicId: string): Promise<string | null> {
   const id = String(publicId || '').trim()

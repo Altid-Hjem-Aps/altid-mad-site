@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import * as amplitude from '@amplitude/analytics-browser'
 import { DEFAULT_SIGNUP_SOURCE } from '@/lib/signup-source'
+import { DUPLICATE_SIGNUP_HEADING } from '@/lib/copy'
 import { markWaitlistJoined } from '@/lib/waitlist-joined'
 import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
@@ -40,6 +41,11 @@ const DK_ELECTRICITY_PROVIDERS = [
   'Andet',
 ]
 
+// When the API sends a longer duplicate message than the shared heading
+// (e.g. "already covered via Altid Hjem"), it becomes the card body under
+// the heading instead.
+const DUPLICATE_HEADING = DUPLICATE_SIGNUP_HEADING
+
 interface Props {
   variant?: 'light' | 'dark'
   id?: string
@@ -62,6 +68,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [signupId, setSignupId] = useState('')
   const [surveyToken, setSurveyToken] = useState('')
   const [referredBy, setReferredBy] = useState('')
+  // Set on a 409 where the API could recover their referral link — renders the
+  // share card (skipping the survey step; they already answered it once).
+  const [duplicate, setDuplicate] = useState<{ body?: string; inviteUrl: string } | null>(null)
 
   // Capture referral code from the URL (?ref=CODE) once on mount
   useEffect(() => {
@@ -134,8 +143,17 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       // 409 = this person is already on the list — that's a confirmed
       // signup for popup-suppression purposes too.
       if (res.status === 409) markWaitlistJoined()
-      setError(data.error ?? 'Noget gik galt. Prøv igen.')
       amplitude.track('Waitlist Step 1 Failed', { error: data.error ?? 'unknown', status: res.status })
+      // Duplicate WITH a known referral link: show the share card instead of a
+      // dead-end error, so they can still invite friends and move up the queue.
+      if (res.status === 409 && data.inviteUrl) {
+        setDuplicate({
+          body: data.error && data.error !== DUPLICATE_HEADING ? data.error : undefined,
+          inviteUrl: data.inviteUrl,
+        })
+        return
+      }
+      setError(data.error ?? 'Noget gik galt. Prøv igen.')
       return
     }
     markWaitlistJoined()
@@ -206,6 +224,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const darkCardStyle = embedded ? undefined : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }
 
   if (isDark) {
+    if (duplicate) return <SuccessCard bare={embedded} heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
     if (view === 'success') return <SuccessCard bare={embedded} inviteUrl={signupId ? `https://altidhjem.dk/?ref=${signupId}` : undefined} />
 
     if (view === 'questions') {
@@ -294,6 +313,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
 
   // ─── Light variant (Hero) ─────────────────────────────────────────────────
 
+  if (duplicate) return <SuccessCard variant="cream" heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
   if (view === 'success') return <SuccessCard variant="cream" inviteUrl={signupId ? `https://altidhjem.dk/?ref=${signupId}` : undefined} />
 
   if (view === 'questions') {
@@ -443,7 +463,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   )
 }
 
-export function SuccessCard({ inviteUrl, variant = 'dark', bare = false }: { inviteUrl?: string; variant?: 'dark' | 'cream'; bare?: boolean }) {
+export function SuccessCard({ inviteUrl, variant = 'dark', bare = false, heading = 'Tak. Du er med.', body = 'Vi giver dig besked, så snart Altid Hjem åbner dørene.' }: { inviteUrl?: string; variant?: 'dark' | 'cream'; bare?: boolean; heading?: string; body?: string }) {
   const [copied, setCopied] = useState(false)
   // On the light (cream) hero the confirmation renders as a solid forest-green
   // card so the white text still works — otherwise the original translucent
@@ -456,9 +476,9 @@ export function SuccessCard({ inviteUrl, variant = 'dark', bare = false }: { inv
       : { background: 'rgba(168,224,99,0.08)', border: '1px solid rgba(168,224,99,0.2)' }
   return (
     <div className={bare ? undefined : 'rounded-[20px] p-8 sm:p-10'} style={cardStyle}>
-      <h3 className="text-3xl font-normal mb-3 text-white">Tak. Du er med.</h3>
+      <h3 className="text-3xl font-normal mb-3 text-white">{heading}</h3>
       <p className="text-base leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
-        Vi giver dig besked, så snart Altid Hjem åbner dørene.
+        {body}
       </p>
 
       {inviteUrl && (
