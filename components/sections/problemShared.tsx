@@ -751,10 +751,10 @@ export default function QuestionSection({
           }
         >
           {kicker && <motion.p className={EYEBROW} style={{ color: TEAL }} {...rise(0)}>{kicker}</motion.p>}
-          <motion.h2 className={`${H2} ${kicker ? 'mt-5' : ''} [text-wrap:pretty] lg:[text-wrap:balance] lg:max-w-[560px]`} style={{ color: FOREST }} {...rise(0.1)}>
+          <motion.h2 className={`${H2} ${kicker ? 'mt-5' : ''} lg:[text-wrap:balance] lg:max-w-[560px]`} style={{ color: FOREST }} {...rise(0.1)}>
             {question}
           </motion.h2>
-          <motion.p className={`${BODY} mt-6 text-pretty lg:max-w-[560px]`} style={{ color: MUTED }} {...rise(0.2)}>
+          <motion.p className={`${BODY} mt-6 lg:text-pretty lg:max-w-[560px]`} style={{ color: MUTED }} {...rise(0.2)}>
             {answer}
           </motion.p>
           <div ref={chipsRef} className="mt-8 max-lg:hidden flex flex-wrap gap-3">
