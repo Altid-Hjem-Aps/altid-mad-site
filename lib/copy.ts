@@ -13,11 +13,13 @@ export const SAVINGS_DISCLAIMER =
 // a data-sharing agreement between the entities and possibly naming Altid Mad
 // ApS as its own sender. CONSENT_VERSION is stored with each signup so the
 // exact wording accepted is documentable.
-export const CONSENT_VERSION = '2026-07-13'
+// Bumped from 2026-07-13 when the wording softened to "vil gerne modtage" —
+// consent_version stores the exact text accepted, so a wording change bumps it.
+export const CONSENT_VERSION = '2026-07-13.2'
 export const SIGNUP_CONSENT_MAD =
-  'Ja tak. Jeg vil modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
 export const SIGNUP_CONSENT_GROUP =
-  'Ja tak. Jeg vil også modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
 
 // The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
 // things: they signed up on this site, or they are already on the shared list

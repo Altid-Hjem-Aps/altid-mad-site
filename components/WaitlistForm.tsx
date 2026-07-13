@@ -323,6 +323,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
             <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.62)' }}>Få tidlig adgang, når appen lanceres.</p>
           </>
         )}
+        {/* Consent shown up front, above the fields, so it's visible before the
+            visitor starts typing their details. */}
+        <ConsentCheckboxes dark mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />
         <div className="flex flex-col gap-3 mb-5">
           <div>
             <label style={darkLabelStyle}>Navn</label>
@@ -340,7 +343,6 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
             </div>
           </div>
         </div>
-        <ConsentCheckboxes dark mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />
         {error && <p className="text-sm mb-3 mt-2 text-center" style={{ color: '#ff8080' }}>{error}</p>}
         <button type="submit" disabled={loading} className={`w-full mt-2 disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: ctaColor, color: '#163223' }}>
           {loading ? 'Sender...' : 'Skriv mig på ventelisten'}
@@ -417,6 +419,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
                 : 'none',
             }}
           >
+            {/* Consent at the top of the card, so it's visible before the
+                visitor fills in name, email and number. */}
+            <ConsentCheckboxes dark={false} mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <input
                 id="name-input-hero"
@@ -469,7 +474,6 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       </div>
 
       {/* Single button — always visible, drops down as fields expand above it */}
-      {expanded && <ConsentCheckboxes dark={false} mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />}
       {error && <p className="text-sm mb-2 mt-2 text-center" style={{ color: '#c6000f' }}>{error}</p>}
       <button
         type={expanded ? 'submit' : 'button'}

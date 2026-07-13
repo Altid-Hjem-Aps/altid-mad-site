@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import WaitlistForm from '@/components/WaitlistForm'
+import { CONSENT_VERSION } from '@/lib/copy'
 
 // Amplitude is a browser SDK with network side effects — mock it.
 vi.mock('@amplitude/analytics-browser', () => ({ track: vi.fn() }))
@@ -196,6 +197,6 @@ describe('marketing consent gating', () => {
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     const body = JSON.parse(fetchMock.mock.calls[0][1].body)
-    expect(body.consent).toEqual({ version: '2026-07-13', mad: true, group: true })
+    expect(body.consent).toEqual({ version: CONSENT_VERSION, mad: true, group: true })
   })
 })
