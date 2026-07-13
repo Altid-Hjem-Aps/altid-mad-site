@@ -109,7 +109,7 @@ export default function HowItWorks() {
             type="button"
             onClick={handleCTA}
             className={`${BUTTON_PRIMARY} w-full px-5 lg:w-auto lg:px-[42px]`}
-            style={{ background: '#bfe6e0', color: '#163223' }}
+            style={{ background: '#DCD799', color: '#163223' }}
           >
             <span className="lg:hidden">Skriv dig gratis på ventelisten</span>
             <span className="hidden lg:inline">Skriv dig på ventelisten og få ro på madbudgettet</span>

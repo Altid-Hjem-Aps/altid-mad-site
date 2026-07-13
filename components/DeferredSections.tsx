@@ -17,7 +17,7 @@ function Placeholder({ className, background }: { className: string; background:
   return <div aria-hidden className={className} style={{ background }} />
 }
 
-const founderPh = () => <Placeholder className="min-h-[850px] lg:min-h-[520px]" background="#0f6e68" />
+const founderPh = () => <Placeholder className="min-h-[850px] lg:min-h-[520px]" background="#3E6924" />
 const savingsPh = () => <Placeholder className="min-h-[630px] lg:min-h-[595px]" background="#fdfaf4" />
 const madplanPh = () => <Placeholder className="min-h-[1040px] lg:min-h-[785px]" background="#ffffff" />
 const indkoebPh = () => <Placeholder className="min-h-[1040px] lg:min-h-[785px]" background="#ffffff" />

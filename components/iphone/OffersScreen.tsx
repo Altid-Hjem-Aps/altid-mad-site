@@ -4,8 +4,8 @@ import { TabBar, HomeIndicator } from './PhoneShell'
 
 type Props = { hovered: boolean }
 
-const TEAL = '#0f6e68'
-const MINT = '#bfe6e0'
+const TEAL = '#3E6924'
+const MINT = '#DCD799'
 
 // Personlig AI: the app asks how the week's plan landed — per-dish thumbs and
 // whether the saving felt right — and tunes next week from the answers. On
@@ -44,7 +44,7 @@ function ThumbChip({ down = false, picked }: { down?: boolean; picked: boolean }
         width: 20,
         height: 20,
         background: picked ? TEAL : 'transparent',
-        border: picked ? '1px solid transparent' : '1px solid rgba(15,110,104,0.25)',
+        border: picked ? '1px solid transparent' : '1px solid rgba(62,105,36,0.25)',
         transition: 'background 0.4s ease, border-color 0.4s ease',
         animation: picked ? 'badge-glow 1.4s ease 1' : 'none',
       }}
@@ -83,12 +83,12 @@ export default function OffersScreen({ hovered }: Props) {
       </div>
 
       {/* Per-dish feedback */}
-      <div className="mx-4 mb-2 rounded-2xl shrink-0 px-3 py-1" style={{ background: 'white', border: '1px solid rgba(15,110,104,0.1)' }}>
+      <div className="mx-4 mb-2 rounded-2xl shrink-0 px-3 py-1" style={{ background: 'white', border: '1px solid rgba(62,105,36,0.1)' }}>
         {DISHES.map((d, i) => (
           <div
             key={d.name}
             className="flex items-center gap-1.5 py-[8px]"
-            style={{ borderTop: i > 0 ? '1px solid rgba(15,110,104,0.06)' : 'none' }}
+            style={{ borderTop: i > 0 ? '1px solid rgba(62,105,36,0.06)' : 'none' }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={d.img} alt="" className="shrink-0 object-cover" style={{ width: 20, height: 20, borderRadius: 7 }} />
@@ -102,7 +102,7 @@ export default function OffersScreen({ hovered }: Props) {
       </div>
 
       {/* Did the saving feel right? — with room for a free-text comment */}
-      <div className="mx-4 rounded-2xl shrink-0 px-3 py-2.5" style={{ background: 'white', border: '1px solid rgba(15,110,104,0.1)' }}>
+      <div className="mx-4 rounded-2xl shrink-0 px-3 py-2.5" style={{ background: 'white', border: '1px solid rgba(62,105,36,0.1)' }}>
         <div className="flex items-center gap-2">
           <span className="flex-1 min-w-0 font-semibold" style={{ fontSize: 10, color: 'var(--text-dark)' }}>
             Passede besparelsen på 312 kr.?
@@ -118,7 +118,7 @@ export default function OffersScreen({ hovered }: Props) {
                   fontSize: 8.5,
                   background: picked ? TEAL : 'transparent',
                   color: picked ? MINT : 'rgba(22,50,35,0.45)',
-                  border: picked ? '1px solid transparent' : '1px solid rgba(15,110,104,0.25)',
+                  border: picked ? '1px solid transparent' : '1px solid rgba(62,105,36,0.25)',
                   transition: 'background 0.4s ease, color 0.4s ease, border-color 0.4s ease',
                   animation: picked ? 'badge-glow 1.4s ease 1' : 'none',
                 }}
@@ -132,7 +132,7 @@ export default function OffersScreen({ hovered }: Props) {
             questionnaire. */}
         <div
           className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-[5px]"
-          style={{ background: 'rgba(15,110,104,0.05)', border: '1px dashed rgba(15,110,104,0.28)' }}
+          style={{ background: 'rgba(62,105,36,0.05)', border: '1px dashed rgba(62,105,36,0.28)' }}
         >
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
             <path

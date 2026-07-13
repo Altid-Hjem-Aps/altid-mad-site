@@ -205,7 +205,7 @@ function GoBack() {
  *  "Du sparer" notes. */
 function SavingsClaim() {
   return (
-    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(191,230,224,0.45)' }}>
+    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(220,215,153,0.45)' }}>
       <p className="flex items-start justify-between gap-1.5 font-bold leading-snug" style={{ fontSize: 11, color: TEAL }}>
         <span>Spar op til 1.250 kr./måned på madbudgettet.*</span>
         <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden className="shrink-0" style={{ marginTop: 1 }}>
@@ -442,7 +442,7 @@ function BudgetSliderScene({ t }: { t: number }) {
         </div>
         {/* The slider — spring-driven, so it moves continuously. */}
         <div className="relative mt-2" style={{ height: 18 }}>
-          <span className="absolute rounded-full" style={{ left: 0, right: 0, top: 6.5, height: 5, background: 'rgba(15,110,104,0.12)' }} />
+          <span className="absolute rounded-full" style={{ left: 0, right: 0, top: 6.5, height: 5, background: 'rgba(62,105,36,0.12)' }} />
           <motion.span
             className="absolute rounded-full"
             style={{ left: 0, top: 6.5, height: 5, width: fillWidth, background: TEAL }}
@@ -602,7 +602,7 @@ function BuildScene({ t }: { t: number }) {
     <div className="flex h-full flex-col items-center justify-center gap-9 pb-4">
       <div className="relative" style={{ width: RING_SIZE, height: RING_SIZE }}>
         <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} aria-hidden>
-          <circle cx={RING_MID} cy={RING_MID} r={RING_R} fill="none" stroke="rgba(191,230,224,0.55)" strokeWidth={RING_SW} />
+          <circle cx={RING_MID} cy={RING_MID} r={RING_R} fill="none" stroke="rgba(220,215,153,0.55)" strokeWidth={RING_SW} />
           <circle
             cx={RING_MID}
             cy={RING_MID}
@@ -663,7 +663,7 @@ function PlanCard({ anim, swapped = false }: { anim: boolean; swapped?: boolean 
           >
             <span
               className="shrink-0 flex items-center justify-center font-bold"
-              style={{ width: 28, height: 22, borderRadius: 7, fontSize: 8.5, background: 'rgba(191,230,224,0.5)', color: TEAL }}
+              style={{ width: 28, height: 22, borderRadius: 7, fontSize: 8.5, background: 'rgba(220,215,153,0.5)', color: TEAL }}
             >
               {m.day}
             </span>
@@ -855,7 +855,7 @@ function DishCard({ dish }: { dish: (typeof SWIPES)[number] }) {
         <div className="mt-1.5 flex items-center gap-1.5">
           <span
             className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-bold"
-            style={{ fontSize: 8, background: 'rgba(15,110,104,0.08)', color: TEAL }}
+            style={{ fontSize: 8, background: 'rgba(62,105,36,0.08)', color: TEAL }}
           >
             <ClockIcon size={9} /> {dish.time}
           </span>

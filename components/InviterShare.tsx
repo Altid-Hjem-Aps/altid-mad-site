@@ -109,7 +109,7 @@ export default function InviterShare({ code }: { code: string }) {
       {/* Personal link + copy — matches the email's link block */}
       <div
         className="mt-8 rounded-2xl p-5"
-        style={{ background: '#fdfaf4', border: `1.5px solid ${copied ? 'transparent' : '#bfe6e0'}` }}
+        style={{ background: '#fdfaf4', border: `1.5px solid ${copied ? 'transparent' : '#DCD799'}` }}
       >
         <p
           style={{ color: '#163223', letterSpacing: '0.1em' }}
@@ -124,7 +124,7 @@ export default function InviterShare({ code }: { code: string }) {
           type="button"
           onClick={copyLink}
           disabled={copied}
-          style={copied ? { color: '#163223' } : { background: '#bfe6e0', color: '#163223' }}
+          style={copied ? { color: '#163223' } : { background: '#DCD799', color: '#163223' }}
           className={`mt-4 w-full rounded-[20px] py-3.5 text-center text-base font-medium transition-colors ${copied ? 'cursor-default' : 'hover:opacity-90'}`}
         >
           {copied ? 'Kopieret!' : 'Kopiér link'}
@@ -152,7 +152,7 @@ export default function InviterShare({ code }: { code: string }) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => trackShare(c.key)}
-            style={{ background: 'rgba(191,230,224,0.35)', color: '#163223' }}
+            style={{ background: 'rgba(220,215,153,0.35)', color: '#163223' }}
             className="flex flex-col items-center gap-2 rounded-2xl py-4 transition-opacity hover:opacity-80"
           >
             <Glyph name={c.key} />
