@@ -28,7 +28,7 @@ export default function Hero() {
               style={{ color: '#163223' }}
             >
               <span className="block">Snart får danskerne</span>
-              <span className="block" style={{ color: '#0f6e68' }}>bedre råd til mad</span>
+              <span className="block" style={{ color: '#3E6924' }}>bedre råd til mad</span>
             </h1>
 
             <p

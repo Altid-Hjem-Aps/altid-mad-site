@@ -19,7 +19,7 @@ const PATHS_HJEM = [
 // "mad" (Afacad, like the Services card lockups) takes hjem's spot, right-
 // aligned on hjem's baseline. Give it the same h-* class you'd give <Logo>;
 // `size` (px height) remains for callers without a class.
-export function MadLogo({ className, style, size, altidColor = '#fff', madColor = '#bfe6e0' }: {
+export function MadLogo({ className, style, size, altidColor = '#fff', madColor = '#DCD799' }: {
   className?: string
   style?: React.CSSProperties
   size?: number

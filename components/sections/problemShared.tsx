@@ -112,13 +112,13 @@ export function MintCta({
         height: 38,
         fontSize: 11,
         background: teal
-          ? active ? TEAL : 'rgba(15,110,104,0.4)'
+          ? active ? TEAL : 'rgba(62,105,36,0.4)'
           : white
             ? active ? '#fff' : 'rgba(255,255,255,0.55)'
-            : active ? MINT : 'rgba(191,230,224,0.35)',
-        color: teal ? (active ? '#eafaf6' : 'rgba(234,250,246,0.65)') : active ? FOREST : 'rgba(22,50,35,0.4)',
-        border: white ? `1px solid ${active ? 'rgba(15,110,104,0.28)' : HAIRLINE}` : 'none',
-        boxShadow: white && active ? '0 10px 24px -12px rgba(22,50,35,0.45)' : teal && active ? '0 10px 24px -12px rgba(15,110,104,0.55)' : 'none',
+            : active ? MINT : 'rgba(220,215,153,0.35)',
+        color: teal ? (active ? '#EEF6E6' : 'rgba(238,246,230,0.65)') : active ? FOREST : 'rgba(22,50,35,0.4)',
+        border: white ? `1px solid ${active ? 'rgba(62,105,36,0.28)' : HAIRLINE}` : 'none',
+        boxShadow: white && active ? '0 10px 24px -12px rgba(22,50,35,0.45)' : teal && active ? '0 10px 24px -12px rgba(62,105,36,0.55)' : 'none',
         transition: 'background 0.4s ease, color 0.4s ease',
         transformOrigin: 'center',
       }}
@@ -350,7 +350,7 @@ function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps)
           left: '50%',
           transform: 'translateX(-50%)',
           background:
-            'radial-gradient(closest-side, rgba(191,230,224,0.55) 0%, rgba(191,230,224,0.3) 55%, rgba(191,230,224,0) 100%)',
+            'radial-gradient(closest-side, rgba(220,215,153,0.55) 0%, rgba(220,215,153,0.3) 55%, rgba(220,215,153,0) 100%)',
         }}
       />
       <div className="relative">
