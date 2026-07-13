@@ -4,6 +4,21 @@
 export const SAVINGS_DISCLAIMER =
   'Eksempelberegning. Besparelsen er vejledende og baseret på antagelser. Den faktiske besparelse afhænger af husstandens forbrug, adresse, aftaler, dækning og gældende priser.'
 
+// Marketing-consent copy for the two signup checkboxes. Verbatim from the
+// legal fact-check (based on Forbrugerombudsmanden's spam guidance): active,
+// non-pre-checked, exhaustively names each brand, and says it is marketing.
+// Present structure: Altid Mad has no CVR yet, so it is a brand run by Altid
+// Hjem ApS (CVR 45637476), which is also the sender — hence "fra Altid Hjem
+// ApS". WHEN Altid Mad becomes a registered company with its own CVR, revisit:
+// a data-sharing agreement between the entities and possibly naming Altid Mad
+// ApS as its own sender. CONSENT_VERSION is stored with each signup so the
+// exact wording accepted is documentable.
+export const CONSENT_VERSION = '2026-07-13'
+export const SIGNUP_CONSENT_MAD =
+  'Ja tak. Jeg vil modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+export const SIGNUP_CONSENT_GROUP =
+  'Ja tak. Jeg vil også modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+
 // The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
 // things: they signed up on this site, or they are already on the shared list
 // via their Hjem signup. Rows mirrored without a Mad source — including signups

@@ -102,6 +102,7 @@ describe('ExitIntentDialog dismissal & cleanup', () => {
     fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
     fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
     fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
+    fireEvent.click(screen.getAllByRole('checkbox')[0]) // tick required Mad consent
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
     await waitFor(() => expect(screen.getByText('Fortæl os lidt om dig.')).toBeInTheDocument())
     expect(amplitude.track).toHaveBeenCalledWith('Exit Intent Converted', { path: '/' })
