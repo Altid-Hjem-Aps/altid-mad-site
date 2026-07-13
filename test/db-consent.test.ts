@@ -9,6 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // upsert resolves to, so we can simulate a missing column.
 const upsertedRows: Record<string, unknown>[] = []
 let results: Array<{ data: unknown; error: unknown }> = []
+// Capture .update() patches (mergeConsent) + the public_id they filter on.
+const updatePatches: Array<{ patch: Record<string, unknown>; id: unknown }> = []
+let updateResults: Array<{ error: unknown }> = []
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
@@ -21,6 +24,12 @@ vi.mock('@supabase/supabase-js', () => ({
           }),
         }
       },
+      update: (patch: Record<string, unknown>) => ({
+        eq: (_col: string, id: unknown) => {
+          updatePatches.push({ patch, id })
+          return Promise.resolve(updateResults.shift() ?? { error: null })
+        },
+      }),
     }),
   }),
 }))
@@ -29,7 +38,7 @@ vi.mock('@supabase/supabase-js', () => ({
 process.env.SUPABASE_URL = 'https://example.supabase.co'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key'
 
-import { mirrorSignup } from '@/lib/db'
+import { mirrorSignup, mergeConsent } from '@/lib/db'
 
 const CONSENT = { version: '2026-07-13', mad: true, group: false }
 
@@ -125,5 +134,65 @@ describe('mirrorSignup consent storage', () => {
 
     await expect(mirrorSignup('pub-5', { consent: CONSENT })).rejects.toThrow(/timeout/)
     expect(upsertedRows).toHaveLength(1) // no retry on a non-column error
+  })
+})
+
+describe('mergeConsent (409 re-signup path)', () => {
+  beforeEach(() => {
+    updatePatches.length = 0
+    updateResults = []
+  })
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('flags newly-consented brands on the existing row (by email) without downgrading', async () => {
+    updateResults = [{ error: null }]
+    // Re-signup ticks both boxes; only the TRUE ones are written, plus version/at.
+    await mergeConsent('A@Example.com', { version: '2026-07-13', mad: true, group: true })
+
+    expect(updatePatches).toHaveLength(1)
+    const { patch, id } = updatePatches[0]
+    expect(id).toBe('a@example.com') // lower-cased, keyed on email
+    expect(patch.marketing_consent_mad).toBe(true)
+    expect(patch.marketing_consent_group).toBe(true)
+    expect(patch.consent_version).toBe('2026-07-13')
+    expect(typeof patch.consent_at).toBe('string')
+  })
+
+  it('only writes the true flags — never sets a flag to false', async () => {
+    updateResults = [{ error: null }]
+    await mergeConsent('b@x.dk', { version: 'v', mad: false, group: true })
+
+    const { patch } = updatePatches[0]
+    expect('marketing_consent_mad' in patch).toBe(false) // false is not written (no downgrade)
+    expect(patch.marketing_consent_group).toBe(true)
+  })
+
+  it('is a no-op when nothing is affirmatively consented', async () => {
+    await mergeConsent('c@x.dk', { version: 'v', mad: false, group: false })
+    expect(updatePatches).toHaveLength(0)
+  })
+
+  it('is a no-op when no consent object is passed', async () => {
+    await mergeConsent('d@x.dk', undefined)
+    expect(updatePatches).toHaveLength(0)
+  })
+
+  it('strips a not-yet-migrated column and retries', async () => {
+    updateResults = [
+      { error: { code: 'PGRST204', message: "Could not find the 'consent_version' column of 'signup' in the schema cache" } },
+      { error: null },
+    ]
+    await mergeConsent('e@x.dk', { version: '2026-07-13', mad: true, group: false })
+
+    expect(updatePatches).toHaveLength(2)
+    expect('consent_version' in updatePatches[1].patch).toBe(false)
+    expect(updatePatches[1].patch.marketing_consent_mad).toBe(true)
+  })
+
+  it('rethrows a non-column error', async () => {
+    updateResults = [{ error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
+    await expect(mergeConsent('f@x.dk', { mad: true })).rejects.toThrow(/timeout/)
   })
 })

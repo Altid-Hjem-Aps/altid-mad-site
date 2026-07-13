@@ -212,6 +212,51 @@ export async function mirrorSignup(
 }
 
 /**
+ * Merge newly-given marketing consent into an EXISTING signup row. Used on the
+ * 409 duplicate-signup path, where mirrorSignup does NOT run — so a person who
+ * first signed up via one brand and later re-submits with broader consent would
+ * otherwise lose it. Only flags the new TRUE consents; never downgrades an
+ * existing true to false (a re-signup is not a withdrawal). No-op when no
+ * consent object is passed or nothing is affirmatively consented.
+ */
+export async function mergeConsent(
+  email: string,
+  consent?: { version?: string; mad?: boolean; group?: boolean },
+): Promise<void> {
+  const addr = String(email || '').toLowerCase().trim()
+  if (!addr || !consent) return
+  const patch: Record<string, unknown> = {}
+  if (consent.mad === true) patch.marketing_consent_mad = true
+  if (consent.group === true) patch.marketing_consent_group = true
+  // Nothing affirmatively consented → nothing to merge (don't touch the row).
+  if (Object.keys(patch).length === 0) return
+  if (consent.version) patch.consent_version = consent.version
+  patch.consent_at = new Date().toISOString()
+
+  const OPTIONAL_COLUMNS = ['marketing_consent_mad', 'marketing_consent_group', 'consent_version', 'consent_at']
+  async function apply(p: Record<string, unknown>) {
+    // Keyed on email: it is the shared-list natural key, so this works from
+    // either site's 409 path without a public_id lookup first.
+    return getClient().from('signup').update(p).eq('email', addr)
+  }
+  let { error } = await apply(patch)
+  // Same column-missing fallback as mirrorSignup: a not-yet-migrated column
+  // (PGRST204 / 42703) is stripped and retried; any other error still throws.
+  for (let i = 0; i < OPTIONAL_COLUMNS.length && error; i++) {
+    const code = (error as { code?: string }).code
+    if (code !== 'PGRST204' && code !== '42703') break
+    const msg = error.message ?? ''
+    const missing = OPTIONAL_COLUMNS.find((c) => c in patch && msg.includes(c))
+    if (!missing) break
+    console.error(`mergeConsent: ${missing} column missing, retrying without it`, msg)
+    delete patch[missing]
+    if (Object.keys(patch).length === 0) return
+    ;({ error } = await apply(patch))
+  }
+  if (error) throw new Error(error.message)
+}
+
+/**
  * Look up an existing signup by email: which site it came from (phrases the
  * duplicate message) and its public_id (rebuilds their referral link so a
  * duplicate signup still gets something actionable). Fail-safe: any error
