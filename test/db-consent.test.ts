@@ -25,10 +25,12 @@ vi.mock('@supabase/supabase-js', () => ({
         }
       },
       update: (patch: Record<string, unknown>) => ({
-        eq: (_col: string, id: unknown) => {
-          updatePatches.push({ patch, id })
-          return Promise.resolve(updateResults.shift() ?? { error: null })
-        },
+        eq: (_col: string, id: unknown) => ({
+          select: () => {
+            updatePatches.push({ patch, id })
+            return Promise.resolve(updateResults.shift() ?? { data: [{ public_id: 'x' }], error: null })
+          },
+        }),
       }),
     }),
   }),
@@ -147,7 +149,7 @@ describe('mergeConsent (409 re-signup path)', () => {
   })
 
   it('flags newly-consented brands on the existing row (by email) without downgrading', async () => {
-    updateResults = [{ error: null }]
+    updateResults = [{ data: [{ public_id: 'p1' }], error: null }]
     // Re-signup ticks both boxes; only the TRUE ones are written, plus version/at.
     await mergeConsent('A@Example.com', { version: '2026-07-13', mad: true, group: true })
 
@@ -161,7 +163,7 @@ describe('mergeConsent (409 re-signup path)', () => {
   })
 
   it('only writes the true flags — never sets a flag to false', async () => {
-    updateResults = [{ error: null }]
+    updateResults = [{ data: [{ public_id: 'p1' }], error: null }]
     await mergeConsent('b@x.dk', { version: 'v', mad: false, group: true })
 
     const { patch } = updatePatches[0]
@@ -181,8 +183,8 @@ describe('mergeConsent (409 re-signup path)', () => {
 
   it('strips a not-yet-migrated column and retries', async () => {
     updateResults = [
-      { error: { code: 'PGRST204', message: "Could not find the 'consent_version' column of 'signup' in the schema cache" } },
-      { error: null },
+      { data: null, error: { code: 'PGRST204', message: "Could not find the 'consent_version' column of 'signup' in the schema cache" } },
+      { data: [{ public_id: 'p1' }], error: null },
     ]
     await mergeConsent('e@x.dk', { version: '2026-07-13', mad: true, group: false })
 
@@ -192,7 +194,16 @@ describe('mergeConsent (409 re-signup path)', () => {
   })
 
   it('rethrows a non-column error', async () => {
-    updateResults = [{ error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
+    updateResults = [{ data: null, error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
     await expect(mergeConsent('f@x.dk', { mad: true })).rejects.toThrow(/timeout/)
+  })
+
+  it('warns (does not throw) when no signup row matches the email', async () => {
+    // Person is in the upstream waitlist (409) but not mirrored into Supabase.
+    updateResults = [{ data: [], error: null }]
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await mergeConsent('missing@x.dk', { mad: true, group: true })
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/no Supabase signup row matched/))
+    warn.mockRestore()
   })
 })

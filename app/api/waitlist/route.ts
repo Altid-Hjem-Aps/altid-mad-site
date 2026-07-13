@@ -70,8 +70,11 @@ export async function POST(req: NextRequest) {
       // A re-signup can carry NEW consent (e.g. a Mad signup later ticks the
       // Hjem "all brands" box). mirrorSignup does not run on a 409, so merge the
       // new consent into the existing row (keyed on email) instead of dropping
-      // it. Fail-safe: a hiccup here must never break the 409 response.
-      await mergeConsent(String(email), consentInput).catch((e) => console.error('mergeConsent failed', e))
+      // it. Deferred via after() so a slow Supabase write never delays the 409
+      // response; .catch keeps it fail-safe.
+      after(async () => {
+        await mergeConsent(String(email), consentInput).catch((e) => console.error('mergeConsent failed', e))
+      })
       return NextResponse.json(
         {
           success: false,
