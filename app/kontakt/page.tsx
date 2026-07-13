@@ -38,7 +38,7 @@ export default function Kontakt() {
           </Link>
 
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">Support</h1>
-          <p className="text-sm mb-12 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Altid Hjem ApS · hej@altidhjem.dk</p>
+          <p className="text-sm mb-12 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Altid Hjem ApS · CVR 45637476 · hej@altidhjem.dk</p>
 
           <div className="space-y-10 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
 
@@ -64,6 +64,7 @@ export default function Kontakt() {
               <h2 className="text-white font-semibold text-base mb-3">Kontakt</h2>
               <div className="pl-4" style={{ borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
                 <p className="font-medium text-white">Altid Hjem ApS</p>
+                <p>CVR 45637476</p>
                 <p>Helsinkigade 29, 2150 Nordhavn</p>
                 <p><a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a></p>
               </div>

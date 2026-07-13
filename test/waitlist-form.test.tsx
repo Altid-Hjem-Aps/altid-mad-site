@@ -15,6 +15,7 @@ function fillAndSubmitDark() {
   fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
   fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
   fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
+  fireEvent.click(screen.getAllByRole('checkbox')[0]) // tick required Mad consent
   fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
 }
 
@@ -32,6 +33,7 @@ describe('WaitlistForm embedded mode (exit-intent dialog)', () => {
     fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
     fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
     fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
+    fireEvent.click(screen.getAllByRole('checkbox')[0]) // tick required Mad consent
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).source).toBe('exit-intent')
@@ -138,7 +140,7 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
   })
 
   it('uses the longer Hjem message as the card body when the API sends it', async () => {
-    const hjemMsg = 'Du er allerede skrevet op til Altid Hjem og står derfor også på ventelisten til Altid Mad.'
+    const hjemMsg = 'Du er allerede skrevet op til Altid Hjem.'
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -165,5 +167,35 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
     fillAndSubmitDark()
     await waitFor(() => expect(screen.getByText('Du er allerede skrevet op!')).toBeInTheDocument())
     expect(screen.queryByRole('button', { name: 'Kopiér' })).toBeNull()
+  })
+})
+
+describe('marketing consent gating', () => {
+  it('blocks submit and shows an error when the Mad consent box is unticked', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    render(<WaitlistForm variant="dark" />)
+    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+    fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
+    fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
+    // No consent tick.
+    fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
+    await waitFor(() => expect(screen.getByText(/Sæt flueben i samtykket/i)).toBeInTheDocument())
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('sends the documented consent (version + both choices) in the POST body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ id: 'abc', surveyToken: 'tok' }) })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<WaitlistForm variant="dark" />)
+    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+    fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
+    fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
+    fireEvent.click(screen.getAllByRole('checkbox')[0]) // Mad
+    fireEvent.click(screen.getAllByRole('checkbox')[1]) // group
+    fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.consent).toEqual({ version: '2026-07-13', mad: true, group: true })
   })
 })

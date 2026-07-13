@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import * as amplitude from '@amplitude/analytics-browser'
 import { DEFAULT_SIGNUP_SOURCE } from '@/lib/signup-source'
-import { DUPLICATE_SIGNUP_HEADING } from '@/lib/copy'
+import { DUPLICATE_SIGNUP_HEADING, SIGNUP_CONSENT_MAD, SIGNUP_CONSENT_GROUP, CONSENT_VERSION } from '@/lib/copy'
 import { markWaitlistJoined } from '@/lib/waitlist-joined'
 import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
@@ -46,6 +46,31 @@ const DK_ELECTRICITY_PROVIDERS = [
 // the heading instead.
 const DUPLICATE_HEADING = DUPLICATE_SIGNUP_HEADING
 
+// Two active, non-pre-checked marketing-consent checkboxes shown above the
+// submit button. Adapts colour to the dark/light form variant.
+function ConsentCheckboxes({ dark, mad, group, onMad, onGroup }: {
+  dark: boolean
+  mad: boolean
+  group: boolean
+  onMad: (v: boolean) => void
+  onGroup: (v: boolean) => void
+}) {
+  const color = dark ? 'rgba(255,255,255,0.7)' : '#6f6a61'
+  const boxStyle: React.CSSProperties = { width: 17, height: 17, marginTop: 2, flexShrink: 0, accentColor: dark ? '#bfe6e0' : '#0f6e68', cursor: 'pointer' }
+  return (
+    <div className="flex flex-col gap-2.5 mt-4 mb-1 text-left">
+      <label className={`flex gap-2.5 items-start ${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
+        <input type="checkbox" checked={mad} onChange={e => onMad(e.target.checked)} style={boxStyle} />
+        <span>{SIGNUP_CONSENT_MAD}</span>
+      </label>
+      <label className={`flex gap-2.5 items-start ${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
+        <input type="checkbox" checked={group} onChange={e => onGroup(e.target.checked)} style={boxStyle} />
+        <span>{SIGNUP_CONSENT_GROUP}</span>
+      </label>
+    </div>
+  )
+}
+
 interface Props {
   variant?: 'light' | 'dark'
   id?: string
@@ -71,6 +96,11 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [signupId, setSignupId] = useState('')
   const [surveyToken, setSurveyToken] = useState('')
   const [referredBy, setReferredBy] = useState('')
+  // Marketing consent (Forbrugerombudsmanden): both start UNCHECKED. Mad is
+  // required to submit (the waitlist's purpose is to receive Altid Mad mails);
+  // the group brands are a separate, voluntary opt-in.
+  const [consentMad, setConsentMad] = useState(false)
+  const [consentGroup, setConsentGroup] = useState(false)
   // Set on a 409 where the API could recover their referral link — renders the
   // share card (skipping the survey step; they already answered it once).
   const [duplicate, setDuplicate] = useState<{ body?: string; inviteUrl: string } | null>(null)
@@ -123,6 +153,10 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
 
   async function submitStep1() {
     if (!phone || !email || !name) return
+    if (!consentMad) {
+      setError('Sæt flueben i samtykket for at skrive dig op.')
+      return
+    }
     setLoading(true)
     setError('')
     // A rejected fetch (offline, DNS) must not leave the button stuck on
@@ -132,7 +166,13 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, name, email, referredBy, source, step: 1 }),
+        body: JSON.stringify({
+          phone, name, email, referredBy, source, step: 1,
+          // Documented consent (wording version + the two active choices) so
+          // the exact permission each person gave is provable. The backend
+          // must persist these and gate marketing sends on them.
+          consent: { version: CONSENT_VERSION, mad: consentMad, group: consentGroup },
+        }),
       })
     } catch {
       setLoading(false)
@@ -300,8 +340,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
             </div>
           </div>
         </div>
-        {error && <p className="text-sm mb-3 text-center" style={{ color: '#ff8080' }}>{error}</p>}
-        <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: ctaColor, color: '#163223' }}>
+        <ConsentCheckboxes dark mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />
+        {error && <p className="text-sm mb-3 mt-2 text-center" style={{ color: '#ff8080' }}>{error}</p>}
+        <button type="submit" disabled={loading} className={`w-full mt-2 disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: ctaColor, color: '#163223' }}>
           {loading ? 'Sender...' : 'Skriv mig på ventelisten'}
         </button>
         <p className={`${FINE_PRINT} text-center mt-3`} style={{ color: 'rgba(255,255,255,0.62)' }}>
@@ -428,7 +469,8 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       </div>
 
       {/* Single button — always visible, drops down as fields expand above it */}
-      {error && <p className="text-sm mb-2 text-center" style={{ color: '#c6000f' }}>{error}</p>}
+      {expanded && <ConsentCheckboxes dark={false} mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />}
+      {error && <p className="text-sm mb-2 mt-2 text-center" style={{ color: '#c6000f' }}>{error}</p>}
       <button
         type={expanded ? 'submit' : 'button'}
         onClick={!expanded ? () => { amplitude.track('Waitlist CTA Clicked', { source: 'hero' }); setExpanded(true); setTimeout(() => document.getElementById('name-input-hero')?.focus(), 60) } : undefined}
