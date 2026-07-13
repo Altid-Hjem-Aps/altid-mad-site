@@ -4,22 +4,25 @@
 export const SAVINGS_DISCLAIMER =
   'Eksempelberegning. Besparelsen er vejledende og baseret på antagelser. Den faktiske besparelse afhænger af husstandens forbrug, adresse, aftaler, dækning og gældende priser.'
 
-// The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
-// things: they signed up on this site, or they are already on the shared list
-// via their Hjem signup. Rows mirrored without a Mad source — including signups
-// made before per-source tagging existed — are Hjem signups.
-// DUPLICATE_SIGNUP_HEADING is shared with WaitlistForm, which compares the
-// API's error text against it to decide whether a longer variant should
-// render as the card body — keep it a single constant so a rewording can
-// never desync the two.
-// NOTE (compliance): we do NOT tell a Hjem signup they are "therefore also on
-// the Altid Mad waitlist" — asserting automatic enrolment in a second brand's
-// marketing is not a valid basis for consent. We state the plain fact (already
-// on the list) and let them share their own referral link.
+// Signup consent (marketing-permission text under every waitlist form).
+// Establishes the ONE-SHARED-LIST model: signing up to any Altid property
+// enrols you across Altid Hjem and its services, with easy one-click opt-out.
+// This is the consent basis that makes the cross-brand duplicate message and
+// cross-brand emails legitimate for NEW signups — it does NOT retroactively
+// cover people who signed up under the old "Ingen spam / Altid Hjem only"
+// text, and the exact wording needs legal/DPO sign-off before it is relied on.
+export const SIGNUP_CONSENT =
+  'Ved at skrive dig op giver du samtykke til, at Altid Hjem ApS må sende dig e-mails om Altid Hjem og alle Altid-tjenester – herunder Altid Mad, Altid Forsikring og Altid Mobil. Du kommer på den fælles venteliste til dem alle og kan til enhver tid afmelde med ét klik.'
+
+// Duplicate signup on the shared list. Per the one-list model above, a Hjem
+// signup is also on the Altid Mad list, so we say so. Kept accurate to whatever
+// SIGNUP_CONSENT establishes. DUPLICATE_SIGNUP_HEADING is shared with
+// WaitlistForm, which compares the API's error text against it to decide
+// whether a longer variant renders as the card body — keep it one constant.
 export const DUPLICATE_SIGNUP_HEADING = 'Du er allerede skrevet op!'
 
 export function duplicateSignupMessage(source: string | null | undefined): string {
   return source?.startsWith('altid-mad')
     ? DUPLICATE_SIGNUP_HEADING
-    : 'Du er allerede skrevet op på Altid Hjems venteliste.'
+    : 'Du er allerede skrevet op til Altid Hjem og dermed også til Altid Mad.'
 }

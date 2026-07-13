@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import * as amplitude from '@amplitude/analytics-browser'
 import { DEFAULT_SIGNUP_SOURCE } from '@/lib/signup-source'
-import { DUPLICATE_SIGNUP_HEADING } from '@/lib/copy'
+import { DUPLICATE_SIGNUP_HEADING, SIGNUP_CONSENT } from '@/lib/copy'
 import { markWaitlistJoined } from '@/lib/waitlist-joined'
 import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
@@ -307,6 +307,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         <p className={`${FINE_PRINT} text-center mt-3`} style={{ color: 'rgba(255,255,255,0.62)' }}>
           Gratis. Ingen spam. <span style={{ color: '#fff' }}>Altid.</span>
         </p>
+        <p className={`${FINE_PRINT} text-center mt-2 leading-relaxed`} style={{ color: 'rgba(255,255,255,0.5)' }}>
+          {SIGNUP_CONSENT}
+        </p>
         <p className={`${FINE_PRINT} text-center mt-1`} style={{ color: 'rgba(255,255,255,0.62)' }}>
           <a href="/privatlivspolitik" className="underline underline-offset-2 hover:opacity-50 transition-opacity">Privatlivspolitik</a>
         </p>
@@ -454,6 +457,11 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       {expanded && (
         <p className={`${FINE_PRINT} text-center mt-2.5`} style={{ color: '#6f6a61' }}>
           Gratis. Ingen spam. <span style={{ color: 'var(--forest)' }}>Altid.</span>
+        </p>
+      )}
+      {expanded && (
+        <p className={`${FINE_PRINT} text-center mt-2 leading-relaxed`} style={{ color: '#8a857c' }}>
+          {SIGNUP_CONSENT}
         </p>
       )}
       {expanded && (

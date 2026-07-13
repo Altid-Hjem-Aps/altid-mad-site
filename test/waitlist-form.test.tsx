@@ -138,7 +138,7 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
   })
 
   it('uses the longer Hjem message as the card body when the API sends it', async () => {
-    const hjemMsg = 'Du er allerede skrevet op på Altid Hjems venteliste.'
+    const hjemMsg = 'Du er allerede skrevet op til Altid Hjem og dermed også til Altid Mad.'
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({

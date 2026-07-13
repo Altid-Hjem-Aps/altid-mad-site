@@ -21,16 +21,16 @@ describe('duplicateSignupMessage', () => {
     expect(duplicateSignupMessage('altid-mad-exit')).toBe('Du er allerede skrevet op!')
   })
 
-  it('tells Hjem signups plainly they are on the shared list, without claiming Mad enrolment', async () => {
+  it('tells Hjem signups they are on the shared list, incl. Altid Mad', async () => {
     const { duplicateSignupMessage } = await import('@/lib/copy')
-    const covered = 'Du er allerede skrevet op på Altid Hjems venteliste.'
+    const covered = 'Du er allerede skrevet op til Altid Hjem og dermed også til Altid Mad.'
     expect(duplicateSignupMessage('forside')).toBe(covered)
     expect(duplicateSignupMessage('exit-intent')).toBe(covered)
   })
 
   it('treats unknown history (no mirror row / null source) as a Hjem signup', async () => {
     const { duplicateSignupMessage } = await import('@/lib/copy')
-    const covered = 'Du er allerede skrevet op på Altid Hjems venteliste.'
+    const covered = 'Du er allerede skrevet op til Altid Hjem og dermed også til Altid Mad.'
     expect(duplicateSignupMessage(null)).toBe(covered)
     expect(duplicateSignupMessage(undefined)).toBe(covered)
   })
