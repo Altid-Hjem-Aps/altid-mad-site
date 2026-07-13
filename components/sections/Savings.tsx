@@ -129,7 +129,15 @@ export default function Savings() {
           }}>
             <p className={`mt-9 ${BODY} mx-auto`} style={{ color: '#6f6a61', maxWidth: 700 }}>
               Baseret på{' '}
-              <span style={{ color: '#163223' }}>Altid Mad Q2-rapporten</span>
+              <a
+                href="/altid-mad-kvartalsrapport-q2.pdf"
+                target="_blank"
+                rel="noopener"
+                className="underline underline-offset-2"
+                style={{ color: '#163223' }}
+              >
+                Altid Mad Q2-rapporten
+              </a>
               . Prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den
               dyreste kæde. Det svarer til en mulig besparelse på op til 11.305 kr. om året. Køber du hver
               vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.
