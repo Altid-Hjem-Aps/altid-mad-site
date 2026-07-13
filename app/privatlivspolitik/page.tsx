@@ -26,7 +26,7 @@ export default function Privatlivspolitik() {
 
             <section>
               <h2 className="text-white font-semibold text-base mb-3">1. Vi er den dataansvarlige</h2>
-              <p className="mb-3">Altid Hjem ApS, CVR 45637476, er dataansvarlig for behandlingen af de personoplysninger, som vi indsamler om dig i forbindelse med din brug af Altid Hjem-appen og vores tilknyttede tjenester (Altid Forsikring, Altid Mobil m.fl.).</p>
+              <p className="mb-3">Altid Hjem ApS, CVR 45637476, er dataansvarlig for behandlingen af de personoplysninger, som vi indsamler om dig i forbindelse med din brug af Altid Hjem-appen, vores websteder (herunder altidhjem.dk og altidmad.dk) og vores tilknyttede tjenester (Altid Mad, Altid Forsikring, Altid Mobil m.fl.). Altid Mad er en tjeneste i Altid Hjem, og Altid Hjem ApS er dataansvarlig for de personoplysninger, du afgiver via altidmad.dk.</p>
               <p className="mb-3">Når du via appen opretter dig som kunde hos eller tilgår din selvbetjening hos Altid Energi, er det Altid Energi ApS (CVR 44373580), der er selvstændig dataansvarlig for behandlingen af dine personoplysninger som elkunde. Du kan læse om Altid Energis behandling af personoplysninger på <a href="https://altidenergi.dk/datapolitik/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 transition-colors hover:text-white">altidenergi.dk/datapolitik</a>.</p>
               <p>Har du spørgsmål til vores behandling af dine personoplysninger, er du velkommen til at kontakte os:</p>
               <div className="mt-3 pl-4" style={{ borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
@@ -38,7 +38,7 @@ export default function Privatlivspolitik() {
 
             <section>
               <h2 className="text-white font-semibold text-base mb-3">2. Venteliste (før lancering)</h2>
-              <p className="mb-3">Indtil Altid Hjem-appen er lanceret, kan du tilmelde dig vores venteliste via altidhjem.dk. Følgende særlige regler gælder for behandlingen af oplysninger fra ventelisten – afsnit 8 (Dine rettigheder) og afsnit 9 (Klage) gælder også for ventelisteoplysninger.</p>
+              <p className="mb-3">Indtil Altid Hjem-appen er lanceret, kan du tilmelde dig vores venteliste via altidhjem.dk eller altidmad.dk. Der er tale om én fælles venteliste, som Altid Hjem ApS er dataansvarlig for. Følgende særlige regler gælder for behandlingen af oplysninger fra ventelisten – afsnit 8 (Dine rettigheder) og afsnit 9 (Klage) gælder også for ventelisteoplysninger.</p>
               <div className="space-y-3">
                 <div>
                   <p className="font-semibold text-white">Hvilke oplysninger indsamler vi?</p>
@@ -54,7 +54,7 @@ export default function Privatlivspolitik() {
                 </div>
                 <div>
                   <p className="font-semibold text-white">Formål og retsgrundlag</p>
-                  <p>Vi behandler oplysningerne for at kunne give dig besked, når Altid Hjem lanceres, og for at forstå, hvem vores tidlige brugere er. Retsgrundlaget er dit samtykke (GDPR artikel 6, stk. 1, litra a), som du til enhver tid kan trække tilbage ved at skrive til <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a>.</p>
+                  <p>Vi behandler oplysningerne for at kunne give dig besked, når Altid Hjem og de tilknyttede tjenester – herunder Altid Mad – lanceres, og for at forstå, hvem vores tidlige brugere er. Retsgrundlaget er dit samtykke (GDPR artikel 6, stk. 1, litra a), som du til enhver tid kan trække tilbage ved at skrive til <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a>.</p>
                 </div>
                 <div>
                   <p className="font-semibold text-white">E-mailstatistik</p>
@@ -111,8 +111,8 @@ export default function Privatlivspolitik() {
               <h2 className="text-white font-semibold text-base mb-3">5. Deling af oplysninger</h2>
               <div className="space-y-3">
                 <div>
-                  <p className="font-semibold text-white">Datterselskaber i Altid Hjem-koncernen</p>
-                  <p>Herunder Altid Forsikring og Altid Mobil, i det omfang det er nødvendigt for at levere de tjenester, du har tilmeldt dig eller ønsker at tilmelde dig. Bemærk at de enkelte datterselskaber er selvstændige dataansvarlige for den behandling, der sker i forbindelse med deres egne produkter og aftaler.</p>
+                  <p className="font-semibold text-white">Tjenester og datterselskaber i Altid Hjem-koncernen</p>
+                  <p>Herunder Altid Mad, Altid Forsikring og Altid Mobil, i det omfang det er nødvendigt for at levere de tjenester, du har tilmeldt dig eller ønsker at tilmelde dig. Altid Hjem ApS er dataansvarlig for de personoplysninger, du afgiver til Altid Hjem og Altid Mad, og deler kun relevante oplysninger med de enkelte tjenester i det omfang, det er nødvendigt for at levere dem til dig. Bemærk at et selvstændigt selskab kan være selvstændig dataansvarlig for den behandling, der sker i forbindelse med dets egne produkter og aftaler.</p>
                 </div>
                 <div>
                   <p className="font-semibold text-white">Datadeling med Altid Energi</p>
