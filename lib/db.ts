@@ -236,10 +236,11 @@ export async function mergeConsent(
   const OPTIONAL_COLUMNS = ['marketing_consent_mad', 'marketing_consent_group', 'consent_version', 'consent_at']
   async function apply(p: Record<string, unknown>) {
     // Keyed on email: it is the shared-list natural key, so this works from
-    // either site's 409 path without a public_id lookup first.
-    return getClient().from('signup').update(p).eq('email', addr)
+    // either site's 409 path without a public_id lookup first. .select() returns
+    // the rows touched so we can tell a real update from a silent no-match.
+    return getClient().from('signup').update(p).eq('email', addr).select('public_id')
   }
-  let { error } = await apply(patch)
+  let { data, error } = await apply(patch)
   // Same column-missing fallback as mirrorSignup: a not-yet-migrated column
   // (PGRST204 / 42703) is stripped and retried; any other error still throws.
   for (let i = 0; i < OPTIONAL_COLUMNS.length && error; i++) {
@@ -251,9 +252,15 @@ export async function mergeConsent(
     console.error(`mergeConsent: ${missing} column missing, retrying without it`, msg)
     delete patch[missing]
     if (Object.keys(patch).length === 0) return
-    ;({ error } = await apply(patch))
+    ;({ data, error } = await apply(patch))
   }
   if (error) throw new Error(error.message)
+  // A 409 means the email exists upstream, but it may not be mirrored into
+  // Supabase (pre-mirror signups). Log a 0-row merge instead of dropping the
+  // consent silently, so the gap is monitorable rather than invisible.
+  if (!(data as unknown[] | null)?.length) {
+    console.error('mergeConsent: no Supabase signup row matched for re-consent — consent not persisted')
+  }
 }
 
 /**
