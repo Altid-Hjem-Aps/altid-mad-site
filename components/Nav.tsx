@@ -62,7 +62,7 @@ const SPIIR_BANNER: BannerConfig = {
 // Colours from the Mad CVI frame (node 44:1060): CTAs and the active-item dot
 // use the Mad mint instead of Hjem's signal green.
 const FOREST = '#163223'
-const MINT = '#bfe6e0'
+const MINT = '#DCD799'
 // Deliberately low-contrast: these links are INACTIVE until each service's
 // site launches (WCAG 1.4.3 exempts inactive components); they flip to
 // 'live'/white when switched on.

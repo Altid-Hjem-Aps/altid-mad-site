@@ -56,3 +56,4 @@ amplitude-setup-report.previous.md
 .claude/skills/wizard-prompt-supplement/
 .env.local
 .gstack/
+.mux-token.txt

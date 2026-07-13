@@ -18,8 +18,8 @@ vi.mock('@mux/mux-player-react', () => ({
 
 import FounderVideo from '@/components/sections/FounderVideo'
 
-const SQUARE = 'p9VDiEQ01T9kj1X1JA00K3IWZ7TX91tG3sgAghtD3xiro'
-const WIDE = 'A01Fuk2X9sobmFQEwkkYgCtrm8xoaN4LZoGP4MdimSa00'
+const SQUARE = 't6YOkbyrk00eFAW9asaC5ruGCUi1THVJHpyHlRE7UywQ'
+const WIDE = '28UsvvvDAS7Z8fJ8FnFlCIWhJogZE2GGXGFujAnvBcw'
 
 // jsdom has no matchMedia; the stub answers every query (wide-frame, touch,
 // reduced-motion) with the same `matches`, which is exactly the combination

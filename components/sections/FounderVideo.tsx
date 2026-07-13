@@ -10,8 +10,8 @@ import { H2, EYEBROW, BODY } from '@/lib/typography'
 // The Altid Mad founder video exists as two Mux assets: a 16:9 master for
 // the sm+ frames and a dedicated 1:1 cut for the phone frame, so phones get
 // the real square edit instead of a centre-crop of the wide one.
-const PLAYBACK_ID_WIDE = 'A01Fuk2X9sobmFQEwkkYgCtrm8xoaN4LZoGP4MdimSa00'
-const PLAYBACK_ID_SQUARE = 'p9VDiEQ01T9kj1X1JA00K3IWZ7TX91tG3sgAghtD3xiro'
+const PLAYBACK_ID_WIDE = '28UsvvvDAS7Z8fJ8FnFlCIWhJogZE2GGXGFujAnvBcw'
+const PLAYBACK_ID_SQUARE = 't6YOkbyrk00eFAW9asaC5ruGCUi1THVJHpyHlRE7UywQ'
 // Exact complement of Tailwind's `sm` (min-width: 640px), which drives the
 // frame aspect and the skeleton's poster pick. Querying min-width (not
 // max-width: 639px) keeps fractional viewport widths like 639.5px — desktop
@@ -299,7 +299,7 @@ export default function FounderVideo() {
   }
 
   return (
-    <section className="relative overflow-hidden" style={{ background: '#0f6e68' }}>
+    <section className="relative overflow-hidden" style={{ background: '#3E6924' }}>
       <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch">
 
         {/* Left: text + CTA */}
@@ -307,7 +307,7 @@ export default function FounderVideo() {
           className="flex flex-col justify-center py-16 lg:py-20 pr-6 sm:pr-10 lg:pr-14 max-w-[880px]"
           style={{ paddingLeft: fluid(140, 32) }}
         >
-          <p className={EYEBROW} style={{ color: '#bfe6e0' }}>
+          <p className={EYEBROW} style={{ color: '#DCD799' }}>
             Mød grundlæggeren
           </p>
 
@@ -318,7 +318,7 @@ export default function FounderVideo() {
             className={`mt-6 ${H2} text-white`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Spar op til <span style={{ color: '#bfe6e0' }}>15.000 kr.</span><br />
+            &ldquo;Spar op til <span style={{ color: '#DCD799' }}>15.000 kr.</span><br />
             på familiens indkøb.&rdquo;
           </h2>
 
@@ -330,7 +330,7 @@ export default function FounderVideo() {
             type="button"
             onClick={handleCTA}
             className="mt-9 inline-flex w-fit items-center justify-center font-medium rounded-[20px] px-8 py-[18px] xl:px-0 xl:py-[23px] xl:w-[clamp(200px,15.83vw,304px)] text-[16px] transition-opacity hover:opacity-90"
-            style={{ background: '#bfe6e0', color: '#163223', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            style={{ background: '#DCD799', color: '#163223', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
             Skriv dig på ventelisten
           </button>
@@ -360,7 +360,7 @@ export default function FounderVideo() {
           <MuxPlayer
             playbackId={playbackId}
             streamType="on-demand"
-            accentColor="#bfe6e0"
+            accentColor="#DCD799"
             poster={posterUrl(playbackId)}
             playsInline
             loop

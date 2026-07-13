@@ -182,7 +182,7 @@ export function TabBar({ active }: { active: 'hjem' | 'mad' | 'sparetips' | 'pro
   return (
     <div
       className="mt-auto shrink-0 flex items-center justify-around px-6 pt-2 pb-1"
-      style={{ borderTop: '1px solid rgba(27,104,64,0.07)' }}
+      style={{ borderTop: '1px solid rgba(62,105,36,0.07)' }}
     >
       <Tab label="Hjem" isActive={active === 'hjem'}>
         <path d="M3 12L12 4L21 12V21H15V15H9V21H3V12Z" fill="currentColor" />

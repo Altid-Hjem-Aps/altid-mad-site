@@ -5,8 +5,8 @@ import Slot from './Slot'
 
 type Props = { hovered: boolean }
 
-const TEAL = '#0f6e68'
-const MINT = '#bfe6e0'
+const TEAL = '#3E6924'
+const MINT = '#DCD799'
 
 // Mon–Fri meal plan mirroring the madplan flow's week — same dishes and food
 // photos. Three rows carry a Tilbud badge (matching the header's "3 retter på
@@ -25,8 +25,8 @@ const DAYS: Day[] = [
   { day: 'Man', dish: 'Kylling i karry', img: '/food/kylling-karry.jpg', price: '52 kr.', offer: true },
   { day: 'Tir', dish: 'Pasta med grønt', img: '/food/pasta-groent.jpg', price: '38 kr.', offer: true },
   { day: 'Ons', dish: 'Laksewok', img: '/food/laksewok.jpg', price: '64 kr.', offer: true },
-  { day: 'Tor', dish: 'Vegetarlasagne', img: '/food/lasagne.jpg', price: '55 kr.', tag: { label: 'Mindre kød', bg: 'rgba(15,110,104,0.1)', ink: TEAL }, swap: { dish: 'Chili con carne', img: '/food/chili-con-carne.jpg', price: '41 kr.' } },
-  { day: 'Fre', dish: 'Pizzafredag', img: '/food/pizzafredag.jpg', price: '46 kr.', tag: { label: 'Favorit', bg: 'rgba(15,110,104,0.1)', ink: TEAL } },
+  { day: 'Tor', dish: 'Vegetarlasagne', img: '/food/lasagne.jpg', price: '55 kr.', tag: { label: 'Mindre kød', bg: 'rgba(62,105,36,0.1)', ink: TEAL }, swap: { dish: 'Chili con carne', img: '/food/chili-con-carne.jpg', price: '41 kr.' } },
+  { day: 'Fre', dish: 'Pizzafredag', img: '/food/pizzafredag.jpg', price: '46 kr.', tag: { label: 'Favorit', bg: 'rgba(62,105,36,0.1)', ink: TEAL } },
 ]
 
 export default function MealPlanScreen({ hovered }: Props) {
@@ -70,7 +70,7 @@ export default function MealPlanScreen({ hovered }: Props) {
       </div>
 
       {/* The five dinners */}
-      <div className="mx-4 mb-3 rounded-2xl shrink-0" style={{ background: 'white', border: '1px solid rgba(15,110,104,0.1)', overflow: 'hidden' }}>
+      <div className="mx-4 mb-3 rounded-2xl shrink-0" style={{ background: 'white', border: '1px solid rgba(62,105,36,0.1)', overflow: 'hidden' }}>
         {DAYS.map((d, i) => {
           const swapped = d.swap && hovered
           return (
@@ -78,14 +78,14 @@ export default function MealPlanScreen({ hovered }: Props) {
               key={d.day}
               className="flex items-center gap-[3px] px-2.5 py-[7px]"
               style={{
-                borderBottom: i < DAYS.length - 1 ? '1px solid rgba(15,110,104,0.06)' : 'none',
-                background: swapped ? 'rgba(191,230,224,0.28)' : 'transparent',
+                borderBottom: i < DAYS.length - 1 ? '1px solid rgba(62,105,36,0.06)' : 'none',
+                background: swapped ? 'rgba(220,215,153,0.28)' : 'transparent',
                 transition: 'background 0.45s ease',
               }}
             >
               <span
                 className="shrink-0 flex items-center justify-center font-bold"
-                style={{ width: 21, height: 21, borderRadius: 7, fontSize: 7.5, background: 'rgba(191,230,224,0.5)', color: TEAL }}
+                style={{ width: 21, height: 21, borderRadius: 7, fontSize: 7.5, background: 'rgba(220,215,153,0.5)', color: TEAL }}
               >
                 {d.day}
               </span>

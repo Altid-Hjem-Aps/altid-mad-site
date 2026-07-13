@@ -6,9 +6,9 @@ import { H2, EYEBROW, BODY } from '@/lib/typography'
 // the "we've done this before" credibility). The two wordmarks sit at the
 // bottom, bridged by a run of pulsing dots across the seam.
 
-const TEAL = '#0c5853'
+const TEAL = '#335620'
 const FOREST = '#193d23'
-const MINT = '#bfe6e0'
+const MINT = '#DCD799'
 
 // Green connector line — 5 equal-size dots that pulse opacity in a staggered
 // loop, each peaking at its own max (20% → 100% toward the green/hjem side) so

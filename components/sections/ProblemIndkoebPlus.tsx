@@ -117,7 +117,7 @@ function ListCard({
       {strokeDelay !== undefined && (
         <motion.div
           className="pointer-events-none absolute inset-0 rounded-xl"
-          style={{ border: '1.5px solid rgba(15,110,104,0.42)' }}
+          style={{ border: '1.5px solid rgba(62,105,36,0.42)' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: strokeDelay, duration: 0.45, ease: EASE_EXPO }}
@@ -143,7 +143,7 @@ function ListCard({
           )
           return (
             <div key={it.name} className="flex items-center gap-2">
-              <span className="inline-block rounded-full shrink-0" style={{ width: 6, height: 6, background: optimized ? STORES[it.store].dot : 'rgba(15,110,104,0.22)' }} />
+              <span className="inline-block rounded-full shrink-0" style={{ width: 6, height: 6, background: optimized ? STORES[it.store].dot : 'rgba(62,105,36,0.22)' }} />
               <span className="flex-1 min-w-0 truncate font-semibold" style={{ fontSize: 9.5, color: FOREST }}>{it.name}</span>
               {optimized ? (
                 reveal ? (
@@ -173,7 +173,7 @@ function CountUp({ to, delay = 0, duration = 1 }: { to: number; delay?: number; 
 }
 
 // A small success confetti burst over a card (deterministic, so it's SSR-safe).
-const CONFETTI_COLORS = ['#0f6e68', '#bfe6e0', '#e88b2f', '#f5c542', '#2f8fd0']
+const CONFETTI_COLORS = ['#3E6924', '#DCD799', '#e88b2f', '#f5c542', '#2f8fd0']
 function Confetti({ delay = 0, count = 16 }: { delay?: number; count?: number }) {
   return (
     <div className="pointer-events-none absolute inset-0" style={{ overflow: 'visible', zIndex: 5 }} aria-hidden>
@@ -339,7 +339,7 @@ function BasisHuntScene({ t }: { t: number }) {
       {/* The classic "+X kr." pops IN FRONT of the running total the moment a
           best price locks — both sit in fixed-width slots so nothing slides
           while the numbers change. */}
-      <div className="mt-2.5 flex items-center justify-between rounded-full px-3.5 py-2" style={{ background: 'rgba(191,230,224,0.45)' }}>
+      <div className="mt-2.5 flex items-center justify-between rounded-full px-3.5 py-2" style={{ background: 'rgba(220,215,153,0.45)' }}>
         <span className="font-semibold" style={{ fontSize: 10, color: TEAL }}>Du sparer indtil videre</span>
         <span className="flex items-center gap-1.5">
           <motion.span
@@ -375,7 +375,7 @@ function SelectRow({ label, sub, selected }: { label: string; sub: string; selec
   return (
     <div
       className="mb-1.5 flex items-center gap-2 rounded-xl px-2.5 py-2"
-      style={{ background: selected ? 'rgba(191,230,224,0.32)' : '#fff', border: `1px solid ${selected ? 'rgba(15,110,104,0.32)' : HAIRLINE}`, transition: 'background 0.3s ease, border-color 0.3s ease' }}
+      style={{ background: selected ? 'rgba(220,215,153,0.32)' : '#fff', border: `1px solid ${selected ? 'rgba(62,105,36,0.32)' : HAIRLINE}`, transition: 'background 0.3s ease, border-color 0.3s ease' }}
     >
       <div className="flex-1">
         <p className="font-semibold" style={{ fontSize: 10.5, color: FOREST }}>{label}</p>
@@ -512,8 +512,8 @@ function BasisListScene({ t }: { t?: number }) {
                 height: 34,
                 fontSize: 11,
                 background: TEAL,
-                color: '#eafaf6',
-                boxShadow: '0 10px 24px -12px rgba(15,110,104,0.55)',
+                color: '#EEF6E6',
+                boxShadow: '0 10px 24px -12px rgba(62,105,36,0.55)',
               }}
               initial={false}
               animate={{ scale: confirmPress ? [1, 0.93, 1] : 1 }}
@@ -561,7 +561,7 @@ function PlanlaegningScene({ t }: { t: number }) {
       <div className="flex flex-col items-center gap-2.5">
         <div className="relative" style={{ width: RING_SIZE, height: RING_SIZE }}>
           <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} aria-hidden>
-            <circle cx={RING_MID} cy={RING_MID} r={RING_R} fill="none" stroke="rgba(191,230,224,0.6)" strokeWidth={RING_SW} />
+            <circle cx={RING_MID} cy={RING_MID} r={RING_R} fill="none" stroke="rgba(220,215,153,0.6)" strokeWidth={RING_SW} />
             <circle
               cx={RING_MID} cy={RING_MID} r={RING_R} fill="none" stroke={TEAL} strokeWidth={RING_SW} strokeLinecap="round"
               strokeDasharray={RING_C} strokeDashoffset={RING_C * (1 - progress)}
@@ -735,7 +735,7 @@ function BilkaPopup() {
             </div>
             <span
               className="shrink-0 rounded-full px-1.5 py-0.5 font-bold"
-              style={{ fontSize: 7, background: 'rgba(15,110,104,0.1)', color: TEAL }}
+              style={{ fontSize: 7, background: 'rgba(62,105,36,0.1)', color: TEAL }}
             >
               Første stop
             </span>
@@ -916,7 +916,7 @@ function KortScene({ t }: { t: number }) {
                 <StoreLogo store={g.store} size={20} />
                 <span className="flex-1 font-bold" style={{ fontSize: 10, color: FOREST }}>{s.name}</span>
                 <span style={{ fontSize: 8.5, color: MUTED }}>{s.dist}</span>
-                <span className="rounded-full px-2 py-0.5 font-bold" style={{ fontSize: 8.5, background: 'rgba(191,230,224,0.5)', color: TEAL }}>{g.count} varer</span>
+                <span className="rounded-full px-2 py-0.5 font-bold" style={{ fontSize: 8.5, background: 'rgba(220,215,153,0.5)', color: TEAL }}>{g.count} varer</span>
               </motion.div>
             )
           })}
@@ -1147,9 +1147,9 @@ function ShoppingList() {
       ))}
       {/* pen resting diagonally across the pad */}
       <div className="absolute" style={{ right: -14, bottom: 8, width: 74, height: 9, transform: 'rotate(24deg)', transformOrigin: 'center' }}>
-        <div style={{ position: 'absolute', left: 8, top: 0, right: 10, height: 9, borderRadius: 5, background: 'linear-gradient(180deg,#3a8f86,#0f6e68)' }} />
+        <div style={{ position: 'absolute', left: 8, top: 0, right: 10, height: 9, borderRadius: 5, background: 'linear-gradient(180deg,#4F983E,#3E6924)' }} />
         <div style={{ position: 'absolute', right: 0, top: 1.5, width: 0, height: 0, borderTop: '3px solid transparent', borderBottom: '3px solid transparent', borderLeft: '10px solid #d8b46a' }} />
-        <div style={{ position: 'absolute', left: 0, top: 1.5, width: 8, height: 6, borderRadius: 3, background: '#0b544f' }} />
+        <div style={{ position: 'absolute', left: 0, top: 1.5, width: 8, height: 6, borderRadius: 3, background: '#335620' }} />
       </div>
     </div>
   )
@@ -1238,7 +1238,7 @@ function CenterIcon({ progress }: { progress: MotionValue<number> }) {
       </div>
       <div style={{ position: 'absolute', left: '50%', top: '50%' }}>
         <motion.div style={{ x: -40, y: -40, scale: ringScale, opacity: ringOpacity }}>
-          <div style={{ width: 80, height: 80, borderRadius: 22, border: '3px solid rgba(15,110,104,0.55)' }} />
+          <div style={{ width: 80, height: 80, borderRadius: 22, border: '3px solid rgba(62,105,36,0.55)' }} />
         </motion.div>
       </div>
     </>

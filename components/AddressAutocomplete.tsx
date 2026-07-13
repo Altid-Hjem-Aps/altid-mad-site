@@ -82,7 +82,7 @@ export default function AddressAutocomplete({ value, onChange, variant = 'light'
           ? { padding: '0 16px', height: 52, background: 'transparent', color: isDark ? 'white' : 'var(--text-dark)', fontFamily: 'var(--font-onest)' }
           : {
               background: isDark ? 'rgba(255,255,255,0.08)' : 'white',
-              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(27,104,64,0.15)',
+              borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(62,105,36,0.15)',
               color: isDark ? 'white' : 'var(--text-dark)',
               fontFamily: 'var(--font-onest)',
             }
@@ -99,7 +99,7 @@ export default function AddressAutocomplete({ value, onChange, variant = 'light'
             width: dropPos.width,
             zIndex: 9999,
             background: 'white',
-            border: '1px solid rgba(27,104,64,0.1)',
+            border: '1px solid rgba(62,105,36,0.1)',
             borderRadius: 12,
             overflow: 'hidden',
             boxShadow: '0 8px 24px rgba(0,0,0,0.14)',

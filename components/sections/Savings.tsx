@@ -98,7 +98,7 @@ export default function Savings() {
             <div
               className="relative w-full flex items-center justify-center rounded-[30px] py-4 sm:py-5 px-10 sm:px-16 font-normal tabular-nums whitespace-nowrap text-[clamp(32px,calc(21.6px+2.66vw),80px)]"
               style={{
-                background: '#bfe6e0',
+                background: '#DCD799',
                 color: '#163223',
                 letterSpacing: '-0.01em',
                 lineHeight: 1,

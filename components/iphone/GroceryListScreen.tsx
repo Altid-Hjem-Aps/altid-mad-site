@@ -5,9 +5,9 @@ import Slot from './Slot'
 
 type Props = { hovered: boolean }
 
-const TEAL = '#0f6e68'
-const MINT = '#bfe6e0'
-const SAVE_TEAL = '#3d9187'
+const TEAL = '#3E6924'
+const MINT = '#DCD799'
+const SAVE_TEAL = '#4F983E'
 
 // ISO 8601 week number — keeps the mockup's "Uge NN" current instead of a
 // hardcoded week that goes stale.
@@ -60,7 +60,7 @@ function Check({ done }: { done: boolean }) {
         width: 15,
         height: 15,
         background: done ? TEAL : 'transparent',
-        border: done ? 'none' : '1.5px solid rgba(15,110,104,0.3)',
+        border: done ? 'none' : '1.5px solid rgba(62,105,36,0.3)',
       }}
     >
       {done && (
@@ -120,9 +120,9 @@ export default function GroceryListScreen({ hovered }: Props) {
 
       {/* Grouped per store: normal price struck out, Altid Mad's price, and
           the store's remaining items + saving on the group footer. */}
-      <div className="mx-4 rounded-2xl shrink-0 px-3 py-[3px]" style={{ background: 'white', border: '1px solid rgba(15,110,104,0.1)' }}>
+      <div className="mx-4 rounded-2xl shrink-0 px-3 py-[3px]" style={{ background: 'white', border: '1px solid rgba(62,105,36,0.1)' }}>
         {STORES.map((store, si) => (
-          <div key={store.key} style={{ borderTop: si > 0 ? '1px solid rgba(15,110,104,0.08)' : 'none' }} className="py-[6px]">
+          <div key={store.key} style={{ borderTop: si > 0 ? '1px solid rgba(62,105,36,0.08)' : 'none' }} className="py-[6px]">
             <div className="flex items-center gap-1.5 mb-[4px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -144,7 +144,7 @@ export default function GroceryListScreen({ hovered }: Props) {
                       fontSize: 9.5,
                       color: item.done ? 'var(--text-light)' : 'var(--text-dark)',
                       textDecoration: item.done ? 'line-through' : 'none',
-                      textDecorationColor: 'rgba(15,110,104,0.35)',
+                      textDecorationColor: 'rgba(62,105,36,0.35)',
                     }}
                   >
                     {item.name}

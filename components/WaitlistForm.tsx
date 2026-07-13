@@ -56,7 +56,7 @@ function ConsentCheckboxes({ dark, mad, group, onMad, onGroup }: {
   onGroup: (v: boolean) => void
 }) {
   const color = dark ? 'rgba(255,255,255,0.7)' : '#6f6a61'
-  const boxStyle: React.CSSProperties = { width: 17, height: 17, marginTop: 2, flexShrink: 0, accentColor: dark ? '#bfe6e0' : '#0f6e68', cursor: 'pointer' }
+  const boxStyle: React.CSSProperties = { width: 17, height: 17, marginTop: 2, flexShrink: 0, accentColor: dark ? '#DCD799' : '#3E6924', cursor: 'pointer' }
   return (
     <div className="flex flex-col gap-2.5 mt-4 mb-1 text-left">
       <label className={`flex gap-2.5 items-start ${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
@@ -383,7 +383,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#bfe6e0', color: '#163223' }}>
+          <button type="submit" disabled={loading} className={`w-full disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: '#DCD799', color: '#163223' }}>
             {loading ? 'Sender...' : 'Indsend'}
           </button>
           <button type="button" onClick={() => { amplitude.track('Waitlist Step 2 Skipped'); setView('success') }} className="w-full py-3 rounded-[20px] text-sm font-normal" style={{ color: '#6f6a61', border: '1px solid #e6e2d8' }}>
@@ -450,7 +450,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
               <div className="flex items-center rounded-xl overflow-hidden" style={{ background: 'white' }}>
                 <span
                   className="flex items-center justify-center pl-4 pr-3 text-sm font-semibold select-none border-r shrink-0"
-                  style={{ height: 52, color: 'var(--text-mid)', borderColor: 'rgba(27,104,64,0.1)', background: 'var(--cream)' }}
+                  style={{ height: 52, color: 'var(--text-mid)', borderColor: 'rgba(62,105,36,0.1)', background: 'var(--cream)' }}
                 >
                   +45
                 </span>
@@ -483,7 +483,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
           expanded ? 'w-full px-5' : 'w-full px-5 lg:w-auto lg:px-[42px]'
         }`}
         style={{
-          background: '#bfe6e0',
+          background: '#DCD799',
           color: '#163223',
           animation: !expanded ? 'pulse-glow 2s ease-in-out infinite' : 'none',
         }}
