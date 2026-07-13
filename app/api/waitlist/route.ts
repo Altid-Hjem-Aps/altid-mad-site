@@ -23,8 +23,19 @@ export async function POST(req: NextRequest) {
     if (await checkRateLimit(`signup:${ip}`, MAX_ATTEMPTS, WINDOW_SECONDS))
       return NextResponse.json({ success: false, error: 'For mange forsøg. Prøv igen om en time.' }, { status: 429 })
 
-    const { email, name, phone, referredBy } = body
+    const { email, name, phone, referredBy, consent } = body
     const signupSource = normalizeSignupSource(body.source)
+    // Normalise the documented marketing consent before it is stored: coerce the
+    // two choices to real booleans and cap the wording version. A malformed or
+    // absent consent object records as "no consent" rather than trusting the body.
+    const consentInput =
+      consent && typeof consent === 'object'
+        ? {
+            version: typeof consent.version === 'string' ? consent.version.slice(0, 32) : undefined,
+            mad: consent.mad === true,
+            group: consent.group === true,
+          }
+        : undefined
 
     if (!email || !EMAIL_RE.test(email))
       return NextResponse.json({ success: false, error: 'Ugyldig e-mail' }, { status: 400 })
@@ -87,7 +98,7 @@ export async function POST(req: NextRequest) {
       // Mirror the signup into Supabase and get this person's unsubscribe token.
       let token: string | null = null
       try {
-        token = await mirrorSignup(userId, { email: cleanEmail, firstName, source: signupSource })
+        token = await mirrorSignup(userId, { email: cleanEmail, firstName, source: signupSource, consent: consentInput })
       } catch (e) {
         console.error('mirrorSignup failed', e)
       }
