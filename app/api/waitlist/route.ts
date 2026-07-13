@@ -2,7 +2,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { sendWaitlistConfirmation, sendReferralWelcome, scheduleReleaseEmail, sendReferralProgress } from '@/lib/send-email'
 import { sendWaitlistConfirmationSms } from '@/lib/send-sms'
 import { trackServer, identifyServer } from '@/lib/amplitude.server'
-import { recordReferral, mirrorSignup, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, getQueuePosition } from '@/lib/db'
+import { recordReferral, mirrorSignup, mergeConsent, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, getQueuePosition } from '@/lib/db'
 import { duplicateSignupMessage } from '@/lib/copy'
 import { syncContactTags, addAudienceContact } from '@/lib/resend'
 import { normalizeSignupSource } from '@/lib/signup-source'
@@ -67,6 +67,11 @@ export async function POST(req: NextRequest) {
       // link (public_id doubles as the public referral code) so a duplicate
       // signup can still invite friends and move up the queue.
       const existing = await getSignupByEmail(String(email))
+      // A re-signup can carry NEW consent (e.g. a Mad signup later ticks the
+      // Hjem "all brands" box). mirrorSignup does not run on a 409, so merge the
+      // new consent into the existing row (keyed on email) instead of dropping
+      // it. Fail-safe: a hiccup here must never break the 409 response.
+      await mergeConsent(String(email), consentInput).catch((e) => console.error('mergeConsent failed', e))
       return NextResponse.json(
         {
           success: false,
