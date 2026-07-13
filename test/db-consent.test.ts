@@ -98,6 +98,28 @@ describe('mirrorSignup consent storage', () => {
     expect(upsertedRows[1].marketing_consent_mad).toBe(true)
   })
 
+  it('strips several not-yet-migrated columns across successive retries', async () => {
+    // A table missing multiple consent columns errors one at a time (PostgREST
+    // names one per response). The loop must strip each in turn and still land
+    // the signup — exercises the multi-iteration path, not just a single strip.
+    results = [
+      { data: null, error: { code: '42703', message: 'column "consent_version" of relation "signup" does not exist' } },
+      { data: null, error: { code: '42703', message: 'column "marketing_consent_group" of relation "signup" does not exist' } },
+      { data: { unsub_token: 'final' }, error: null },
+    ]
+
+    const token = await mirrorSignup('pub-6', { source: 'altid-mad', consent: CONSENT })
+
+    expect(token).toBe('final')
+    expect(upsertedRows).toHaveLength(3)
+    const finalRow = upsertedRows[2]
+    expect('consent_version' in finalRow).toBe(false)
+    expect('marketing_consent_group' in finalRow).toBe(false)
+    // Columns that were never flagged missing survive.
+    expect(finalRow.marketing_consent_mad).toBe(true)
+    expect(finalRow.signup_source).toBe('altid-mad')
+  })
+
   it('rethrows a non-column error instead of silently dropping data', async () => {
     results = [{ data: null, error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
 

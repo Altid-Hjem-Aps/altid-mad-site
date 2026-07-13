@@ -193,6 +193,13 @@ export async function mirrorSignup(
 
   let { data, error } = await upsert(row)
   for (let i = 0; i < OPTIONAL_COLUMNS.length && error; i++) {
+    // Only the unknown-column errors are strippable: PGRST204 (PostgREST
+    // schema-cache miss) or Postgres 42703 (column does not exist). Any OTHER
+    // error that merely names a column in its message (NOT NULL / CHECK / RLS /
+    // trigger) must still throw, so a real failure can never silently drop the
+    // consent/source data while the signup itself "succeeds".
+    const code = (error as { code?: string }).code
+    if (code !== 'PGRST204' && code !== '42703') break
     const msg = error.message ?? ''
     const missing = OPTIONAL_COLUMNS.find((c) => c in row && msg.includes(c))
     if (!missing) break
