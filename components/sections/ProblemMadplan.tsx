@@ -215,7 +215,15 @@ function SavingsClaim() {
       </p>
       <p className="mt-1 leading-relaxed" style={{ fontSize: 7.5, color: MUTED }}>
         *En gennemsnitlig husstand på 4 personer kan spare op til 1.250 kr./måned på familiens indkøb med
-        Altid Mad. Kilde: Altid Mad Q2-rapporten.
+        Altid Mad.{' '}
+        <a
+          href="/altid-mad-kvartalsrapport-q2.pdf"
+          target="_blank"
+          rel="noopener"
+          style={{ textDecoration: 'underline' }}
+        >
+          Læs Altid Mad-rapporten
+        </a>
       </p>
     </div>
   )
