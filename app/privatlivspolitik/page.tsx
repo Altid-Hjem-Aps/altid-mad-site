@@ -47,7 +47,7 @@ export default function Privatlivspolitik() {
                     <li>E-mailadresse</li>
                     <li>Mobilnummer (valgfrit)</li>
                     <li>Valgfrie svar på spørgsmål om din husstand og energiforbrug</li>
-                    <li>Hvilken side på altidhjem.dk du tilmeldte dig fra</li>
+                    <li>Hvilken side du tilmeldte dig fra</li>
                     <li>Om du er tilmeldt via en invitation fra en anden person på ventelisten</li>
                     <li>Oplysninger om din interaktion med vores e-mails (om en e-mail åbnes, og hvilke links der klikkes på)</li>
                   </ul>
