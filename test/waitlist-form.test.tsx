@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import WaitlistForm from '@/components/WaitlistForm'
-import { CONSENT_VERSION } from '@/lib/copy'
+import { CONSENT_VERSION, SIGNUP_CONSENT_MAD, SIGNUP_CONSENT_GROUP, SIGNUP_LAUNCH_NOTICE } from '@/lib/copy'
 
 // Amplitude is a browser SDK with network side effects — mock it.
 vi.mock('@amplitude/analytics-browser', () => ({ track: vi.fn() }))
@@ -171,18 +171,49 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
   })
 })
 
+describe('consent copy: launch notice separated from marketing', () => {
+  it('drops "lanceringer" from the Mad box but keeps it in the group box', () => {
+    // The Mad launch is covered by signing up (the §10 consent for that one mail),
+    // so it must not sit behind the optional Mad marketing box. The other brands'
+    // launches are marketing a Mad signer never asked for, so they stay in the
+    // group box.
+    expect(SIGNUP_CONSENT_MAD).not.toContain('lanceringer')
+    expect(SIGNUP_CONSENT_GROUP).toContain('lanceringer')
+  })
+
+  it('shows the signup-grounded launch notice once the visitor starts typing', () => {
+    render(<WaitlistForm variant="dark" />)
+    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+    expect(screen.getByText(SIGNUP_LAUNCH_NOTICE)).toBeInTheDocument()
+  })
+})
+
 describe('marketing consent gating', () => {
-  it('blocks submit and shows an error when the Mad consent box is unticked', async () => {
-    const fetchMock = vi.fn()
+  it('lets the user submit without ticking any consent box (consent is optional)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ id: 'abc', surveyToken: 'tok' }) })
     vi.stubGlobal('fetch', fetchMock)
     render(<WaitlistForm variant="dark" />)
     fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
     fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
     fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
-    // No consent tick.
+    // No consent tick — must NOT block submit.
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
-    await waitFor(() => expect(screen.getByText(/Sæt flueben i samtykket/i)).toBeInTheDocument())
-    expect(fetchMock).not.toHaveBeenCalled()
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.consent).toEqual({ version: CONSENT_VERSION, mad: false, group: false })
+  })
+
+  it('lets the user submit without a mobile number (mobile is optional)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ id: 'abc', surveyToken: 'tok' }) })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<WaitlistForm variant="dark" />)
+    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+    fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
+    // No mobile entered.
+    fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.phone).toBe('')
   })
 
   it('sends the documented consent (version + both choices) in the POST body', async () => {
