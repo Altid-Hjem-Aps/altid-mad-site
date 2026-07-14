@@ -54,7 +54,7 @@ export default function Privatlivspolitik() {
                 </div>
                 <div>
                   <p className="font-semibold text-white">Formål og retsgrundlag</p>
-                  <p>Vi behandler oplysningerne for at kunne give dig besked, når Altid Hjem og de tilknyttede tjenester – herunder Altid Mad – lanceres, og for at forstå, hvem vores tidlige brugere er. Retsgrundlaget er dit samtykke (GDPR artikel 6, stk. 1, litra a), som du til enhver tid kan trække tilbage ved at skrive til <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a>.</p>
+                  <p>Vi behandler oplysningerne for at kunne give dig besked, når Altid Hjem og de tilknyttede tjenester – herunder Altid Mad – lanceres, og for at forstå, hvem vores tidlige brugere er. Retsgrundlaget er dit samtykke (GDPR artikel 6, stk. 1, litra a), som du til enhver tid kan trække tilbage via afmeldingslinket i vores e-mails eller ved at skrive til <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a>. Selve lanceringsbeskeden er markedsføring efter markedsføringslovens § 10, men sendes på grundlag af din tilmelding til ventelisten, som udgør dit forudgående, specifikke samtykke til netop den besked; den indeholder kun information om lancering og adgang.</p>
                 </div>
                 <div>
                   <p className="font-semibold text-white">E-mailstatistik</p>
