@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import WaitlistForm from '@/components/WaitlistForm'
-import { CONSENT_VERSION, SIGNUP_CONSENT_MAD, SIGNUP_CONSENT_GROUP, SIGNUP_LAUNCH_NOTICE } from '@/lib/copy'
+import {
+  CONSENT_VERSION,
+  SIGNUP_CONSENT_MAD,
+  SIGNUP_CONSENT_GROUP,
+  SIGNUP_LAUNCH_NOTICE,
+  DUPLICATE_SIGNUP_HEADING,
+  CONFIRM_SENT_HEADING,
+  confirmSentBody,
+  ALREADY_CONSENTED_HEADING,
+} from '@/lib/copy'
 
 // Amplitude is a browser SDK with network side effects — mock it.
 vi.mock('@amplitude/analytics-browser', () => ({ track: vi.fn() }))
@@ -73,6 +82,76 @@ describe('waitlist-joined flag (exit-popup suppression)', () => {
     )
     fillAndSubmitDark()
     await waitFor(() => expect(window.localStorage.getItem('ah-waitlist-joined')).toBe('1'))
+  })
+
+  it('still shows the plain duplicate card when nothing was ticked', async () => {
+    // Unchanged behaviour: no consent asked for, nothing to confirm, so the
+    // reader is simply told they are already on the list.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            error: 'Du er allerede skrevet op til Altid Hjem.',
+            inviteUrl: 'https://altidmad.dk/?ref=abc',
+          }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText(DUPLICATE_SIGNUP_HEADING)).toBeInTheDocument())
+    expect(screen.queryByText(CONFIRM_SENT_HEADING)).toBeNull()
+  })
+
+  it('sends them to their inbox instead of the dead end when consent is pending', async () => {
+    // The fix. The ticked boxes are held pending and a confirmation mail is sent,
+    // so the screen must NOT say "du er allerede skrevet op" — that sentence read
+    // as "you're covered" and is what lost 36 people's consent on 14 Jul.
+    const body = confirmSentBody('test@test.dk')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            confirmSent: true,
+            heading: CONFIRM_SENT_HEADING,
+            error: body,
+          }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText(CONFIRM_SENT_HEADING)).toBeInTheDocument())
+    expect(screen.getByText(body)).toBeInTheDocument()
+    expect(screen.queryByText(DUPLICATE_SIGNUP_HEADING)).toBeNull()
+    // No referral push while a confirmation is pending — it would bury the one
+    // action we actually need from them.
+    expect(screen.queryByRole('button', { name: /kopiér/i })).toBeNull()
+  })
+
+  it('tells someone who already holds the consent that there is nothing to do', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            success: false,
+            alreadyConsented: true,
+            heading: ALREADY_CONSENTED_HEADING,
+            error: 'Du står på ventelisten og vil modtage nyt om Altid Mad. Du behøver ikke gøre mere.',
+            inviteUrl: 'https://altidmad.dk/?ref=abc',
+          }),
+      }),
+    )
+    fillAndSubmitDark()
+    await waitFor(() => expect(screen.getByText(ALREADY_CONSENTED_HEADING)).toBeInTheDocument())
+    expect(screen.queryByText(CONFIRM_SENT_HEADING)).toBeNull()
   })
 
   it('does NOT mark the browser on other failures', async () => {
