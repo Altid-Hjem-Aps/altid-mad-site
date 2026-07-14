@@ -221,12 +221,15 @@ export async function mirrorSignup(
 }
 
 /**
- * Merge newly-given marketing consent into an EXISTING signup row. Used on the
- * 409 duplicate-signup path, where mirrorSignup does NOT run — so a person who
- * first signed up via one brand and later re-submits with broader consent would
- * otherwise lose it. Only flags the new TRUE consents; never downgrades an
- * existing true to false (a re-signup is not a withdrawal). No-op when no
- * consent object is passed or nothing is affirmatively consented.
+ * Merge newly-given marketing consent into an EXISTING signup row. Only flags
+ * the new TRUE consents; never downgrades an existing true to false (a re-signup
+ * is not a withdrawal). No-op when no consent object is passed or nothing is
+ * affirmatively consented.
+ *
+ * Deliberately NOT called from the anonymous waitlist form: that caller can't
+ * prove it owns the email, so letting it write consent would let anyone flip
+ * another person's marketing consent. Retained for the authenticated re-consent
+ * path (the preference center), which is the only caller that should reach it.
  */
 export async function mergeConsent(
   email: string,
