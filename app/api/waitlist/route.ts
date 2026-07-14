@@ -45,13 +45,15 @@ export async function POST(req: NextRequest) {
     if (rawPhone && !PHONE_RE.test(rawPhone))
       return NextResponse.json({ success: false, error: 'Ugyldigt mobilnummer' }, { status: 400 })
     // TEMPORARY BRIDGE — REMOVE once the backend makes Mobile optional (follow-up PR).
-    // The upstream API still marks Mobile as [Required], so a blank mobile returns a
-    // 400 and the user cannot join. Until Thomas ships the nullable-Mobile change we
-    // fall back to a company number so no-phone signups still go through. The fallback
-    // is sent ONLY upstream: it is never SMSed (the confirmation SMS below is gated on
-    // the user's own number, cleanPhone) and is not mirrored to Supabase. Rows carrying
-    // the fallback must be scrubbed when the backend change lands.
-    const FALLBACK_MOBILE = '30489297'
+    // The upstream API marks Mobile as [Required] (verified: 400 when missing) but does
+    // NOT validate the format (verified: it accepts 00000000). So when the user leaves
+    // mobile blank we send an obviously-fake sentinel that reads as "no number given":
+    // it is not a real Danish MSISDN (can never receive an SMS), is not anyone's real
+    // number, and is trivially identifiable for cleanup (WHERE mobile = '00000000').
+    // Sent ONLY upstream: never SMSed (the confirmation SMS below is gated on the user's
+    // own number, cleanPhone) and never mirrored to Supabase. Scrub these rows when the
+    // backend change lands.
+    const FALLBACK_MOBILE = '00000000'
     const upstreamMobile = rawPhone || FALLBACK_MOBILE
     if (!name || String(name).trim().length < 2)
       return NextResponse.json({ success: false, error: 'Navn mangler' }, { status: 400 })
