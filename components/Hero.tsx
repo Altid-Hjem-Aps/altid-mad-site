@@ -1,6 +1,7 @@
 import WaitlistForm from '@/components/WaitlistForm'
 import IPhoneMockup from '@/components/IPhoneMockup'
 import HeroStatCounter from '@/components/HeroStatCounter'
+import PressStrip from '@/components/sections/PressStrip'
 import { H1, BODY } from '@/lib/typography'
 
 // Stats from the Mad CVI frame (node 44:1060) — left column below the CTA.
@@ -19,7 +20,14 @@ export default function Hero() {
 
       {/* Wide grid as in the CVI frame: ~71px margins at 1920 (= Figma's ~95/47). */}
       <div className="max-w-[1920px] mx-auto w-full px-6 sm:px-10 lg:px-[clamp(48px,3.7vw,72px)]">
-        <div className="grid grid-cols-1 lg:grid-cols-[47fr_53fr] gap-12 lg:gap-[clamp(48px,4.8vw,92px)] items-center py-12 lg:py-10 lg:min-h-[680px]">
+        {/* Press mention, MOBILE placement — directly beneath the nav so it's
+            visible on load. On desktop it renders at the bottom of the hero
+            instead (see below); each is hidden at the other breakpoint. */}
+        <div className="lg:hidden pt-2 pb-1">
+          <PressStrip />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[47fr_53fr] gap-12 lg:gap-[clamp(48px,4.8vw,92px)] items-center pb-12 pt-8 lg:py-10 lg:min-h-[680px]">
 
           {/* Left: copy + form + stats */}
           <div className="flex flex-col text-center lg:text-left">
@@ -70,6 +78,12 @@ export default function Hero() {
             <IPhoneMockup />
           </div>
 
+        </div>
+
+        {/* Press mention, DESKTOP placement — at the bottom of the hero, on the
+            same cream ground (mobile shows it at the top instead — above). */}
+        <div className="hidden lg:block pb-14">
+          <PressStrip />
         </div>
       </div>
     </section>
