@@ -39,8 +39,20 @@ export async function POST(req: NextRequest) {
 
     if (!email || !EMAIL_RE.test(email))
       return NextResponse.json({ success: false, error: 'Ugyldig e-mail' }, { status: 400 })
-    if (!phone || !PHONE_RE.test(String(phone).replace(/\s/g, '')))
+    // Mobile is optional for the user (data minimisation — an email is enough to
+    // give notice at launch). Validate the format only when one is supplied.
+    const rawPhone = phone ? String(phone).replace(/\s/g, '') : ''
+    if (rawPhone && !PHONE_RE.test(rawPhone))
       return NextResponse.json({ success: false, error: 'Ugyldigt mobilnummer' }, { status: 400 })
+    // TEMPORARY BRIDGE — REMOVE once the backend makes Mobile optional (follow-up PR).
+    // The upstream API still marks Mobile as [Required], so a blank mobile returns a
+    // 400 and the user cannot join. Until Thomas ships the nullable-Mobile change we
+    // fall back to a company number so no-phone signups still go through. The fallback
+    // is sent ONLY upstream: it is never SMSed (the confirmation SMS below is gated on
+    // the user's own number, cleanPhone) and is not mirrored to Supabase. Rows carrying
+    // the fallback must be scrubbed when the backend change lands.
+    const FALLBACK_MOBILE = '30489297'
+    const upstreamMobile = rawPhone || FALLBACK_MOBILE
     if (!name || String(name).trim().length < 2)
       return NextResponse.json({ success: false, error: 'Navn mangler' }, { status: 400 })
 
@@ -54,7 +66,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: String(name).trim(),
-        mobile: String(phone).replace(/\s/g, ''),
+        mobile: upstreamMobile,
         email: String(email).toLowerCase().trim(),
       }),
     })
@@ -89,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     const cleanName = String(name).trim()
     const cleanEmail = String(email).toLowerCase().trim()
-    const cleanPhone = String(phone).replace(/\s/g, '')
+    const cleanPhone = rawPhone
     const firstName = cleanName.split(' ')[0]
     const userId = data.id as string
     const refBy = referredBy ? String(referredBy).trim() : ''
@@ -100,7 +112,7 @@ export async function POST(req: NextRequest) {
       // Awaited (not fire-and-forget): inside after() an un-awaited promise can be
       // killed when the serverless instance freezes. .catch() keeps one failure
       // from aborting the rest.
-      await sendWaitlistConfirmationSms(cleanName, cleanPhone).catch(console.error)
+      if (cleanPhone) await sendWaitlistConfirmationSms(cleanName, cleanPhone).catch(console.error)
       await scheduleReleaseEmail(cleanName, cleanEmail).catch(console.error)
 
       // Mirror the signup into Supabase and get this person's unsubscribe token.

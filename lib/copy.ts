@@ -15,11 +15,21 @@ export const SAVINGS_DISCLAIMER =
 // exact wording accepted is documentable.
 // Bumped from 2026-07-13 when the wording softened to "vil gerne modtage" —
 // consent_version stores the exact text accepted, so a wording change bumps it.
-export const CONSENT_VERSION = '2026-07-13.2'
+// 2026-07-14 (legal fact-check): the Altid Mad launch mail IS direct marketing,
+// but the waitlist signup itself is the prior, specific markedsføringslov §10
+// consent to that one mail — the purpose is stated right before the button in
+// SIGNUP_LAUNCH_NOTICE. That mail may carry ONLY launch/access info: no offers,
+// other brands, or referral push. "lanceringer" is therefore dropped from the
+// Mad box (its launch is covered by signing up) but KEPT in the group box (a
+// Mad signer never asked about the other brands' launches). Both boxes stay
+// optional and independent of joining the waitlist.
+export const CONSENT_VERSION = '2026-07-14.2'
+export const SIGNUP_LAUNCH_NOTICE =
+  'Når du skriver dig op, beder du Altid Hjem ApS om at sende dig én e-mail, når Altid Mad er klar. Du kan til enhver tid forlade ventelisten.'
 export const SIGNUP_CONSENT_MAD =
-  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, tilbud og anden markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
 export const SIGNUP_CONSENT_GROUP =
-  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage via afmeldingslinket i e-mails.'
+  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og anden markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
 
 // The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
 // things: they signed up on this site, or they are already on the shared list

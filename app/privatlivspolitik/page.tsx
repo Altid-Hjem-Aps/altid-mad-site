@@ -45,7 +45,7 @@ export default function Privatlivspolitik() {
                   <ul className="mt-1 space-y-1 list-disc list-inside">
                     <li>Navn</li>
                     <li>E-mailadresse</li>
-                    <li>Mobilnummer</li>
+                    <li>Mobilnummer (valgfrit)</li>
                     <li>Valgfrie svar på spørgsmål om din husstand og energiforbrug</li>
                     <li>Hvilken side på altidhjem.dk du tilmeldte dig fra</li>
                     <li>Om du er tilmeldt via en invitation fra en anden person på ventelisten</li>
