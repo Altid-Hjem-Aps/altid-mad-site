@@ -109,7 +109,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [consentGroup, setConsentGroup] = useState(false)
   // Set on a 409 where the API could recover their referral link — renders the
   // share card (skipping the survey step; they already answered it once).
-  const [duplicate, setDuplicate] = useState<{ body?: string; inviteUrl: string } | null>(null)
+  // heading is set by the API for the confirmation states; a plain duplicate
+  // keeps DUPLICATE_HEADING. inviteUrl is absent while a confirmation is pending.
+  const [duplicate, setDuplicate] = useState<{ heading?: string; body?: string; inviteUrl?: string } | null>(null)
 
   // Capture referral code from the URL (?ref=CODE) once on mount
   useEffect(() => {
@@ -191,11 +193,24 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       // 409 = this person is already on the list — that's a confirmed
       // signup for popup-suppression purposes too.
       if (res.status === 409) markWaitlistJoined()
-      amplitude.track('Waitlist Step 1 Failed', { error: data.error ?? 'unknown', status: res.status })
+      // A pending confirmation is not a failure. Counting it as one would bury
+      // the fix in the same bucket as the dead-end duplicates it replaces, and
+      // the funnel would still show 36 "failures" a day.
+      if (data.confirmSent) amplitude.track('Consent Confirmation Sent', { signup_source: source })
+      else amplitude.track('Waitlist Step 1 Failed', { error: data.error ?? 'unknown', status: res.status })
+
+      // "Check your inbox" has no referral link: this person has not confirmed
+      // anything yet, and pushing them to invite friends mid-flow would bury the
+      // one action we need from them.
+      if (res.status === 409 && data.confirmSent) {
+        setDuplicate({ heading: data.heading, body: data.error })
+        return
+      }
       // Duplicate WITH a known referral link: show the share card instead of a
       // dead-end error, so they can still invite friends and move up the queue.
       if (res.status === 409 && data.inviteUrl) {
         setDuplicate({
+          heading: data.heading,
           body: data.error && data.error !== DUPLICATE_HEADING ? data.error : undefined,
           inviteUrl: data.inviteUrl,
         })
@@ -272,7 +287,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const darkCardStyle = embedded ? undefined : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }
 
   if (isDark) {
-    if (duplicate) return <SuccessCard bare={embedded} heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
+    if (duplicate) return <SuccessCard bare={embedded} heading={duplicate.heading ?? DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
     if (view === 'success') return <SuccessCard bare={embedded} inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
     if (view === 'questions') {
@@ -364,7 +379,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
 
   // ─── Light variant (Hero) ─────────────────────────────────────────────────
 
-  if (duplicate) return <SuccessCard variant="cream" heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
+  if (duplicate) return <SuccessCard variant="cream" heading={duplicate.heading ?? DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
   if (view === 'success') return <SuccessCard variant="cream" inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
   if (view === 'questions') {
