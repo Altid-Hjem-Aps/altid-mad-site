@@ -16,7 +16,12 @@ const WINDOW_SECONDS = 60 * 60 // 1 hour
 const MAX_ATTEMPTS = 3
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ success: false, error: 'Ugyldig anmodning' }, { status: 400 })
+  }
 
   if (body.step === 1) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'

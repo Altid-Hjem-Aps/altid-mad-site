@@ -207,6 +207,15 @@ export async function mirrorSignup(
     delete row[missing]
     ;({ data, error } = await upsert(row))
   }
+  // Transient failure (network / timeout / 5xx) here would otherwise lose the
+  // consent record permanently: a later re-signup 409s upstream before
+  // mirrorSignup runs, and the 409 path can't backfill without this row's
+  // public_id. Retry a few times — this runs in after(), so a short delay does
+  // not affect the response.
+  for (let i = 0; i < 3 && error; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 300 * (i + 1)))
+    ;({ data, error } = await upsert(row))
+  }
   if (error) throw new Error(error.message)
   return (data as { unsub_token?: string } | null)?.unsub_token ?? null
 }

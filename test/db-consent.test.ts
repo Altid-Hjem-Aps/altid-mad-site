@@ -131,11 +131,24 @@ describe('mirrorSignup consent storage', () => {
     expect(finalRow.signup_source).toBe('altid-mad')
   })
 
-  it('rethrows a non-column error instead of silently dropping data', async () => {
-    results = [{ data: null, error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
+  it('retries a transient error, then rethrows if it never recovers', async () => {
+    // A statement timeout (57014) is transient, so mirrorSignup retries it rather
+    // than dropping the consent record on the first blip. If every attempt fails,
+    // it still surfaces the error.
+    results = Array(4).fill({ data: null, error: { code: '57014', message: 'canceling statement due to statement timeout' } })
 
     await expect(mirrorSignup('pub-5', { consent: CONSENT })).rejects.toThrow(/timeout/)
-    expect(upsertedRows).toHaveLength(1) // no retry on a non-column error
+    expect(upsertedRows).toHaveLength(4) // initial + 3 retries
+  })
+
+  it('recovers when a transient error clears on retry (consent not lost)', async () => {
+    results = [
+      { data: null, error: { code: '57014', message: 'statement timeout' } },
+      { data: { unsub_token: 'tok' }, error: null },
+    ]
+    const token = await mirrorSignup('pub-6', { consent: CONSENT })
+    expect(token).toBe('tok')
+    expect(upsertedRows).toHaveLength(2) // failed once, then succeeded on retry
   })
 })
 

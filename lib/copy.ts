@@ -11,8 +11,10 @@ export const SAVINGS_DISCLAIMER =
 // Hjem ApS (CVR 45637476), which is also the sender — hence "fra Altid Hjem
 // ApS". WHEN Altid Mad becomes a registered company with its own CVR, revisit:
 // a data-sharing agreement between the entities and possibly naming Altid Mad
-// ApS as its own sender. CONSENT_VERSION is stored with each signup so the
-// exact wording accepted is documentable.
+// ApS as its own sender. CONSENT_VERSION is stored with each signup; the site
+// suffix ('-mad', vs the altidhjem.dk '-hjem') makes it self-documenting on the
+// SHARED waitlist, since the two sites use different wording — the exact text
+// accepted is identifiable from the version alone, not only via signup_source.
 // Bumped from 2026-07-13 when the wording softened to "vil gerne modtage" —
 // consent_version stores the exact text accepted, so a wording change bumps it.
 // 2026-07-14 (legal fact-check): the Altid Mad launch mail IS direct marketing,
@@ -23,7 +25,7 @@ export const SAVINGS_DISCLAIMER =
 // Mad box (its launch is covered by signing up) but KEPT in the group box (a
 // Mad signer never asked about the other brands' launches). Both boxes stay
 // optional and independent of joining the waitlist.
-export const CONSENT_VERSION = '2026-07-14.2'
+export const CONSENT_VERSION = '2026-07-14.2-mad'
 export const SIGNUP_LAUNCH_NOTICE =
   'Når du skriver dig op, beder du Altid Hjem ApS om at sende dig én e-mail, når Altid Mad er klar. Du kan til enhver tid forlade ventelisten.'
 export const SIGNUP_CONSENT_MAD =
