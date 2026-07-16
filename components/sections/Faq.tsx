@@ -10,28 +10,42 @@ import { H2, EYEBROW } from '@/lib/typography'
 // scroll area, so the section keeps the photo-driven height and never resizes.
 // The green app-icon badge straddles the seam up into the Trust section above.
 
-type Item = { q: string; a: string }
+/** `a` is one entry per paragraph — the store answer needs two. */
+type Item = { q: string; a: string[] }
 
 const ITEMS: Item[] = [
   {
     q: 'Er Altid Mad en del af Altid Hjem?',
-    a: 'Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen. Når du skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem – med samme login og samme app.',
+    a: ['Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen. Når du skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem – med samme login og samme app.'],
   },
   {
     q: 'Hvad er Altid Hjem?',
-    a: 'Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.',
+    a: ['Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.'],
+  },
+  // Sits at index 2 so it stays inside MOBILE_VISIBLE — it's the answer to the
+  // question the hero's store pills provoke, and the one that stops someone
+  // searching a store for a name that isn't there.
+  {
+    q: 'Kan jeg hente Altid Mad i App Store eller Google Play?',
+    a: [
+      'Nej, Altid Mad har ikke sin egen app. Du finder det som en del af Altid Hjem-appen, der snart kommer til både App Store og Google Play.',
+      'Appen kan endnu ikke hentes, men skriver du dig på ventelisten, får du besked, så snart den er klar.',
+    ],
   },
   {
     q: 'Hvor meget sparer jeg med Altid Mad?',
-    a: 'Altid Mad Q2-rapporten viser, at prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den dyreste kæde – det svarer til en besparelse på op til 11.305 kr. om året for en familie. Køber du hver vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.',
+    a: ['Altid Mad Q2-rapporten viser, at prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den dyreste kæde – det svarer til en besparelse på op til 11.305 kr. om året for en familie. Køber du hver vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.'],
   },
   {
     q: 'Er det gratis at skrive sig på ventelisten?',
-    a: 'Ja, det er helt gratis og uforpligtende. Du får besked, når appen er klar, og du kan til enhver tid afmelde dig igen.',
+    a: ['Ja, det er helt gratis og uforpligtende. Du får besked, når appen er klar, og du kan til enhver tid afmelde dig igen.'],
   },
 ]
 
-const MOBILE_VISIBLE = 3
+// 4, not 3: the store question sits at index 2, and at 3 it pushed the savings
+// question — the strongest copy on a savings product — behind "Vis flere".
+// Raise this if anything is ever inserted above index 3 again.
+const MOBILE_VISIBLE = 4
 
 export default function Faq() {
   // The first answer ends up open, but it STARTS closed and folds out when
@@ -175,10 +189,22 @@ export default function Faq() {
                         className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)] motion-reduce:transition-none"
                         style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
                       >
+                        {/* The clipping div must stay padding-free: overflow
+                            clips to the PADDING box, so padding here survives
+                            the 0fr collapse and leaks a strip of the closed
+                            answer. Bottom spacing goes on the inner wrapper. */}
                         <div className="overflow-hidden">
-                          <p className="font-normal text-[15px] leading-[1.8] pb-6 pr-10" style={{ color: '#6f6a61', maxWidth: 560 }}>
-                            {item.a}
-                          </p>
+                          <div className="pb-6">
+                            {item.a.map((para, p) => (
+                              <p
+                                key={p}
+                                className={`font-normal text-[15px] leading-[1.8] pr-10${p > 0 ? ' mt-4' : ''}`}
+                                style={{ color: '#6f6a61', maxWidth: 560 }}
+                              >
+                                {para}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
