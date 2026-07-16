@@ -56,8 +56,12 @@ export default function ComingSoonStores() {
         -appen
         {/* Below sm the pills drop "Kommer snart i" so they fit one row, so the
             phrase lands here instead. Complement of the pills' max-sm:hidden —
-            exactly one of the two shows at any width, never both. */}
-        <span className="sm:hidden">, der snart kommer til</span>
+            exactly one of the two shows at any width, never both. The break is
+            inside this span, so it disappears with it above sm. */}
+        <span className="sm:hidden">
+          ,<br />
+          der snart kommer til
+        </span>
       </p>
 
       {/* Labelled by the lead-in: below sm the pills say only "App Store" /

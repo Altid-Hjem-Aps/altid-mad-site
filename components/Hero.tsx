@@ -53,7 +53,11 @@ export default function Hero() {
                 box's intrinsic width while still filling it. Without that, the
                 consent block (long Danish legal copy, ~1150px unwrapped) mounts
                 on the first keystroke and yanks the box wider than the pills. */}
-            <div className="mt-8 w-fit max-w-[600px] mx-auto lg:mx-0">
+            {/* w-full below sm: there the lead-in carries a hard break, so its
+                max-content is only the longest segment and w-fit would shrink
+                the whole box — CTA included — to that. The box only needs to
+                hug at sm+, which is where the pills set the width anyway. */}
+            <div className="mt-8 w-full sm:w-fit max-w-[600px] mx-auto lg:mx-0">
               <div id="venteliste" className="w-0 min-w-full">
                 <WaitlistForm variant="light" ctaFillsContainer />
               </div>
