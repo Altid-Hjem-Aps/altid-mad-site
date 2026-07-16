@@ -1,4 +1,5 @@
 import WaitlistForm from '@/components/WaitlistForm'
+import ComingSoonStores from '@/components/ComingSoonStores'
 import IPhoneMockup from '@/components/IPhoneMockup'
 import HeroStatCounter from '@/components/HeroStatCounter'
 import { H1, BODY } from '@/lib/typography'
@@ -40,8 +41,26 @@ export default function Hero() {
               <span style={{ color: '#163223' }}>Altid.</span>
             </p>
 
-            <div id="venteliste" className="mt-8 w-full max-w-[600px] mx-auto lg:mx-0">
-              <WaitlistForm variant="light" />
+            {/* One w-fit box around the CTA and the pills so both size to the
+                pills, without hard-coding either width against the other's
+                copy. Two rules keep that honest:
+
+                max-w-[600px] applies at EVERY width, not just lg — fit-content
+                already clamps to the available space, so an lg-only cap left
+                the sm..lg band uncapped and the box grew to the full column.
+
+                w-0 min-w-full on the form makes it contribute nothing to the
+                box's intrinsic width while still filling it. Without that, the
+                consent block (long Danish legal copy, ~1150px unwrapped) mounts
+                on the first keystroke and yanks the box wider than the pills. */}
+            <div className="mt-8 w-fit max-w-[600px] mx-auto lg:mx-0">
+              <div id="venteliste" className="w-0 min-w-full">
+                <WaitlistForm variant="light" ctaFillsContainer />
+              </div>
+
+              <div className="mt-6">
+                <ComingSoonStores />
+              </div>
             </div>
 
             {/* Stats row — single centered stat below lg, both side by side on desktop */}

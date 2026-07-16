@@ -91,9 +91,14 @@ interface Props {
   /** Dark variant only: submit-button colour. Defaults to Hjem's signal green
    *  (BottomCta is Hjem-branded); the Mad exit dialog passes the Mad mint. */
   ctaColor?: string
+  /** Let the collapsed CTA fill its container at lg instead of hugging its
+   *  label. The hero wraps the button and the store pills in one w-fit box so
+   *  the two line up; that only works if the button stops sizing to its text.
+   *  Other hosts leave this off and keep the hug. */
+  ctaFillsContainer?: boolean
 }
 
-export default function WaitlistForm({ variant = 'light', id, defaultView = 'form', source = DEFAULT_SIGNUP_SOURCE, embedded = false, onSignup, ctaColor = '#90ff7c' }: Props) {
+export default function WaitlistForm({ variant = 'light', id, defaultView = 'form', source = DEFAULT_SIGNUP_SOURCE, embedded = false, onSignup, ctaColor = '#90ff7c', ctaFillsContainer = false }: Props) {
   const [view, setView] = useState<View>(defaultView)
   const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -500,7 +505,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         onClick={!expanded ? () => { amplitude.track('Waitlist CTA Clicked', { source: 'hero' }); setExpanded(true); setTimeout(() => document.getElementById('name-input-hero')?.focus(), 60) } : undefined}
         disabled={expanded && loading}
         className={`${BUTTON_PRIMARY} disabled:opacity-60 ${
-          expanded ? 'w-full px-5' : 'w-full px-5 lg:w-auto lg:px-[42px]'
+          expanded || ctaFillsContainer ? 'w-full px-5' : 'w-full px-5 lg:w-auto lg:px-[42px]'
         }`}
         style={{
           background: '#DCD799',
