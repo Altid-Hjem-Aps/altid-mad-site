@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse, after } from 'next/server'
-import { sendWaitlistConfirmation, sendReferralWelcome, scheduleReleaseEmail, sendReferralProgress } from '@/lib/send-email'
+import { sendWaitlistConfirmation, sendReferralWelcome, scheduleReleaseEmail, sendReferralProgress, sendConsentConfirmation } from '@/lib/send-email'
 import { sendWaitlistConfirmationSms } from '@/lib/send-sms'
 import { trackServer, identifyServer } from '@/lib/amplitude.server'
-import { recordReferral, mirrorSignup, mergeConsent, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, getQueuePosition } from '@/lib/db'
-import { duplicateSignupMessage } from '@/lib/copy'
+import { recordReferral, mirrorSignup, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, checkRateLimitStrict, getQueuePosition } from '@/lib/db'
+import {
+  CONSENT_VERSION,
+  CONFIRM_SENT_HEADING,
+  confirmSentBody,
+  DUPLICATE_ERROR,
+  LOOKUP_FAILED_ERROR,
+  CONFIRM_SENDS_PER_HOUR,
+} from '@/lib/copy'
+import { signConfirmToken, assertConsentTokenConfigured } from '@/lib/consent-token'
 import { syncContactTags, addAudienceContact } from '@/lib/resend'
 import { normalizeSignupSource } from '@/lib/signup-source'
 import { assertSurveyTokenConfigured, signSurveyToken, verifySurveyToken } from '@/lib/survey-token'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.altidhjem.dk'
+// Pinned, not req.nextUrl.origin: the confirmation link carries a consent token,
+// and its host should not be derived from a request header.
+const SITE_ORIGIN = 'https://altidmad.dk'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_RE = /^\d{8}$/
 
@@ -16,7 +27,12 @@ const WINDOW_SECONDS = 60 * 60 // 1 hour
 const MAX_ATTEMPTS = 3
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ success: false, error: 'Ugyldig anmodning' }, { status: 400 })
+  }
 
   if (body.step === 1) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
@@ -26,12 +42,15 @@ export async function POST(req: NextRequest) {
     const { email, name, phone, referredBy, consent } = body
     const signupSource = normalizeSignupSource(body.source)
     // Normalise the documented marketing consent before it is stored: coerce the
-    // two choices to real booleans and cap the wording version. A malformed or
-    // absent consent object records as "no consent" rather than trusting the body.
+    // two choices to real booleans. A malformed or absent consent object records
+    // as "no consent" rather than trusting the body. The wording version is
+    // stamped server-side (not read from the body): the server knows which text
+    // it served, so the consent audit trail can never be poisoned by a tampered
+    // client sending an arbitrary version string.
     const consentInput =
       consent && typeof consent === 'object'
         ? {
-            version: typeof consent.version === 'string' ? consent.version.slice(0, 32) : undefined,
+            version: CONSENT_VERSION,
             mad: consent.mad === true,
             group: consent.group === true,
           }
@@ -62,6 +81,9 @@ export async function POST(req: NextRequest) {
     // upstream — otherwise signSurveyToken throws after side effects and the
     // user is enrolled but sees a 500, then 409 on retry.
     assertSurveyTokenConfigured()
+    // Same reason: the 409 path below mints a confirmation token, and a missing
+    // secret there would throw after the upstream registration side effect.
+    assertConsentTokenConfigured()
 
     const res = await fetch(`${API_URL}/api/waitlist`, {
       method: 'POST',
@@ -80,21 +102,93 @@ export async function POST(req: NextRequest) {
       // signed up" — the two sites share one waitlist. Include their referral
       // link (public_id doubles as the public referral code) so a duplicate
       // signup can still invite friends and move up the queue.
+      //
+      // The anonymous form may NOT write consent: it cannot prove it owns the
+      // email, so letting any re-signup merge consent would let a stranger flip
+      // another person's marketing consent by knowing their address (PR #36).
+      //
+      // But refusing SILENTLY is what lost 36 people's consent on 14 Jul: they
+      // ticked the boxes, were told "du er allerede skrevet op", and left
+      // believing they had consented. So instead of discarding the ticks, we
+      // hold them pending and mail a confirmation link to the address ON FILE.
+      // Clicking that link is the proof of ownership the form could never give.
       const existing = await getSignupByEmail(String(email))
-      // A re-signup can carry NEW consent (e.g. a Mad signup later ticks the
-      // Hjem "all brands" box). mirrorSignup does not run on a 409, so merge the
-      // new consent into the existing row (keyed on email) instead of dropping
-      // it. Deferred via after() so a slow Supabase write never delays the 409
-      // response; .catch keeps it fail-safe.
-      after(async () => {
-        await mergeConsent(String(email), consentInput).catch((e) => console.error('mergeConsent failed', e))
-      })
+      const asked = consentInput?.mad === true || consentInput?.group === true
+
+      // Nothing was ticked: no consent to capture, so the plain duplicate card is
+      // still the honest answer.
+      if (!asked) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: DUPLICATE_ERROR,
+            ...(existing ? { inviteUrl: `${SITE_ORIGIN}/?ref=${encodeURIComponent(existing.publicId)}` } : {}),
+          },
+          { status: 409 },
+        )
+      }
+
+      // The lookup failed (Supabase slow — getSignupByEmail races a 2s timeout).
+      // We must NOT fall back to "du er allerede skrevet op": that is the exact
+      // sentence that told 36 people they were covered while their consent was
+      // dropped. Say it failed, and let them retry.
+      if (!existing) {
+        return NextResponse.json({ success: false, error: LOOKUP_FAILED_ERROR }, { status: 503 })
+      }
+
+      // Only what they ticked AND do not already hold.
+      const pending = {
+        mad: consentInput?.mad === true && !existing.consentMad,
+        group: consentInput?.group === true && !existing.consentGroup,
+      }
+      const hasPending = pending.mad || pending.group
+
+      // We send ONLY when there is something to confirm, the person has not left
+      // the list, and we have a token to build their unsubscribe link with.
+      const shouldSend = hasPending && !existing.unsubscribed && Boolean(existing.unsubToken)
+
+      if (shouldSend) {
+        // Two limiters, both FAIL CLOSED. checkRateLimit returns false on any
+        // error and false means "not limited", so using it here would let a
+        // Supabase hiccup permit every send.
+        //   per-address: stops one inbox being sprayed.
+        //   global:      stops the endpoint being used to mail the whole list.
+        // Without the global one, an attacker with rotating IPs sends one bare
+        // mail per hour to EVERY non-consenting address on the shared list, from
+        // our own verified domain.
+        let allowed = false
+        try {
+          const perAddress = await checkRateLimitStrict(`consent-confirm:${String(email).toLowerCase().trim()}`, 1, 60 * 60)
+          const global = await checkRateLimitStrict('consent-confirm:global', CONFIRM_SENDS_PER_HOUR, 60 * 60)
+          allowed = !perAddress && !global
+        } catch (e) {
+          console.error('consent-confirm rate limit unavailable — refusing to send', e)
+          allowed = false
+        }
+
+        if (allowed) {
+          const token = signConfirmToken(existing.publicId, pending, Date.now() / 1000)
+          await sendConsentConfirmation({
+            name: existing.firstName || String(name).trim(),
+            email: String(email).toLowerCase().trim(),
+            confirmUrl: `${SITE_ORIGIN}/api/bekraeft?t=${encodeURIComponent(token)}`,
+            unsubscribeUrl: `https://altidhjem.dk/api/unsubscribe?token=${encodeURIComponent(existing.unsubToken as string)}`,
+            pending,
+          })
+          trackServer('Consent Confirmation Sent', { signup_id: existing.publicId }, existing.publicId)
+        }
+      }
+
+      // ONE response for every ticked-consent duplicate, whatever we actually did.
+      //
+      // This is deliberate and it costs us a nicer screen. Distinguishing "we sent
+      // you a link" from "you already have this consent" turns the endpoint into a
+      // silent oracle: a stranger types your address, ticks one box, and reads your
+      // marketing profile off the response — and you are never told, because no
+      // mail is sent in the branch that leaks. Same body, same status, no
+      // public_id, whether or not a mail went out.
       return NextResponse.json(
-        {
-          success: false,
-          error: duplicateSignupMessage(existing?.source ?? null),
-          ...(existing ? { inviteUrl: `https://altidmad.dk/?ref=${encodeURIComponent(existing.publicId)}` } : {}),
-        },
+        { success: false, confirmSent: true, heading: CONFIRM_SENT_HEADING, error: confirmSentBody(String(email).toLowerCase().trim()) },
         { status: 409 },
       )
     }

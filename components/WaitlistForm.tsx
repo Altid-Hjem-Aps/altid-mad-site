@@ -91,9 +91,14 @@ interface Props {
   /** Dark variant only: submit-button colour. Defaults to Hjem's signal green
    *  (BottomCta is Hjem-branded); the Mad exit dialog passes the Mad mint. */
   ctaColor?: string
+  /** Let the collapsed CTA fill its container at lg instead of hugging its
+   *  label. The hero wraps the button and the store pills in one w-fit box so
+   *  the two line up; that only works if the button stops sizing to its text.
+   *  Other hosts leave this off and keep the hug. */
+  ctaFillsContainer?: boolean
 }
 
-export default function WaitlistForm({ variant = 'light', id, defaultView = 'form', source = DEFAULT_SIGNUP_SOURCE, embedded = false, onSignup, ctaColor = '#90ff7c' }: Props) {
+export default function WaitlistForm({ variant = 'light', id, defaultView = 'form', source = DEFAULT_SIGNUP_SOURCE, embedded = false, onSignup, ctaColor = '#90ff7c', ctaFillsContainer = false }: Props) {
   const [view, setView] = useState<View>(defaultView)
   const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -109,7 +114,9 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [consentGroup, setConsentGroup] = useState(false)
   // Set on a 409 where the API could recover their referral link — renders the
   // share card (skipping the survey step; they already answered it once).
-  const [duplicate, setDuplicate] = useState<{ body?: string; inviteUrl: string } | null>(null)
+  // heading is set by the API for the confirmation states; a plain duplicate
+  // keeps DUPLICATE_HEADING. inviteUrl is absent while a confirmation is pending.
+  const [duplicate, setDuplicate] = useState<{ heading?: string; body?: string; inviteUrl?: string } | null>(null)
 
   // Capture referral code from the URL (?ref=CODE) once on mount
   useEffect(() => {
@@ -191,11 +198,24 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       // 409 = this person is already on the list — that's a confirmed
       // signup for popup-suppression purposes too.
       if (res.status === 409) markWaitlistJoined()
-      amplitude.track('Waitlist Step 1 Failed', { error: data.error ?? 'unknown', status: res.status })
+      // A pending confirmation is not a failure. Counting it as one would bury
+      // the fix in the same bucket as the dead-end duplicates it replaces, and
+      // the funnel would still show 36 "failures" a day.
+      if (data.confirmSent) amplitude.track('Consent Confirmation Sent', { signup_source: source })
+      else amplitude.track('Waitlist Step 1 Failed', { error: data.error ?? 'unknown', status: res.status })
+
+      // "Check your inbox" has no referral link: this person has not confirmed
+      // anything yet, and pushing them to invite friends mid-flow would bury the
+      // one action we need from them.
+      if (res.status === 409 && data.confirmSent) {
+        setDuplicate({ heading: data.heading, body: data.error })
+        return
+      }
       // Duplicate WITH a known referral link: show the share card instead of a
       // dead-end error, so they can still invite friends and move up the queue.
       if (res.status === 409 && data.inviteUrl) {
         setDuplicate({
+          heading: data.heading,
           body: data.error && data.error !== DUPLICATE_HEADING ? data.error : undefined,
           inviteUrl: data.inviteUrl,
         })
@@ -272,7 +292,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const darkCardStyle = embedded ? undefined : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }
 
   if (isDark) {
-    if (duplicate) return <SuccessCard bare={embedded} heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
+    if (duplicate) return <SuccessCard bare={embedded} heading={duplicate.heading ?? DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
     if (view === 'success') return <SuccessCard bare={embedded} inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
     if (view === 'questions') {
@@ -364,7 +384,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
 
   // ─── Light variant (Hero) ─────────────────────────────────────────────────
 
-  if (duplicate) return <SuccessCard variant="cream" heading={DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
+  if (duplicate) return <SuccessCard variant="cream" heading={duplicate.heading ?? DUPLICATE_HEADING} body={duplicate.body} inviteUrl={duplicate.inviteUrl} />
   if (view === 'success') return <SuccessCard variant="cream" inviteUrl={signupId ? `https://altidmad.dk/?ref=${signupId}` : undefined} />
 
   if (view === 'questions') {
@@ -485,7 +505,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         onClick={!expanded ? () => { amplitude.track('Waitlist CTA Clicked', { source: 'hero' }); setExpanded(true); setTimeout(() => document.getElementById('name-input-hero')?.focus(), 60) } : undefined}
         disabled={expanded && loading}
         className={`${BUTTON_PRIMARY} disabled:opacity-60 ${
-          expanded ? 'w-full px-5' : 'w-full px-5 lg:w-auto lg:px-[42px]'
+          expanded || ctaFillsContainer ? 'w-full px-5' : 'w-full px-5 lg:w-auto lg:px-[42px]'
         }`}
         style={{
           background: '#DCD799',
