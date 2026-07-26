@@ -1,18 +1,9 @@
 // Press-mention banner, rendered INSIDE the hero section (see Hero.tsx) so the
 // hero's cream ground stays continuous and the phone mockup's drop shadow isn't
 // cut by a section seam. Modelled on the Altid Energi hero press citation.
-//
-// -------------------------------------------------------------------------
-// PLACEHOLDER COPY — the EB article isn't published yet, so the exact headline
-// and URL are unknown. `headline` + `url` below are stand-ins for design
-// review only. Do NOT ship this: replace both with the real values once the
-// article is live (Werner: "så snart artikel er ude"), then open the PR.
-// -------------------------------------------------------------------------
 const ARTICLE = {
-  // Example headline — replace with the article's actual title.
-  headline: 'Ny app kan spare en børnefamilie op til 15.000 kr. om året på maden',
-  // Replace with the published Ekstra Bladet article URL.
-  url: '#',
+  headline: 'Spar stort på dine dagligvarer: Ny app sammenligner priser',
+  url: 'https://ekstrabladet.dk/forbrug/Teknologi/spar-stort-paa-dine-dagligvarer-ny-app-sammenligner-priser/11232767',
 }
 
 export default function PressStrip() {
