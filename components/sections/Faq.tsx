@@ -38,7 +38,7 @@ const ITEMS: Item[] = [
   },
   {
     q: 'Er Altid Mad gratis at bruge?',
-    a: 'Ja. Altid Mad er gratis at bruge. Du kan opgradere til Premium med ekstra funktioner for 29 kr./md.',
+    a: ['Ja. Altid Mad er gratis at bruge. Du kan opgradere til Premium med ekstra funktioner for 29 kr./md.'],
   },
   {
     q: 'Er det gratis at skrive sig på ventelisten?',
