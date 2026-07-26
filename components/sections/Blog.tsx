@@ -22,6 +22,86 @@ type Post = {
 
 const POSTS: Post[] = [
   {
+    href: '/billigste-supermarked',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Hvilket supermarked er billigst?',
+    excerpt: 'Vi sammenlignede den samme kurv med 23 varer hos 7 kæder. Se hvem der var billigst, hvad forskellen betyder på et år, og hvordan analysen er lavet.',
+    meta: '5 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/madpakker-paa-budget',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Madpakker på budget til skolestart',
+    excerpt: 'Skolestart betyder 5 madpakker om ugen pr. barn. Få billige madpakke-idéer, en enkel ugeplan og råd til at planlægge efter ugens tilbud.',
+    meta: '4 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/madbudget',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Hvad er et normalt madbudget?',
+    excerpt: 'Danmarks Statistik har tallene for, hvad husstande faktisk bruger på mad. Se benchmark for jeres husstandstype, og hvorfor tallene i forældrefora ofte er højere.',
+    meta: '6 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/beregn-dit-madbudget',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Beregn jeres madbudget på et minut',
+    excerpt: 'Vælg husstand, indtast hvad I bruger i dag, og se jeres benchmark plus et estimat på, hvad smartere indkøb kan betyde. Intet gemmes.',
+    meta: 'Beregner · 26. jul 2026',
+  },
+  {
+    href: '/madplan-efter-tilbud',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Madplan efter ugens tilbud',
+    excerpt: 'Tilbud først, madplan bagefter, indkøbsliste til sidst. Den rækkefølge er den enkeltvane, der flytter mest i madbudgettet. Sådan gør du i praksis.',
+    meta: '5 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/madbudget-familie-paa-4',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Madbudget for en familie på 4',
+    excerpt: 'Hvad er normalt for en børnefamilie? Se tallene fra Danmarks Statistik, hvad vores egen kurvanalyse viser, og de tre vaner der flytter mest.',
+    meta: '5 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/mad-for-3000-om-maaneden',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Kan man leve for 3.000 kr. mad om måneden?',
+    excerpt: 'Det ærlige svar med regnestykket: hvad 3.000 kr. betyder pr. uge, hvem der realistisk kan ramme det, og hvordan I kommer tættest på.',
+    meta: '5 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/spar-penge-paa-dagligvarer',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Spar penge på dagligvarer',
+    excerpt: 'Ingen kupon-tricks, bare vaner der virker: vælg hovedbutik med omhu, planlæg efter tilbud, og køb rigtigt ind. Den samlede gevinst kan mærkes.',
+    meta: '6 min læsning · 26. jul 2026',
+  },
+  {
+    href: '/graensehandel-beregner',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Kan grænsehandel betale sig?',
+    excerpt: 'Regn det efter, før I kører: brændstof, break-even og de udgifter folk glemmer. Beregneren giver det ærlige svar for netop jeres tur.',
+    meta: 'Beregner · 26. jul 2026',
+  },
+  {
+    href: '/jul-paa-budget',
+    icon: '/services/altid-mad.svg',
+    category: 'Mad',
+    title: 'Jul på budget uden panik-uge',
+    excerpt: 'Spred juleindkøbene over ugerne op til jul i stedet for én dyr uge i december. Sådan planlægger I julemaden efter tilbuddene.',
+    meta: '5 min læsning · 26. jul 2026',
+  },
+  {
     href: 'https://altidhjem.dk/hvad-koster-forsikring',
     icon: '/services/icon-forsikring.svg',
     category: 'Forsikring',
@@ -96,7 +176,7 @@ function PostCard({ post, clone = false }: { post: Post; clone?: boolean }) {
       {/* Category chip */}
       <div className="flex items-center gap-3 mb-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.icon} alt="" className="shrink-0" style={{ width: 'clamp(34px,2.3vw,44px)', height: 'clamp(34px,2.3vw,44px)', borderRadius: 10 }} />
+        <img src={post.icon} alt="" loading="lazy" decoding="async" className="shrink-0" style={{ width: 'clamp(34px,2.3vw,44px)', height: 'clamp(34px,2.3vw,44px)', borderRadius: 10 }} />
         <span className="text-[13px] font-medium uppercase" style={{ color: '#163223', letterSpacing: '1.2px' }}>
           {post.category}
         </span>
