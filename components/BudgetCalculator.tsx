@@ -65,7 +65,7 @@ export default function BudgetCalculator() {
     >
       <CardHeader eyebrow="Beregner" title="Hvad er jeres madbudget-benchmark?" />
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-2 gap-3 mb-3 items-end">
         <Field label="Voksne">
           <select className={selectCls} style={{ ...fieldStyle, ...CHEVRON_BG }} value={adults} onChange={(e) => setAdults(e.target.value)}>
             <option value="1">1 voksen</option>

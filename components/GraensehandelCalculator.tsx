@@ -62,7 +62,7 @@ export default function GraensehandelCalculator() {
     >
       <CardHeader eyebrow="Beregner" title="Kan turen betale sig?" />
 
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-2 gap-3 mb-3 items-end">
         <Field label="Kørsel tur-retur (km)">
           <input type="text" inputMode="decimal" className={inputCls} style={fieldStyle} value={km} onChange={(e) => setKm(e.target.value)} />
         </Field>
