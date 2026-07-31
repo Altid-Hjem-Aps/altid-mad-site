@@ -22,7 +22,6 @@ const PAPERS = [
   { name: 'Netto', icon: '/logos/netto.png' },
   { name: 'Bilka', icon: '/logos/bilka.png' },
   { name: 'Føtex', icon: '/logos/foetex.png' },
-  { name: 'Spar', icon: '/logos/spar.png' },
 ]
 
 // Same week as the hero's MealPlanScreen — dishes and photos match.
