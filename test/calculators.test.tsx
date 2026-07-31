@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { parseDanishNumber } from '@/components/seo/mockupKit'
-import BudgetCalculator from '@/components/BudgetCalculator'
+import MadbudgetSammenligningMockup from '@/components/MadbudgetSammenligningMockup'
 
 describe('parseDanishNumber', () => {
   it('parses a decimal comma', () => {
@@ -29,44 +29,43 @@ describe('parseDanishNumber', () => {
   })
 })
 
-describe('BudgetCalculator', () => {
-  it('shows the DST benchmark for the default household (2 adults + kids)', () => {
-    render(<BudgetCalculator />)
-    expect(screen.getByText(/5\.481 kr\. om måneden/)).toBeInTheDocument()
+/* The calculator that used to live on /beregn-dit-madbudget was replaced by an
+ * animated mockup. These pin the numbers the mockup asserts, which are the
+ * only verified ones: the DST FU13 2024 average for 2 adults with children and
+ * the Q2 basket gap. A number drifting here is a compliance problem, not a
+ * cosmetic one. */
+describe('MadbudgetSammenligningMockup', () => {
+  // Under reduced motion the card pins its finished state, so every figure is
+  // present at once. That is both the a11y contract and the only way to assert
+  // the later rows without driving the phase timer.
+  beforeEach(() => {
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }) as unknown as typeof window.matchMedia
   })
 
-  it('computes the savings estimate from the user number (21,3 pct.)', () => {
-    render(<BudgetCalculator />)
-    fireEvent.change(screen.getByPlaceholderText('F.eks. 5.000'), { target: { value: '5.000' } })
-    // 5000 * 21,3% = 1065/md, 12780/yr; 5000 vs benchmark 5481 = 481 under
-    expect(screen.getByText(/1\.065 kr\./)).toBeInTheDocument()
-    expect(screen.getByText(/12\.780 kr\. om året/)).toBeInTheDocument()
-    expect(screen.getByText(/481 kr\. under gennemsnittet/)).toBeInTheDocument()
+  it('renders the verified DST average and the example household', () => {
+    render(<MadbudgetSammenligningMockup />)
+    expect(screen.getByText('5.481 kr./md.')).toBeInTheDocument()
+    expect(screen.getByText('2 voksne, 2 børn')).toBeInTheDocument()
   })
 
-  it('parses Danish decimals without inflating the amount', () => {
-    render(<BudgetCalculator />)
-    fireEvent.change(screen.getByPlaceholderText('F.eks. 5.000'), { target: { value: '5.000,50' } })
-    // 5000,50 must NOT become 500050 — estimate stays ~1.065
-    expect(screen.getByText(/1\.065 kr\./)).toBeInTheDocument()
+  it('labels the household spend as an example, never as a measured figure', () => {
+    render(<MadbudgetSammenligningMockup />)
+    expect(screen.getByText(/eksempel/i)).toBeInTheDocument()
   })
 
-  it('keeps the estimate gated for garbage and implausible input', () => {
-    render(<BudgetCalculator />)
-    const input = screen.getByPlaceholderText('F.eks. 5.000')
-    fireEvent.change(input, { target: { value: 'abc' } })
-    expect(screen.getByText(/Indtast et beløb mellem 100 og 100\.000 kr\./)).toBeInTheDocument()
-    fireEvent.change(input, { target: { value: '999999999' } })
-    expect(screen.getByText(/Indtast et beløb mellem 100 og 100\.000 kr\./)).toBeInTheDocument()
-    fireEvent.change(input, { target: { value: '' } })
-    expect(screen.getByText(/Indtast jeres månedsforbrug/)).toBeInTheDocument()
+  it('states the saving as "op til" with its condition, never a promised amount', () => {
+    render(<MadbudgetSammenligningMockup />)
+    expect(screen.getByText(/Op til/)).toBeInTheDocument()
+    expect(screen.getByText('21,3 pct.')).toBeInTheDocument()
+    expect(screen.getByText(/Hvis jeres indkøb ligner testkurven/)).toBeInTheDocument()
   })
 
-  it('switches benchmark when the household changes', () => {
-    render(<BudgetCalculator />)
-    const selects = screen.getAllByRole('combobox')
-    fireEvent.change(selects[0], { target: { value: '1' } })
-    fireEvent.change(selects[1], { target: { value: '0' } })
-    expect(screen.getByText(/1\.811 kr\. om måneden/)).toBeInTheDocument()
+  it('describes the whole card to assistive tech as an example', () => {
+    render(<MadbudgetSammenligningMockup />)
+    expect(screen.getByRole('img').getAttribute('aria-label')).toMatch(/^Eksempel: /)
   })
 })

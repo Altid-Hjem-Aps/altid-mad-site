@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import BudgetCalculator from '@/components/BudgetCalculator'
+import MadbudgetSammenligningMockup from '@/components/MadbudgetSammenligningMockup'
 import BottomCta from '@/components/sections/BottomCta'
 import Footer from '@/components/Footer'
 import {
@@ -17,9 +17,9 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madbudget beregner: Se jeres niveau – Altid Mad',
+  title: 'Madbudget: Sammenlign jeres forbrug med gennemsnittet – Altid Mad',
   description:
-    'Beregn jeres madbudget ud fra husstand og forbrug. Sammenlign med Danmarks Statistik, og se en mulig besparelse. Prøv beregneren gratis.',
+    'Se, hvad danske husstande bruger på dagligvarer, og få et konkret sammenligningsgrundlag til jeres madbudget.',
 }
 
 // FAQ copy is used twice: rendered on the page AND serialized as FAQPage
@@ -33,10 +33,10 @@ const FAQ: FaqItem[] = [
     ],
   },
   {
-    q: 'Hvilke tal skal jeg bruge for at beregne?',
+    q: 'Hvordan finder I jeres månedsforbrug?',
     a: [
-      'Brug jeres normale forbrug på dagligvarer pr. måned.',
-      'Tag gerne udgangspunkt i kontoudtog eller kvitteringer, og medregn fødevarer og ikke-alkoholiske drikkevarer, så sammenligningen bliver mere retvisende.',
+      'Gennemgå jeres kontoudtog for en typisk måned, og læg alle køb af dagligvarer sammen.',
+      'Hold udgifter til takeaway og restaurantbesøg adskilt, så sammenligningen bliver mere retvisende.',
     ],
   },
   {
@@ -87,26 +87,26 @@ export default function BeregnDitMadbudget() {
         <div className="max-w-2xl mx-auto px-6 pb-4">
           <BackLink />
 
-          <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Beregn jeres madbudget</h1>
+          <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Få overblik over jeres madbudget</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
             Opdateret: juli 2026 · Kilde: Danmarks Statistik 2024 og Altid Mads Q2-analyse
           </p>
 
           <P>
-            Madbudgetberegneren viser, hvordan jeres forbrug ligger i forhold til lignende husstande. I får også et estimat på, hvad I muligvis kan spare ved at planlægge indkøbene efter priser og tilbud.
+            Et godt madbudget begynder med at kende jeres eget månedsforbrug og sammenligne det med lignende husstande.
           </P>
           <P>
-            Beregneren skal kun bruge 2 tal og tager cirka 1 minut. Vælg jeres husstand, og indtast, hvad I normalt bruger på dagligvarer om måneden.
+            Her får I tal fra Danmarks Statistik og et eksempel på, hvor stor prisforskellen kan være, når indkøb planlægges efter priser og tilbud.
           </P>
         </div>
 
-        <MockupFrame caption="Beregneren viser jeres benchmark og et estimat ud fra jeres eget tal. Intet gemmes.">
-          <BudgetCalculator />
+        <MockupFrame caption="Illustrationen viser et eksempel på en sammenligning af månedsforbrug og en mulig besparelse. Det er ikke et skærmbillede fra appen.">
+          <MadbudgetSammenligningMockup />
         </MockupFrame>
         <div className="max-w-2xl mx-auto px-6 pb-20">
-          <H2>Sådan virker madbudgetberegneren</H2>
+          <H2>Sådan får I overblik over jeres madbudget</H2>
           <P>
-            Vælg antal voksne og børn, og skriv jeres nuværende forbrug. Herefter får I et sammenligningsgrundlag fra Danmarks Statistik og et estimat på en mulig besparelse.
+            Find jeres nuværende månedsforbrug, og sammenlign det med tal for en husstand som jeres. Det giver jer et konkret udgangspunkt for at vurdere budgettet og se, hvor der kan være mulighed for at spare.
           </P>
           <P>
             Sammenligningen bygger på Forbrugsundersøgelsen 2024. Her bruger en gennemsnitshusstand 41.851 kr. om året på fødevarer og ikke-alkoholiske drikkevarer, svarende til cirka 3.488 kr. om måneden. For 2 voksne med børn er beløbet 65.775 kr. om året, svarende til cirka 5.481 kr. om måneden.
