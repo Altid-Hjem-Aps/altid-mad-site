@@ -23,7 +23,7 @@ type Post = {
 const POSTS: Post[] = [
   {
     href: '/billigste-supermarked',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Hvilket supermarked er billigst?',
     excerpt: 'Vi sammenlignede den samme kurv med 23 varer hos 7 kæder. Se hvem der var billigst, hvad forskellen betyder på et år, og hvordan analysen er lavet.',
@@ -31,7 +31,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/madpakker-paa-budget',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Madpakker på budget til skolestart',
     excerpt: 'Skolestart betyder 5 madpakker om ugen pr. barn. Få billige madpakke-idéer, en enkel ugeplan og råd til at planlægge efter ugens tilbud.',
@@ -39,7 +39,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/madbudget',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Hvad er et normalt madbudget?',
     excerpt: 'Danmarks Statistik har tallene for, hvad husstande faktisk bruger på mad. Se benchmark for jeres husstandstype, og hvorfor tallene i forældrefora ofte er højere.',
@@ -47,7 +47,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/beregn-dit-madbudget',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Beregn jeres madbudget på et minut',
     excerpt: 'Vælg husstand, indtast hvad I bruger i dag, og se jeres benchmark plus et estimat på, hvad smartere indkøb kan betyde. Intet gemmes.',
@@ -55,7 +55,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/madplan-efter-tilbud',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Madplan efter ugens tilbud',
     excerpt: 'Tilbud først, madplan bagefter, indkøbsliste til sidst. Den rækkefølge er den enkeltvane, der flytter mest i madbudgettet. Sådan gør du i praksis.',
@@ -63,7 +63,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/madbudget-familie-paa-4',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Madbudget for en familie på 4',
     excerpt: 'Hvad er normalt for en børnefamilie? Se tallene fra Danmarks Statistik, hvad vores egen kurvanalyse viser, og de tre vaner der flytter mest.',
@@ -71,7 +71,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/mad-for-3000-om-maaneden',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Kan man leve for 3.000 kr. mad om måneden?',
     excerpt: 'Det ærlige svar med regnestykket: hvad 3.000 kr. betyder pr. uge, hvem der realistisk kan ramme det, og hvordan I kommer tættest på.',
@@ -79,7 +79,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/spar-penge-paa-dagligvarer',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Spar penge på dagligvarer',
     excerpt: 'Ingen kupon-tricks, bare vaner der virker: vælg hovedbutik med omhu, planlæg efter tilbud, og køb rigtigt ind. Den samlede gevinst kan mærkes.',
@@ -87,7 +87,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/graensehandel-beregner',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Kan grænsehandel betale sig?',
     excerpt: 'Regn det efter, før I kører: brændstof, break-even og de udgifter folk glemmer. Beregneren giver det ærlige svar for netop jeres tur.',
@@ -95,7 +95,7 @@ const POSTS: Post[] = [
   },
   {
     href: '/jul-paa-budget',
-    icon: '/services/altid-mad.svg',
+    icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Jul på budget uden panik-uge',
     excerpt: 'Spred juleindkøbene over ugerne op til jul i stedet for én dyr uge i december. Sådan planlægger I julemaden efter tilbuddene.',

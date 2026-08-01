@@ -85,6 +85,14 @@ body {
   to { width: 100%; }
 }
 
+/* Dot buttons sit inside an overflow-hidden sliding window — the default
+   focus ring draws outside the box and would be clipped, so draw it inset. */
+.carousel-dot:focus-visible {
+  outline: 2px solid #163223;
+  outline-offset: -2px;
+  border-radius: 9999px;
+}
+
 /* FAQ — native scrollbar hidden; a custom always-visible green bar on the left
    edge (rendered in Faq.tsx) acts as the scroll indicator instead. */
 .faq-scroll {
