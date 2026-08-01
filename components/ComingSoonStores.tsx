@@ -8,11 +8,10 @@
 // phrase themselves need 474px against the 327px a 375px screen offers and
 // would drop to two rows. Same split as the Hjem version, one message deeper.
 //
-// Not Apple's or Google's badge artwork: each store sanctions exactly one
-// pre-launch badge ("Pre-order on the App Store", "Pre-register on Google
-// Play") and both need a live listing we don't have. The marks below are
-// redrawn outside the badge artwork that licenses them — the same knowing
-// trade documented on the Hjem side (Thor, 16 Jul).
+// Custom store pills, not the official badge artwork: the sanctioned
+// pre-launch badges ("Pre-order on the App Store", "Pre-register on Google
+// Play") both require a live store listing, which doesn't exist yet. Swap
+// these for the official badges when the listings go live.
 //
 // The pills are not links and must not become links until the listings are
 // live. On this site that matters twice over: the store they'd point at has
