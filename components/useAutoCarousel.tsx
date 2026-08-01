@@ -250,6 +250,15 @@ export function useCarouselReveal(
 
 // Apple-gallery pagination: dots where the active one stretches into a pill
 // whose fill loads over the autoplay interval, plus a pause/play toggle.
+// With more than MAX_DOTS items the row becomes an Instagram-style sliding
+// window: only MAX_DOTS dots are visible, the row glides to keep the active
+// dot centred, and the window's edge dots shrink to say "more this way" —
+// the blog carousels grew past 15 posts and the full row spanned the whole
+// mobile viewport.
+const MAX_DOTS = 5
+const SLOT = 24 // touch-target width of an inactive dot's button
+const PILL_SLOT = 52 // the active dot's button, stretched into the pill
+
 export function CarouselPagination({
   count,
   carousel,
@@ -262,46 +271,118 @@ export function CarouselPagination({
   itemLabel: (i: number) => string
 }) {
   const { active, reduced, inView, paused, goTo, togglePaused, autoMs } = carousel
+  // First visible dot — the active dot sits centred except near the ends.
+  const windowed = count > MAX_DOTS
+  const start = windowed ? Math.min(Math.max(active - Math.floor(MAX_DOTS / 2), 0), count - MAX_DOTS) : 0
+  const end = start + MAX_DOTS - 1
+  // The loop wrap (last card → first) moves the window many slots in one
+  // step — animating that reads as a glitchy zip across the row, so snap.
+  const prevStartRef = useRef(start)
+  const jumped = Math.abs(start - prevStartRef.current) > 1
+  useEffect(() => {
+    prevStartRef.current = start
+  })
+  // aria-hidden must never sit on the focused element. Two guards: focus
+  // inside the dot row pauses autoplay (so the window doesn't slide away
+  // under the focused dot), and a dot that gets clipped anyway — the user
+  // can still swipe the carousel — is blurred.
+  const rowRef = useRef<HTMLDivElement>(null)
+  const focusPausedRef = useRef(false)
+  useEffect(() => {
+    const el = document.activeElement as HTMLElement | null
+    if (el && rowRef.current?.contains(el) && el.getAttribute('aria-hidden') === 'true') el.blur()
+  }, [start])
   return (
     <div className="flex items-center justify-center gap-0">
-      {Array.from({ length: count }).map((_, i) => (
-        // The button is the (invisible) 24px+ touch target — WCAG 2.5.8 /
-        // Lighthouse target-size; the visible dot is the span inside.
-        <button
-          key={i}
-          type="button"
-          aria-label={itemLabel(i)}
-          onClick={() => goTo(i)}
-          className="flex items-center justify-center"
-          style={{ minWidth: 24, height: 24, padding: 0 }}
+      {/* Fixed viewport over the sliding dot row. Every slot outside the
+          window is held at exactly SLOT wide (see the button width note),
+          so the offset is simply start × SLOT. */}
+      <div className="overflow-hidden" style={{ width: windowed ? (MAX_DOTS - 1) * SLOT + PILL_SLOT : undefined }}>
+        <div
+          ref={rowRef}
+          className="flex items-center"
+          onFocus={() => {
+            if (!paused) {
+              focusPausedRef.current = true
+              togglePaused()
+            }
+          }}
+          onBlur={(e) => {
+            if (focusPausedRef.current && !rowRef.current?.contains(e.relatedTarget as Node)) {
+              focusPausedRef.current = false
+              togglePaused()
+            }
+          }}
+          style={{
+            transform: windowed ? `translateX(${-start * SLOT}px)` : undefined,
+            transition: reduced || jumped ? undefined : 'transform 0.3s ease',
+          }}
         >
-          <span
-            className="relative overflow-hidden rounded-full transition-[width] duration-300 block"
-            style={{
-              width: active === i ? 52 : 9,
-              height: 9,
-              background: 'rgba(22,50,35,0.2)',
-            }}
-          >
-            {active === i && (
-              <span
-                className="absolute inset-y-0 left-0 rounded-full"
+          {Array.from({ length: count }).map((_, i) => {
+            // Dots outside the window are clipped by the viewport — take them
+            // out of the tab order and accessibility tree while they are.
+            const clipped = windowed && (i < start || i > end)
+            // Edge dots shrink while more dots exist beyond them.
+            const hint = windowed && !clipped && active !== i && ((i === start && start > 0) || (i === end && end < count - 1))
+            return (
+              // The button is the (invisible) 24px+ touch target — WCAG 2.5.8 /
+              // Lighthouse target-size; the visible dot is the span inside.
+              <button
+                key={i}
+                type="button"
+                aria-label={itemLabel(i)}
+                aria-hidden={clipped || undefined}
+                tabIndex={clipped ? -1 : undefined}
+                onClick={() => goTo(i)}
+                // carousel-dot: inset focus ring (globals.css) — the default
+                // outline draws outside the box and the window would clip it.
+                className="carousel-dot flex items-center justify-center"
+                // Explicit width (not content-driven): the shrinking old pill
+                // and growing new pill then sum to a constant, so the row
+                // never wobbles against the fixed window. shrink-0 because
+                // flex would otherwise crush the 52px pill to fit. A clipped
+                // ex-pill snaps to SLOT instantly — it's invisible, and the
+                // start × SLOT offset relies on off-window slots being SLOT.
                 style={{
-                  background: '#163223',
-                  width: reduced ? '100%' : undefined,
-                  // Longhand props (not the `animation` shorthand) so the
-                  // play-state can change without React shorthand conflicts.
-                  animationName: reduced || !inView ? undefined : 'blog-progress',
-                  animationDuration: `${autoMs}ms`,
-                  animationTimingFunction: 'linear',
-                  animationFillMode: 'forwards',
-                  animationPlayState: paused ? 'paused' : 'running',
+                  width: active === i ? PILL_SLOT : SLOT,
+                  height: 24,
+                  padding: 0,
+                  flexShrink: 0,
+                  transition: clipped ? undefined : 'width 0.3s',
                 }}
-              />
-            )}
-          </span>
-        </button>
-      ))}
+              >
+                <span
+                  className="relative overflow-hidden rounded-full block"
+                  style={{
+                    width: active === i ? PILL_SLOT : 9,
+                    height: 9,
+                    background: 'rgba(22,50,35,0.2)',
+                    transform: hint ? 'scale(0.62)' : undefined,
+                    transition: 'width 0.3s, transform 0.3s',
+                  }}
+                >
+                  {active === i && (
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-full"
+                      style={{
+                        background: '#163223',
+                        width: reduced ? '100%' : undefined,
+                        // Longhand props (not the `animation` shorthand) so the
+                        // play-state can change without React shorthand conflicts.
+                        animationName: reduced || !inView ? undefined : 'blog-progress',
+                        animationDuration: `${autoMs}ms`,
+                        animationTimingFunction: 'linear',
+                        animationFillMode: 'forwards',
+                        animationPlayState: paused ? 'paused' : 'running',
+                      }}
+                    />
+                  )}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       {/* Pause/play toggle, like Apple's gallery control */}
       {!reduced && (
