@@ -22,12 +22,12 @@ type Chain = {
 // Wordmarks are the chains' own SVGs (bilka.dk / foetex.dk site assets, the
 // official Netto 2019 wordmark, REMA 1000's outlined one-liner) — crisp at
 // any size, viewBoxes trimmed to the artwork so nothing renders cut off.
-// nemlig.com has no public vector; its 600px PNG holds up at this size.
+// nemlig.com's official vector from their own site assets (RGB positive).
 const CHAINS: Chain[] = [
   { src: '/supermarkets/netto-wordmark.svg', alt: 'Netto', height: 42, disc: { src: '/logos/netto.png', height: 54 } },
   { src: '/supermarkets/rema1000.svg', alt: 'REMA 1000', height: 50 },
   { src: '/supermarkets/bilka.svg', alt: 'Bilka', height: 50 },
-  { src: '/supermarkets/nemlig.png', alt: 'nemlig.com', height: 46 },
+  { src: '/supermarkets/nemlig.svg', alt: 'nemlig.com', height: 46 },
   { src: '/supermarkets/foetex.svg', alt: 'føtex', height: 104 },
 ]
 
