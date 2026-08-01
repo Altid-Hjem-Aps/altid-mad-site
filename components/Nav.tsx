@@ -146,7 +146,8 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
   const desktopMenu = (
     <div className="hidden xl:flex items-center gap-[clamp(56px,5.5vw,105px)]">
       {NAV_LINKS.map(({ label, href, tone }) => {
-        const active = tone === 'home' && pathname === '/'
+        // Mad is the current site: its nav item is active on every altidmad.dk page.
+        const active = tone === 'home'
         const external = href.startsWith('http')
         return (
           <span key={label} className="relative" style={tone === 'soon' ? { opacity: 0.6 } : undefined}>
@@ -243,7 +244,8 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
     >
       <ul className="flex flex-col px-5 sm:px-8 pt-2">
         {NAV_LINKS.map(({ label, href, tone }) => {
-          const active = tone === 'home' && pathname === '/'
+          // Mad is the current site: its nav item is active on every altidmad.dk page.
+          const active = tone === 'home'
           const external = href.startsWith('http')
           const inner = (
             <>
