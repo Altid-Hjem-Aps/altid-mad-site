@@ -22,13 +22,26 @@ type Chain = {
 // Wordmarks are the chains' own SVGs (bilka.dk / foetex.dk site assets, the
 // official Netto 2019 wordmark, REMA 1000's outlined one-liner) — crisp at
 // any size, viewBoxes trimmed to the artwork so nothing renders cut off.
-// nemlig.com's official vector from their own site assets (RGB positive).
+// nemlig.com's official vector from their own site assets (RGB positive);
+// SPAR's is the wordmark from their site navigation (logo-redesign).
+//
+// nemlig is the one source whose viewBox is NOT trimmed: the l/i ascenders and
+// the g descender pad it, so only 92.7 of its 157 units are letter. Its height
+// is therefore set from the ink, not the box — at 62px the 'n' measures 36.75px
+// against Bilka's 'a' at 40.0px (Bilka at 50px), so it sits a touch under its
+// neighbour. Scaling it to sit on Bilka's baseline instead would take 80px and
+// blow the 'n' up to Bilka's cap height. Re-measure if either height moves.
+//
+// The track mounts on the first entry, so Bilka leads. The order is a rotation
+// of the original (Netto, REMA 1000 tail the list) — in a seamless loop the
+// cycle is unchanged, only the card the visitor lands on.
 const CHAINS: Chain[] = [
+  { src: '/supermarkets/bilka.svg', alt: 'Bilka', height: 50 },
+  { src: '/supermarkets/nemlig.svg', alt: 'nemlig.com', height: 62 },
+  { src: '/supermarkets/foetex.svg', alt: 'føtex', height: 104 },
+  { src: '/supermarkets/spar.svg', alt: 'SPAR', height: 44 },
   { src: '/supermarkets/netto-wordmark.svg', alt: 'Netto', height: 42, disc: { src: '/logos/netto.png', height: 54 } },
   { src: '/supermarkets/rema1000.svg', alt: 'REMA 1000', height: 50 },
-  { src: '/supermarkets/bilka.svg', alt: 'Bilka', height: 50 },
-  { src: '/supermarkets/nemlig.svg', alt: 'nemlig.com', height: 46 },
-  { src: '/supermarkets/foetex.svg', alt: 'føtex', height: 104 },
 ]
 
 // The track renders the logos three times so the carousel can loop seamlessly
@@ -62,7 +75,7 @@ export default function Supermarkets() {
             <div
               key={`${c.alt}-${i}`}
               aria-hidden={clone || undefined}
-              // Cell width + gap must keep one 5-logo cycle wider than the
+              // Cell width + gap must keep one 6-logo cycle wider than the
               // viewport at 1920, so the tripled loop never shows the same
               // logo twice at once (stride ≈ 320+140 = 460px → ~4.2 visible).
               // Below sm the cell spans 100vw minus a gap per side, so exactly
