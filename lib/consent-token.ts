@@ -26,6 +26,11 @@ const CONFIRM_TTL_SECONDS = 7 * 24 * 60 * 60 // 7 days
 // and referrer headers too.
 export const CONFIRM_COOKIE = 'am_confirm'
 
+// The cookie is scoped to the one page that reads it. Set (api/bekraeft) and
+// delete (bekraeft page) MUST use this same path: a delete emitted under a
+// different path silently no-ops in the browser and strands a stale cookie.
+export const CONFIRM_COOKIE_PATH = '/bekraeft'
+
 export type ConsentSet = { mad: boolean; group: boolean }
 
 // A dedicated secret, NOT the Supabase service-role key. Signing consent with

@@ -9,12 +9,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 // upsert resolves to, so we can simulate a missing column.
 const upsertedRows: Record<string, unknown>[] = []
 let results: Array<{ data: unknown; error: unknown }> = []
-// Capture .update() patches (mergeConsent) + the public_id they filter on.
-const updatePatches: Array<{ patch: Record<string, unknown>; id: unknown }> = []
-let updateResults: Array<{ error: unknown }> = []
+// Capture .rpc() calls (redeemConsentToken) and script their results.
+const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = []
+let rpcResults: Array<{ data: unknown; error: unknown }> = []
+// Script the select chain (isConfirmTokenRedeemed). A null entry simulates a
+// query that never resolves (the 2s timeout race must win).
+const selectFilters: Array<{ col: string; value: unknown }> = []
+let selectResults: Array<{ data: unknown; error: unknown } | null> = []
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      rpcCalls.push({ fn, args })
+      return Promise.resolve(rpcResults.shift() ?? { data: null, error: null })
+    },
     from: () => ({
       upsert: (row: Record<string, unknown>) => {
         upsertedRows.push(row)
@@ -24,12 +32,23 @@ vi.mock('@supabase/supabase-js', () => ({
           }),
         }
       },
-      update: (patch: Record<string, unknown>) => ({
-        eq: (_col: string, id: unknown) => ({
-          select: () => {
-            updatePatches.push({ patch, id })
-            return Promise.resolve(updateResults.shift() ?? { data: [{ public_id: 'x' }], error: null })
-          },
+      select: () => ({
+        eq: (col: string, value: unknown) => ({
+          limit: () => ({
+            // boundedRead attaches .abortSignal() to the builder, then awaits
+            // the builder itself — the mock must be a thenable WITH abortSignal.
+            maybeSingle: () => {
+              selectFilters.push({ col, value })
+              const next = selectResults.shift()
+              // null = hang forever, so the caller's timeout race decides.
+              const p: Promise<unknown> =
+                next === null ? new Promise(() => {}) : Promise.resolve(next ?? { data: null, error: null })
+              return {
+                abortSignal: () => {},
+                then: (...args: Parameters<Promise<unknown>['then']>) => p.then(...args),
+              }
+            },
+          }),
         }),
       }),
     }),
@@ -40,7 +59,7 @@ vi.mock('@supabase/supabase-js', () => ({
 process.env.SUPABASE_URL = 'https://example.supabase.co'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key'
 
-import { mirrorSignup, mergeConsent } from '@/lib/db'
+import { mirrorSignup, redeemConsentToken, isConfirmTokenRedeemed } from '@/lib/db'
 
 const CONSENT = { version: '2026-07-13', mad: true, group: false }
 
@@ -152,71 +171,99 @@ describe('mirrorSignup consent storage', () => {
   })
 })
 
-describe('mergeConsent (409 re-signup path)', () => {
+describe('redeemConsentToken (atomic double opt-in redemption)', () => {
   beforeEach(() => {
-    updatePatches.length = 0
-    updateResults = []
+    rpcCalls.length = 0
+    rpcResults = []
   })
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  it('flags newly-consented brands on the existing row (by email) without downgrading', async () => {
-    updateResults = [{ data: [{ public_id: 'p1' }], error: null }]
-    // Re-signup ticks both boxes; only the TRUE ones are written, plus version/at.
-    await mergeConsent('A@Example.com', { version: '2026-07-13', mad: true, group: true })
+  const REDEEM = {
+    publicId: '08a3b8b6-9482-4ff1-9703-220331a068dd',
+    tokenId: 'sha256-of-token',
+    mad: true,
+    group: false,
+    version: '2026-07-14.2-mad',
+  }
 
-    expect(updatePatches).toHaveLength(1)
-    const { patch, id } = updatePatches[0]
-    expect(id).toBe('a@example.com') // lower-cased, keyed on email
-    expect(patch.marketing_consent_mad).toBe(true)
-    expect(patch.marketing_consent_group).toBe(true)
-    expect(patch.consent_version).toBe('2026-07-13')
-    expect(typeof patch.consent_at).toBe('string')
+  it('calls the RPC with the exact parameter mapping and returns applied', async () => {
+    rpcResults = [{ data: 'applied', error: null }]
+
+    await expect(redeemConsentToken(REDEEM)).resolves.toBe('applied')
+
+    expect(rpcCalls).toHaveLength(1)
+    expect(rpcCalls[0].fn).toBe('redeem_consent_token')
+    expect(rpcCalls[0].args).toEqual({
+      p_public_id: REDEEM.publicId,
+      p_token_id: REDEEM.tokenId,
+      p_mad: true,
+      p_group: false,
+      p_version: '2026-07-14.2-mad',
+    })
   })
 
-  it('only writes the true flags — never sets a flag to false', async () => {
-    updateResults = [{ data: [{ public_id: 'p1' }], error: null }]
-    await mergeConsent('b@x.dk', { version: 'v', mad: false, group: true })
-
-    const { patch } = updatePatches[0]
-    expect('marketing_consent_mad' in patch).toBe(false) // false is not written (no downgrade)
-    expect(patch.marketing_consent_group).toBe(true)
+  it('passes the already_used outcome through (replayed link)', async () => {
+    rpcResults = [{ data: 'already_used', error: null }]
+    await expect(redeemConsentToken(REDEEM)).resolves.toBe('already_used')
   })
 
-  it('is a no-op when nothing is affirmatively consented', async () => {
-    await mergeConsent('c@x.dk', { version: 'v', mad: false, group: false })
-    expect(updatePatches).toHaveLength(0)
+  it('passes the ineligible outcome through (row gone or unsubscribed)', async () => {
+    rpcResults = [{ data: 'ineligible', error: null }]
+    await expect(redeemConsentToken(REDEEM)).resolves.toBe('ineligible')
   })
 
-  it('is a no-op when no consent object is passed', async () => {
-    await mergeConsent('d@x.dk', undefined)
-    expect(updatePatches).toHaveLength(0)
+  it('throws on an RPC error — a transport failure must never read as a state', async () => {
+    rpcResults = [{ data: null, error: { message: 'connection reset' } }]
+    await expect(redeemConsentToken(REDEEM)).rejects.toThrow(/connection reset/)
   })
 
-  it('strips a not-yet-migrated column and retries', async () => {
-    updateResults = [
-      { data: null, error: { code: 'PGRST204', message: "Could not find the 'consent_version' column of 'signup' in the schema cache" } },
-      { data: [{ public_id: 'p1' }], error: null },
-    ]
-    await mergeConsent('e@x.dk', { version: '2026-07-13', mad: true, group: false })
+  it('throws on an unexpected outcome value instead of guessing', async () => {
+    rpcResults = [{ data: 'partial', error: null }]
+    await expect(redeemConsentToken(REDEEM)).rejects.toThrow(/unexpected outcome/)
+  })
+})
 
-    expect(updatePatches).toHaveLength(2)
-    expect('consent_version' in updatePatches[1].patch).toBe(false)
-    expect(updatePatches[1].patch.marketing_consent_mad).toBe(true)
+describe('isConfirmTokenRedeemed (render-time replay check, UX only)', () => {
+  beforeEach(() => {
+    selectFilters.length = 0
+    selectResults = []
+  })
+  afterEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('rethrows a non-column error', async () => {
-    updateResults = [{ data: null, error: { code: '57014', message: 'canceling statement due to statement timeout' } }]
-    await expect(mergeConsent('f@x.dk', { mad: true })).rejects.toThrow(/timeout/)
+  it('true when a consent_event row carries the token id', async () => {
+    selectResults = [{ data: { id: 1 }, error: null }]
+    await expect(isConfirmTokenRedeemed('tok-1')).resolves.toBe(true)
+    expect(selectFilters[0]).toEqual({ col: 'token_id', value: 'tok-1' })
   })
 
-  it('warns (does not throw) when no signup row matches the email', async () => {
-    // Person is in the upstream waitlist (409) but not mirrored into Supabase.
-    updateResults = [{ data: [], error: null }]
-    const warn = vi.spyOn(console, 'error').mockImplementation(() => {})
-    await mergeConsent('missing@x.dk', { mad: true, group: true })
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/no Supabase signup row matched/))
-    warn.mockRestore()
+  it('false when no row matches (token not yet redeemed)', async () => {
+    selectResults = [{ data: null, error: null }]
+    await expect(isConfirmTokenRedeemed('tok-2')).resolves.toBe(false)
+  })
+
+  it('false without querying for an empty token id', async () => {
+    await expect(isConfirmTokenRedeemed('')).resolves.toBe(false)
+    expect(selectFilters).toHaveLength(0)
+  })
+
+  it('fails OPEN (false) when the query hangs past the 2s race', async () => {
+    vi.useFakeTimers()
+    try {
+      selectResults = [null] // never resolves — only the timeout can win
+      const pending = isConfirmTokenRedeemed('tok-3')
+      await vi.advanceTimersByTimeAsync(2001)
+      await expect(pending).resolves.toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('throws on a real query error so the caller can log the fall-open', async () => {
+    selectResults = [{ data: null, error: { message: 'permission denied' } }]
+    await expect(isConfirmTokenRedeemed('tok-4')).rejects.toThrow(/permission denied/)
   })
 })
