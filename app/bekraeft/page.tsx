@@ -34,13 +34,16 @@ export const dynamic = 'force-dynamic'
 // jar.delete(name) emits Path=/, which browsers will NOT match against a
 // Path=/bekraeft cookie — the delete silently no-ops and the stale cookie
 // loops the user back into a dead form. Always delete with the explicit path.
-// TRANSITION (remove after ~mid-Aug 2026): pre-deploy cookies were set with
-// Path=/, which a Path=/bekraeft delete cannot clear — expire that variant
-// too, or a user mid-flow at deploy time keeps a stale bearer cookie that
-// shadows the scoped one for up to 30 minutes.
+//
+// ONE delete only: Next's response-cookie jar is keyed by NAME, so a second
+// delete for the same name (e.g. a legacy Path=/ variant) would REPLACE this
+// one instead of accompanying it — that clobbering is exactly what broke the
+// token cookie in the /api/bekraeft route on 4 Aug. Legacy Path=/ cookies from
+// before the path-scoping deploy are expired by the GET route (raw header
+// append), which every emailed link passes through; they die within 30 minutes
+// regardless.
 function deleteConfirmCookie(jar: Awaited<ReturnType<typeof cookies>>) {
   jar.delete({ name: CONFIRM_COOKIE, path: CONFIRM_COOKIE_PATH })
-  jar.delete({ name: CONFIRM_COOKIE, path: '/' })
 }
 
 /**

@@ -198,8 +198,9 @@ describe('confirmAction outcomes', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {})
     await expect(action(formData('mad'))).rejects.toThrow('NEXT_REDIRECT:/bekraeft?state=expired')
     expect(jar.delete).toHaveBeenCalledWith({ name: 'am_confirm', path: '/bekraeft' })
-    // TRANSITION: the pre-deploy Path=/ variant must be expired too.
-    expect(jar.delete).toHaveBeenCalledWith({ name: 'am_confirm', path: '/' })
+    // ONE delete only: the response-cookie jar keys by name, so a second
+    // same-name delete would clobber this one (the 4 Aug route regression).
+    expect(vi.mocked(jar.delete).mock.calls).toHaveLength(1)
     // Data minimisation: the analytics event must NOT carry the signup id for
     // someone who may have left the list — the server log carries it instead.
     expect(vi.mocked(trackServer)).toHaveBeenCalledWith('Consent Confirm Ineligible', {})
