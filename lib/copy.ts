@@ -79,16 +79,36 @@ export function confirmSentBody(email: string): string {
 // that wrote consent on GET would have the scanner consent on the person's
 // behalf, before they ever saw the mail.
 export const CONFIRM_PAGE_HEADING = 'Bekræft, at du vil høre nyt om Altid Mad'
-export const CONFIRM_PAGE_INTRO = 'Når du trykker på knappen, bekræfter du følgende:'
+// Names the actual two-step interaction: the boxes ship unticked (a pre-ticked
+// box is not valid consent), so "press the button" alone described one action
+// where two are required.
+export const CONFIRM_PAGE_INTRO = 'Sæt kryds ved det, du vil sige ja til, og tryk på knappen:'
 export const CONFIRM_PAGE_BUTTON = 'Bekræft'
+export const CONFIRM_PAGE_BUTTON_PENDING = 'Bekræfter…'
+// Read by screen readers while the submission is in flight (the button itself
+// is disabled, which drops focus silently).
+export const CONFIRM_PENDING_ANNOUNCE = 'Sender din bekræftelse'
+// Inline error when the form is submitted with every box unticked (reachable
+// without JavaScript). NOT the expired-link screen: the link is fine.
+export const CONFIRM_PICK_ONE = 'Vælg mindst ét samtykke for at fortsætte.'
 
 export const CONFIRM_DONE_HEADING = 'Tak, nu er du med'
 export const CONFIRM_DONE_BODY =
   'Du vil fremover høre fra Altid Mad, når vi har nyt til dig. Du kan altid trække dit samtykke tilbage via afmeldingslinket i vores e-mails.'
 
+// A replayed confirmation (double-click, back button, re-clicked email link).
+// Speaks about the past act, not the present state: the consent may have been
+// revoked since redemption, so "du er med" could be false where "du har
+// allerede bekræftet" is always true.
+export const CONFIRM_ALREADY_HEADING = 'Du har allerede bekræftet'
+export const CONFIRM_ALREADY_BODY =
+  'Din bekræftelse er registreret, og du behøver ikke gøre mere. Du kan altid trække dit samtykke tilbage via afmeldingslinket i vores e-mails.'
+
 export const CONFIRM_EXPIRED_HEADING = 'Linket virker desværre ikke længere'
 export const CONFIRM_EXPIRED_BODY =
   'Det kan være udløbet eller være blevet ændret undervejs i din mail. Skriv dig op igen, så sender vi dig et nyt link.'
+
+export const CONFIRM_HOME_CTA = 'Gå til altidmad.dk'
 
 export const CONFIRM_RATE_LIMITED_HEADING = 'Vi har allerede sendt dig en mail'
 export const CONFIRM_RATE_LIMITED_BODY =

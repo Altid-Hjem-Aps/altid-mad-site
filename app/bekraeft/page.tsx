@@ -1,7 +1,15 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { verifyConfirmToken, grantedConsent, tokenId, CONFIRM_COOKIE } from '@/lib/consent-token'
-import { mergeConsent, getSignupByPublicId, recordConsentEvent, isTokenAlreadyUsed } from '@/lib/db'
+import { after } from 'next/server'
+import {
+  verifyConfirmToken,
+  grantedConsent,
+  tokenId,
+  CONFIRM_COOKIE,
+  CONFIRM_COOKIE_PATH,
+} from '@/lib/consent-token'
+import { redeemConsentToken, isConfirmTokenRedeemed } from '@/lib/db'
+import { trackServer, flushAmplitude } from '@/lib/amplitude.server'
 import ConsentConfirmForm from '@/components/ConsentConfirmForm'
 import { BRAND } from '@/lib/brand'
 import {
@@ -14,9 +22,26 @@ import {
   CONFIRM_DONE_BODY,
   CONFIRM_EXPIRED_HEADING,
   CONFIRM_EXPIRED_BODY,
+  CONFIRM_ALREADY_HEADING,
+  CONFIRM_ALREADY_BODY,
+  CONFIRM_PICK_ONE,
+  CONFIRM_HOME_CTA,
 } from '@/lib/copy'
 
 export const dynamic = 'force-dynamic'
+
+// The cookie is scoped to /bekraeft (see /api/bekraeft). A bare
+// jar.delete(name) emits Path=/, which browsers will NOT match against a
+// Path=/bekraeft cookie — the delete silently no-ops and the stale cookie
+// loops the user back into a dead form. Always delete with the explicit path.
+// TRANSITION (remove after ~mid-Aug 2026): pre-deploy cookies were set with
+// Path=/, which a Path=/bekraeft delete cannot clear — expire that variant
+// too, or a user mid-flow at deploy time keeps a stale bearer cookie that
+// shadows the scoped one for up to 30 minutes.
+function deleteConfirmCookie(jar: Awaited<ReturnType<typeof cookies>>) {
+  jar.delete({ name: CONFIRM_COOKIE, path: CONFIRM_COOKIE_PATH })
+  jar.delete({ name: CONFIRM_COOKIE, path: '/' })
+}
 
 /**
  * Writes the consent. Only reachable from the button on this page — never from
@@ -27,64 +52,75 @@ export const dynamic = 'force-dynamic'
  * from a form field, anyone holding the link could confirm more than they
  * ticked (escalating a Mad-only tick into Mad + group), and the stored record
  * would be a signed claim about a set nothing vouches for.
+ *
+ * The write itself is ONE atomic RPC (redeem_consent_token): evidence row and
+ * signup flags commit together, the row lock serializes against a concurrent
+ * withdrawal, and the unique token_id index makes redemption single-use. The
+ * cookie survives a successful redemption on purpose: a replay (double-click,
+ * back button, second tab, re-clicked email link) then reaches the RPC and
+ * gets the honest 'already_used' answer instead of the expired-link screen.
  */
 async function confirmAction(formData: FormData) {
   'use server'
+
+  // Amplitude's node SDK only ENQUEUES events; every branch below ends in a
+  // redirect (which throws), and Vercel freezes the function right after the
+  // response — an un-flushed queue is silently dropped. after() keeps the
+  // instance alive until the flush has actually left the box.
+  after(async () => {
+    await flushAmplitude().promise
+  })
 
   const jar = await cookies()
   const raw = jar.get(CONFIRM_COOKIE)?.value
   const claim = verifyConfirmToken(raw, Date.now() / 1000)
   if (!claim) {
-    jar.delete(CONFIRM_COOKIE)
+    deleteConfirmCookie(jar)
+    trackServer('Consent Confirm Link Dead', { reason: raw ? 'bad-signature-or-expired' : 'no-cookie' })
     redirect('/bekraeft?state=expired')
   }
 
   const granted = grantedConsent(claim, formData.getAll('consent').map(String))
-  // Unticked everything: nothing to record. Not an error, just nothing to do.
+  // Unticked everything: a declined form, not a dead link. Keep the cookie and
+  // send them back to the form with the inline error.
   if (!granted.mad && !granted.group) {
-    jar.delete(CONFIRM_COOKIE)
-    redirect('/bekraeft?state=expired')
+    trackServer('Consent Confirm Nothing Ticked', { signup_id: claim.publicId }, claim.publicId)
+    redirect('/bekraeft?state=pick')
   }
 
-  const row = await getSignupByPublicId(claim.publicId)
-  // Fail closed. A deleted row, or one that has left the list, must not get a
-  // marketing consent written onto it — a token minted six days ago says nothing
-  // about the row's state today.
-  if (!row || row.unsubscribed) {
-    jar.delete(CONFIRM_COOKIE)
-    redirect('/bekraeft?state=expired')
-  }
-
-  // The RESULTING state, not the delta: someone who already holds one flag and
-  // confirms the other must end up recorded as holding both, or the audit table
-  // answers "did you hold this consent" wrong for exactly the people it matters
-  // most for.
-  const after = { mad: row.consentMad || granted.mad, group: row.consentGroup || granted.group }
-
-  // Evidence FIRST, flags second. recordConsentEvent throws on a duplicate
-  // token_id, so a replayed link (forwarded mail, scanner log, shared browser,
-  // back button) is refused BEFORE it can re-grant consent the person has since
-  // revoked in the preference centre. Writing the flag first and the evidence
-  // second would leave a consent with nothing behind it whenever the evidence
-  // failed — which is the one thing this table exists to prevent.
+  let outcome
   try {
-    await recordConsentEvent({
+    outcome = await redeemConsentToken({
       publicId: claim.publicId,
-      method: 'double-opt-in-email',
-      version: CONSENT_VERSION,
-      mad: after.mad,
-      group: after.group,
       tokenId: tokenId(raw as string),
+      mad: granted.mad,
+      group: granted.group,
+      version: CONSENT_VERSION,
     })
   } catch (e) {
-    jar.delete(CONFIRM_COOKIE)
-    if (isTokenAlreadyUsed(e)) redirect('/bekraeft?state=expired')
+    // Loud and greppable: a redemption that failed in transit must surface as
+    // an error page, never as a state screen that could misreport the write.
+    console.error(`consent redemption failed for ${claim.publicId}`, e)
     throw e
   }
 
-  await mergeConsent(row.email, { version: CONSENT_VERSION, mad: granted.mad, group: granted.group })
+  if (outcome === 'already_used') {
+    trackServer('Consent Confirm Replayed', { signup_id: claim.publicId }, claim.publicId)
+    redirect('/bekraeft?state=already')
+  }
+  if (outcome === 'ineligible') {
+    // Row gone or unsubscribed since the mail was sent. The expired screen is a
+    // deliberate safety lie here: an honest answer would leak list-membership.
+    // No signup_id on this event: the person may have left the list, and tying
+    // their identifier to consent activity in analytics is processing we don't
+    // need — the server log above support greps carries the id instead.
+    deleteConfirmCookie(jar)
+    console.error(`consent redemption ineligible for ${claim.publicId} (row gone or unsubscribed)`)
+    trackServer('Consent Confirm Ineligible', {})
+    redirect('/bekraeft?state=expired')
+  }
 
-  jar.delete(CONFIRM_COOKIE)
+  trackServer('Consent Confirmed', { signup_id: claim.publicId, mad: granted.mad, group: granted.group }, claim.publicId)
   redirect('/bekraeft?state=done')
 }
 
@@ -101,6 +137,26 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Every terminal state shares this shape, and every one of them gets the home
+// CTA — the success screen used to be the flow's only dead end.
+function TerminalScreen({ heading, body }: { heading: string; body: string }) {
+  return (
+    <Shell>
+      <h1 className="text-2xl font-medium mb-4">{heading}</h1>
+      <p className="text-base leading-relaxed mb-8" style={{ color: BRAND.textMutedWarm }}>
+        {body}
+      </p>
+      <a
+        href="/"
+        className="inline-block rounded-[20px] px-6 py-3 text-base font-medium"
+        style={{ background: BRAND.signal, color: BRAND.forestDeep }}
+      >
+        {CONFIRM_HOME_CTA}
+      </a>
+    </Shell>
+  )
+}
+
 export default async function BekraeftPage({
   searchParams,
 }: {
@@ -109,35 +165,32 @@ export default async function BekraeftPage({
   const { state } = await searchParams
 
   if (state === 'done') {
-    return (
-      <Shell>
-        <h1 className="text-2xl font-medium mb-4">{CONFIRM_DONE_HEADING}</h1>
-        <p className="text-base leading-relaxed" style={{ color: BRAND.textMutedWarm }}>
-          {CONFIRM_DONE_BODY}
-        </p>
-      </Shell>
-    )
+    return <TerminalScreen heading={CONFIRM_DONE_HEADING} body={CONFIRM_DONE_BODY} />
+  }
+  if (state === 'already') {
+    return <TerminalScreen heading={CONFIRM_ALREADY_HEADING} body={CONFIRM_ALREADY_BODY} />
   }
 
   const jar = await cookies()
-  const claim = state === 'expired' ? null : verifyConfirmToken(jar.get(CONFIRM_COOKIE)?.value, Date.now() / 1000)
+  const raw = jar.get(CONFIRM_COOKIE)?.value
+  const claim = state === 'expired' ? null : verifyConfirmToken(raw, Date.now() / 1000)
 
   if (!claim) {
-    return (
-      <Shell>
-        <h1 className="text-2xl font-medium mb-4">{CONFIRM_EXPIRED_HEADING}</h1>
-        <p className="text-base leading-relaxed mb-8" style={{ color: BRAND.textMutedWarm }}>
-          {CONFIRM_EXPIRED_BODY}
-        </p>
-        <a
-          href="/"
-          className="inline-block rounded-[20px] px-6 py-3 text-base font-medium"
-          style={{ background: BRAND.signal, color: BRAND.forestDeep }}
-        >
-          Gå til altidmad.dk
-        </a>
-      </Shell>
-    )
+    return <TerminalScreen heading={CONFIRM_EXPIRED_HEADING} body={CONFIRM_EXPIRED_BODY} />
+  }
+
+  // UX only, fail open: someone re-clicking the email link after confirming
+  // should see the honest answer, not a form whose only possible outcome is
+  // "already used". Enforcement lives in the RPC, so an error here logs and
+  // falls through to the form rather than blocking first-time confirmers.
+  let redeemed = false
+  try {
+    redeemed = await isConfirmTokenRedeemed(tokenId(raw as string))
+  } catch (e) {
+    console.error('bekraeft: redeemed-check failed, falling open to the form', e)
+  }
+  if (redeemed) {
+    return <TerminalScreen heading={CONFIRM_ALREADY_HEADING} body={CONFIRM_ALREADY_BODY} />
   }
 
   // Only the consents the token vouches for are offered. Each is tickable
@@ -153,7 +206,11 @@ export default async function BekraeftPage({
       <p className="text-base" style={{ color: BRAND.textMutedWarm }}>
         {CONFIRM_PAGE_INTRO}
       </p>
-      <ConsentConfirmForm allowed={allowed} action={confirmAction} />
+      <ConsentConfirmForm
+        allowed={allowed}
+        action={confirmAction}
+        error={state === 'pick' ? CONFIRM_PICK_ONE : undefined}
+      />
     </Shell>
   )
 }
