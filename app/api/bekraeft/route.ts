@@ -21,14 +21,16 @@ import { verifyConfirmToken, CONFIRM_COOKIE, CONFIRM_COOKIE_PATH } from '@/lib/c
 // below cannot overwrite or delete them, and a stale root cookie can shadow a
 // fresh one on /bekraeft for up to its 30-minute life. Expire the legacy
 // variant on every response from this endpoint.
-function expireLegacyRootCookie(res: NextResponse) {
-  res.cookies.set(CONFIRM_COOKIE, '', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  })
+//
+// RAW HEADER APPEND, not res.cookies.set: Next's ResponseCookies is keyed by
+// NAME ONLY, so a second set() for am_confirm REPLACES the first even when the
+// paths differ — which silently dropped the token cookie and sent every fresh
+// confirmation link to the expired screen (caught in live QA 4 Aug). Two
+// same-name cookies with different paths need two literal Set-Cookie headers,
+// and this append must run AFTER every res.cookies.set (ResponseCookies
+// re-serialises the whole header on each set, wiping raw appends).
+function appendLegacyRootCookieExpiry(res: NextResponse) {
+  res.headers.append('Set-Cookie', `${CONFIRM_COOKIE}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=lax`)
 }
 
 export function GET(req: NextRequest) {
@@ -53,7 +55,7 @@ export function GET(req: NextRequest) {
       path: CONFIRM_COOKIE_PATH,
       maxAge: 0,
     })
-    expireLegacyRootCookie(res)
+    appendLegacyRootCookieExpiry(res)
     res.headers.set('Cache-Control', 'private, no-store')
     return res
   }
@@ -74,7 +76,7 @@ export function GET(req: NextRequest) {
     // confirmed" answer — the token itself is single-use in the database.
     maxAge: 60 * 30,
   })
-  expireLegacyRootCookie(res)
+  appendLegacyRootCookieExpiry(res)
   // A cached 302 + Set-Cookie would hand one person's identity to the next
   // visitor. Vercel's edge caches aggressively; say no explicitly.
   res.headers.set('Cache-Control', 'private, no-store')
