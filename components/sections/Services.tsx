@@ -23,7 +23,7 @@ type Benefit = {
 
 const BENEFITS: Benefit[] = [
   {
-    title: 'Spar op til 29,2 %',
+    title: 'Spar op til 53,1 %',
     desc: 'Familier der handler systematisk på tilbud, sparer markant mere end de tror er muligt. ',
     icon: '/benefits/spar.svg',
     Anim: PiggyCoinIcon,

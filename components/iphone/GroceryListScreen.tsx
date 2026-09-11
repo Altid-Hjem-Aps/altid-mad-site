@@ -29,7 +29,7 @@ function isoWeek(d = new Date()): number {
 type Store = { key: string; name: string; logo: string; count: number; save: string; saveHover?: string; round?: boolean }
 const STORES: Store[] = [
   { key: 'bilka', name: 'Bilka', logo: '/logos/bilka.png', count: 8, save: '28 kr.' },
-  { key: 'netto', name: 'Netto', logo: '/logos/netto.png', count: 12, save: '31 kr.', round: true },
+  { key: 'netto', name: 'Netto', logo: '/supermarkets/netto-disc.svg', count: 12, save: '31 kr.', round: true },
   { key: 'rema', name: 'REMA 1000', logo: '/logos/rema.png', count: 13, save: '37 kr.', saveHover: '43 kr.' },
 ]
 

@@ -26,7 +26,7 @@ const POSTS: Post[] = [
     icon: '/services/icon-mad.svg',
     category: 'Mad',
     title: 'Hvilket supermarked er billigst?',
-    excerpt: 'Vi sammenlignede den samme kurv med 23 varer hos 7 kæder. Se hvem der var billigst, hvad forskellen betyder på et år, og hvordan analysen er lavet.',
+    excerpt: 'Vi sammenlignede den samme kurv med 23 varer hos 13 kæder. Se hvem der var billigst, hvad forskellen betyder på et år, og hvordan analysen er lavet.',
     meta: '5 min læsning · 26. jul 2026',
   },
   {

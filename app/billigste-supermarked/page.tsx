@@ -17,7 +17,7 @@ const FAQ: { q: string; a: string[] }[] = [
   {
     q: 'Hvilket supermarked er billigst i Danmark?',
     a: [
-      'Rema 1000 var billigst for hele varekurven i vores Q2-analyse.',
+      'Lidl var billigst for hele varekurven i vores Q3-analyse.',
       'Resultatet er et øjebliksbillede, fordi priser, tilbud og familiers indkøb varierer.',
     ],
   },
@@ -38,15 +38,15 @@ const FAQ: { q: string; a: string[] }[] = [
   {
     q: 'Hvor meget kan en familie spare?',
     a: [
-      'Forskellen mellem den billigste og dyreste samlede kurv var op til 11.305 kr. om året.',
-      'Besparelsen kan nå op til 15.481 kr. om året, hvis hver vare købes dér, hvor den er billigst.',
+      'Forskellen mellem den billigste og dyreste samlede kurv var op til 27.624 kr. om året.',
+      'Besparelsen kan nå op til 36.248 kr. om året, hvis hver vare købes dér, hvor den er billigst.',
     ],
   },
   {
     q: 'Hvordan er analysen lavet?',
     a: [
-      'Vi sammenlignede den samme kurv med 23 varer hos 7 kæder i en enkelt uge.',
-      'Varekurven tager udgangspunkt i en husstand med 2 voksne og 2 teenagere, og hele metoden findes i Q2-rapporten.',
+      'Vi sammenlignede den samme kurv med 23 varer hos 13 kæder i en enkelt uge.',
+      'Varekurven tager udgangspunkt i en husstand med 2 voksne og 2 teenagere, og hele metoden findes i Q3-rapporten.',
     ],
   },
   {
@@ -92,7 +92,7 @@ export default function BilligsteSupermarked() {
     <>
       <Nav
         banner={{
-          longPrefix: 'Vores pristjek: op til 11.305 kr. at spare på dagligvarer om året. ',
+          longPrefix: 'Vores pristjek: op til 27.624 kr. at spare på dagligvarer om året. ',
           shortPrefix: 'Spar på dagligvarer? ',
           source: 'billigste-supermarked-banner',
         }}
@@ -118,29 +118,28 @@ export default function BilligsteSupermarked() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Hvilket supermarked er billigst?</h1>
           <p className="text-xs mb-10" style={{ color: 'rgba(22,50,35,0.5)' }}>
-            Opdateret: juli 2026 · Baseret på Altid Mads Q2-analyse · Opdateres kvartalsvist
+            Opdateret: september 2026 · Baseret på Altid Mads Q3-analyse · Opdateres kvartalsvist
           </p>
 
           <P>
-            Rema 1000 var det billigste supermarked for hele varekurven i vores Q2-analyse. Kurven kostede
-            802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar.
+            Lidl var det billigste supermarked for hele varekurven i vores Q3-analyse. Kurven kostede
+            782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand.
           </P>
           <P>
             Det betyder ikke, at Rema 1000 er billigst på alle varer eller i alle uger. Det bedste valg
             afhænger også af jeres faste indkøb, ugens tilbud og hvor mange butikker I vil besøge.
           </P>
 
-          <H2>Rema 1000 var billigst i vores pristjek</H2>
+          <H2>Lidl var billigst i vores pristjek</H2>
           <P>
-            Vi sammenlignede den samme ugentlige kurv med 23 varer hos 7 kæder: Rema 1000, Netto, Bilka,
-            Føtex, Nemlig.com, Min Købmand og Spar.
+            Vi sammenlignede den samme ugentlige kurv med 23 varer hos 13 kæder: Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand.
           </P>
           <P>
-            Rema 1000 havde den billigste samlede kurv til 802,79 kr., mens Spar var dyrest til 1.020,20 kr.
-            Prisforskellen på præcis de samme varer var 21,3 pct.
+            Lidl havde den billigste samlede kurv til 782,70 kr., mens Min Købmand var dyrest til 1.313,94 kr.
+            Prisforskellen på præcis de samme varer var 40,4 pct.
           </P>
           <P>
-            Forskellen svarer til 217,41 kr. om ugen og op til 11.305 kr. om året. For en familie kan valget
+            Forskellen svarer til 531,24 kr. om ugen og op til 27.624 kr. om året. For en familie kan valget
             af supermarked derfor have mærkbar betydning for husholdningsbudgettet.
           </P>
 
@@ -150,8 +149,8 @@ export default function BilligsteSupermarked() {
             basisvarer er billigst ét sted, mens ugens tilbud gør andre varer billigere hos en anden kæde.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, falder kurvens pris til 722,49 kr. om ugen.
-            Sammenlignet med den dyreste samlede kurv giver det en besparelse på op til 15.481 kr. om året.
+            Hvis hver vare købes dér, hvor den er billigst, falder kurvens pris til 616,86 kr. om ugen.
+            Sammenlignet med den dyreste samlede kurv giver det en besparelse på op til 36.248 kr. om året.
           </P>
           <P>
             Det er dog sjældent praktisk at besøge alle kæder. Den reelle besparelse skal altid vejes op mod
@@ -170,19 +169,18 @@ export default function BilligsteSupermarked() {
 
           <H2>Sådan har vi lavet analysen</H2>
           <P>
-            Analysen tager udgangspunkt i den samme ugentlige kurv med 23 varer hos Rema 1000, Netto, Bilka,
-            Føtex, Nemlig.com, Min Købmand og Spar. Kurven er baseret på en husstand med 2 voksne og 2
+            Analysen tager udgangspunkt i den samme ugentlige kurv med 23 varer hos Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand. Kurven er baseret på en husstand med 2 voksne og 2
             teenagere.
           </P>
           <P>
-            Pristjekket er et øjebliksbillede fra en enkelt uge i vores Q2-analyse. Du kan læse den samlede
+            Pristjekket er et øjebliksbillede fra en enkelt uge i vores Q3-analyse. Du kan læse den samlede
             metode og se varegrundlaget i{' '}
             <a
-              href="/altid-mad-kvartalsrapport-q2.pdf"
+              href="/altid-mad-kvartalsrapport-q3.pdf"
               className="underline underline-offset-4 hover:opacity-70"
               style={{ color: FOREST }}
             >
-              Q2-rapporten
+              Q3-rapporten
             </a>
             .
           </P>

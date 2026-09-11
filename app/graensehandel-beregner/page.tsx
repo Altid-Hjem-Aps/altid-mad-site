@@ -90,7 +90,7 @@ export default function GraensehandelBeregner() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Kan grænsehandel betale sig?</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026
+            Opdateret: september 2026
           </p>
 
           <P>
@@ -137,10 +137,10 @@ export default function GraensehandelBeregner() {
           </P>
           <H2>Kan besparelsen hentes uden køreturen?</H2>
           <P>
-            Ja, en del familier kan spare ved at sammenligne danske supermarkeder og planlægge indkøbene bedre. I Altid Mads analyse kostede den samme ugentlige kurv med 23 varer til 2 voksne og 2 teenagere 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar.
+            Ja, en del familier kan spare ved at sammenligne danske supermarkeder og planlægge indkøbene bedre. I Altid Mads analyse kostede den samme ugentlige kurv med 23 varer til 2 voksne og 2 teenagere 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand.
           </P>
           <P>
-            Det er en forskel på 217,41 kr. om ugen, svarende til op til 11.305 kr. om året. Prisgabet på den samme kurv var 21,3 pct., uden at transport til grænsen skulle trækkes fra.
+            Det er en forskel på 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Prisgabet på den samme kurv var 40,4 pct., uden at transport til grænsen skulle trækkes fra.
           </P>
           <P>
             Kurven blev også sammenlignet hos Netto, Bilka, Føtex, Nemlig.com og Min Købmand. Du kan læse mere om metoden på siden om <A href="/billigste-supermarked">det billigste supermarked</A>.

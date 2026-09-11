@@ -207,17 +207,17 @@ function SavingsClaim() {
   return (
     <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(220,215,153,0.45)' }}>
       <p className="flex items-start justify-between gap-1.5 font-bold leading-snug" style={{ fontSize: 11, color: TEAL }}>
-        <span>Spar op til 1.250 kr./måned på madbudgettet.*</span>
+        <span>Spar op til 3.000 kr./måned på madbudgettet.*</span>
         <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden className="shrink-0" style={{ marginTop: 1 }}>
           <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42z" fill={TEAL} />
           <circle cx="6" cy="6" r="1.5" fill="#fff" />
         </svg>
       </p>
       <p className="mt-1 leading-relaxed" style={{ fontSize: 7.5, color: MUTED }}>
-        *En gennemsnitlig husstand på 4 personer kan spare op til 1.250 kr./måned på familiens indkøb med
+        *En gennemsnitlig husstand på 4 personer kan spare op til 3.000 kr./måned på familiens indkøb med
         Altid Mad.{' '}
         <a
-          href="/altid-mad-kvartalsrapport-q2.pdf"
+          href="/altid-mad-kvartalsrapport-q3.pdf"
           target="_blank"
           rel="noopener"
           style={{ textDecoration: 'underline' }}
@@ -294,16 +294,16 @@ function HensynScene({ t }: { t: number }) {
 
 // Same step as the budget scene, but as a slider in two beats: the thumb
 // sweeps 0 → 5.000 kr/md and gets a Bekræft — then Altid Mad takes over,
-// nudges it down to 4.750 (a ghost marker keeps the original spot), the
+// nudges it down to 2.000 (a ghost marker keeps the original spot), the
 // numbers flip to Hjem lime, and the full savings card lands below.
 const SLIDER_MS = 11400
 const SLIDER_MAX = 6000
 const SLIDER_CHOICE = 5000
-const SLIDER_OPTIMIZED = 3750 // 5.000 − 1.250, matching the savings card
+const SLIDER_OPTIMIZED = 2000 // 5.000 − 3.000, matching the savings card
 const SLIDE_UP: [number, number] = [600, 2600] // 0 → 5.000
 const CONFIRM_ACTIVE = 3200
 const CONFIRM_PRESS = 4400 // Bekræft rests a beat after the count-up, THEN clicks
-const REDUCE: [number, number] = [5200, 6600] // Altid Mad: 5.000 → 3.750
+const REDUCE: [number, number] = [5200, 6600] // Altid Mad: 5.000 → 2.000
 const SAVE_CARD = 7200 // the claim card lands below
 const PLAN_CTA = 8400 // Sammensæt vores madplan waits a beat, then appears
 
