@@ -22,7 +22,7 @@ import {
  *
  * Replaces the interactive calculator that used to sit here. Numbers are the
  * verified ones only: 5.481 kr./md is DST FU13 2024 for "2 voksne med børn"
- * (65.775 kr./year / 12) and 21,3 pct. is the Q2 basket gap. The 6.200 kr. is
+ * (65.775 kr./year / 12) and 40,4 pct. is the Q3 basket gap. The 6.200 kr. is
  * labelled as an example household, and the saving stays "op til" with its
  * condition — never a promised amount.
  */
@@ -85,7 +85,7 @@ export default function MadbudgetSammenligningMockup() {
     <div
       ref={ref}
       role="img"
-      aria-label="Eksempel: En husstand med 2 voksne og 2 børn bruger 6.200 kr. om måneden, 719 kr. mere end gennemsnittet på 5.481 kr., og kan spare op til 21,3 pct., hvis indkøbene ligner testkurven."
+      aria-label="Eksempel: En husstand med 2 voksne og 2 børn bruger 6.200 kr. om måneden, 719 kr. mere end gennemsnittet på 5.481 kr., og kan spare op til 40,4 pct., hvis indkøbene ligner testkurven."
       className="w-full max-w-[440px] rounded-[24px] px-5 pt-5 pb-4"
       style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: 'var(--font-onest)' }}
     >
@@ -141,7 +141,7 @@ export default function MadbudgetSammenligningMockup() {
             Mulig besparelse
           </p>
           <p className="font-bold text-[17px] leading-tight text-white">
-            Op til <span style={{ color: MINT }}>21,3 pct.</span> at spare
+            Op til <span style={{ color: MINT }}>40,4 pct.</span> at spare
           </p>
           <p style={{ fontSize: 11, color: ON_TEAL_MUTED, marginTop: 2 }}>
             Hvis jeres indkøb ligner testkurven

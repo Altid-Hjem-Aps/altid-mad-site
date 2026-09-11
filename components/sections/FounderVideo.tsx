@@ -318,7 +318,7 @@ export default function FounderVideo() {
             className={`mt-6 ${H2} text-white`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Spar op til <span style={{ color: '#DCD799' }}>15.000 kr.</span><br />
+            &ldquo;Spar op til <span style={{ color: '#DCD799' }}>36.000 kr.</span><br />
             på familiens indkøb.&rdquo;
           </h2>
 

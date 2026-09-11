@@ -7,7 +7,7 @@ import { CardHeader } from '@/components/seo/mockupKit'
  * The regneeksempel card on /mad-for-3000-om-maaneden: 3.000 kr./md as a
  * weekly figure held against the verified cheapest basket for a 2+2
  * household. All figures are either transparent arithmetic on the goal
- * (3.000 × 12 / 52 ≈ 692) or the verified Q2 basket number — nothing else.
+ * (3.000 × 12 / 52 ≈ 692) or the verified Q3 basket number — nothing else.
  */
 
 const TEAL = '#3E6924'
@@ -15,10 +15,10 @@ const MINT = '#DCD799'
 const AMBER = { wash: 'rgba(232,139,47,0.15)', ink: '#7d430e' }
 const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
-// 3.000 kr./md × 12 / 52 = 692,31 kr./uge; basket 802,79 - 692,31 = 110,48.
+// 3.000 kr./md × 12 / 52 = 692,31 kr./uge; basket 782,70 - 692,31 = 90,39.
 const GOAL_WEEK = 692
-const BASKET_WEEK = 802.79
-const GAP_WEEK = 110
+const BASKET_WEEK = 782.70
+const GAP_WEEK = 90
 
 export default function TreTusindMockup() {
   const { ref, running, reduced } = useMockupStart()
@@ -26,7 +26,7 @@ export default function TreTusindMockup() {
 
   const rows = [
     { label: 'Målet: 3.000 kr. pr. måned', value: `${GOAL_WEEK} kr. pr. uge`, width: (GOAL_WEEK / BASKET_WEEK) * 100, bar: 'rgba(62,105,36,0.45)' },
-    { label: 'Billigste testkurv, 2 voksne + 2 teenagere', value: '802,79 kr. pr. uge', width: 100, bar: TEAL },
+    { label: 'Billigste testkurv, 2 voksne + 2 teenagere', value: '782,70 kr. pr. uge', width: 100, bar: TEAL },
   ]
 
   return (
@@ -92,7 +92,7 @@ export default function TreTusindMockup() {
 
       <p className="text-[10px] mt-3 leading-relaxed" style={{ color: 'var(--text-light)' }}>
         Regneeksempel: 3.000 kr. pr. måned svarer til ca. 692 kr. pr. uge (× 12 ÷ 52). Kurvtallet er fra
-        vores Q2-pristjek af samme kurv med 23 varer hos 7 kæder.
+        vores Q3-pristjek af samme kurv med 23 varer hos 13 kæder.
       </p>
     </div>
   )

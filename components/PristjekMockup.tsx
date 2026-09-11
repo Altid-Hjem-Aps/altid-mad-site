@@ -7,10 +7,10 @@ import { CardHeader } from '@/components/seo/mockupKit'
 /**
  * Animated app-UI card for /billigste-supermarked, in the Altid Mad design
  * system (same tokens as the hero's iphone screens, scaled up for page
- * display): the app scans the week's basket across the 7 chains, highlights
+ * display): the app scans the week's basket across the 13 chains, highlights
  * the cheapest and dearest, and lands on the yearly saving.
  *
- * Numbers are the verified Q2 figures only — the intermediate chains show a
+ * Numbers are the verified Q3 figures only — the intermediate chains show a
  * checkmark, never an invented price.
  */
 
@@ -20,17 +20,24 @@ const AMBER = { wash: 'rgba(232,139,47,0.15)', ink: '#7d430e' }
 const HAIRLINE = 'rgba(62,105,36,0.06)'
 const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
-// Verified basket results: only Rema (cheapest) and Spar (dearest) carry
-// numbers; the other chains were scanned but their totals are not published.
-// icon = /logos/<file>.png where a chain logo exists; initials otherwise.
+// Verified basket results: only Lidl (cheapest) and Min Købmand (dearest)
+// carry numbers; the other chains were scanned but their totals are not
+// published. icon = /logos/<file>.png where a chain logo exists; initials
+// otherwise.
 const CHAINS: { name: string; icon?: string; initials?: string; result?: 'cheapest' | 'dearest' }[] = [
-  { name: 'Rema 1000', icon: '/logos/rema.png', result: 'cheapest' },
-  { name: 'Netto', icon: '/logos/netto.png' },
+  { name: 'Lidl', icon: '/logos/lidl.png', result: 'cheapest' },
+  { name: 'Rema 1000', icon: '/logos/rema.png' },
+  { name: 'Netto', icon: '/supermarkets/netto-disc.svg' },
+  { name: '365discount', initials: '365' },
+  { name: 'Meny', icon: '/logos/meny.png' },
   { name: 'Bilka', icon: '/logos/bilka.png' },
+  { name: 'Kvickly', initials: 'K' },
+  { name: 'Super Brugsen', initials: 'SB' },
   { name: 'Føtex', icon: '/logos/foetex.png' },
+  { name: 'Brugsen', initials: 'B' },
   { name: 'Nemlig.com', initials: 'N' },
-  { name: 'Min Købmand', initials: 'MK' },
-  { name: 'Spar', icon: '/logos/spar.png', result: 'dearest' },
+  { name: 'Spar', icon: '/logos/spar.png' },
+  { name: 'Min Købmand', initials: 'MK', result: 'dearest' },
 ]
 
 const SCAN_MS = 550
@@ -88,7 +95,7 @@ export default function PristjekMockup() {
       role="img"
       aria-label="Eksempel: Altid Mad sammenligner ugens kurv på tværs af kæderne"
     >
-      <CardHeader eyebrow="Ugens pristjek" title="Samme kurv · 23 varer · 7 kæder" />
+      <CardHeader eyebrow="Ugens pristjek" title="Samme kurv · 23 varer · 13 kæder" />
 
       <div className="rounded-2xl overflow-hidden mb-3" style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}` }}>
         {CHAINS.map((c, i) => {
@@ -122,11 +129,11 @@ export default function PristjekMockup() {
               </span>
               {isCheapest ? (
                 <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 6, background: MINT, color: TEAL, transition: 'opacity 0.45s ease' }}>
-                  Billigst · 802,79 kr.
+                  Billigst · 782,70 kr.
                 </span>
               ) : isDearest ? (
                 <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 6, background: AMBER.wash, color: AMBER.ink, transition: 'opacity 0.45s ease' }}>
-                  Dyrest · 1.020,20 kr.
+                  Dyrest · 1.313,94 kr.
                 </span>
               ) : (
                 <span className="shrink-0 text-[12px] tabular-nums" style={{ color: scanned ? TEAL : 'var(--text-light)' }}>
@@ -150,10 +157,10 @@ export default function PristjekMockup() {
       >
         <div className="min-w-0">
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 1 }}>
-            Forskel på samme kurv · 217,41 kr. pr. uge
+            Forskel på samme kurv · 531,24 kr. pr. uge
           </p>
           <p className="font-bold text-[17px] leading-tight text-white">
-            Op til <span style={{ color: MINT }}>11.305 kr.</span> om året
+            Op til <span style={{ color: MINT }}>27.624 kr.</span> om året
           </p>
         </div>
         <span

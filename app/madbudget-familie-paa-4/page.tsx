@@ -50,8 +50,8 @@ const FAQ: FaqItem[] = [
   {
     q: 'Hvor meget betyder supermarkedsvalget?',
     a: [
-      'Supermarkedsvalget kan betyde op til 11.305 kr. om året i vores analyse.',
-      'Den samme kurv med 23 varer kostede 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar, en forskel på 21,3 pct.',
+      'Supermarkedsvalget kan betyde op til 27.624 kr. om året i vores analyse.',
+      'Den samme kurv med 23 varer kostede 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand, en forskel på 40,4 pct.',
     ],
   },
   {
@@ -90,7 +90,7 @@ export default function MadbudgetFamiliePaa4() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Hvad koster mad til en familie på 4?</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026 · Kilde: Danmarks Statistik, Forbrugsundersøgelsen 2024
+            Opdateret: september 2026 · Kilde: Danmarks Statistik, Forbrugsundersøgelsen 2024
           </p>
 
           <P>
@@ -126,15 +126,15 @@ export default function MadbudgetFamiliePaa4() {
           <P>
             Andre forhold spiller også ind. Specialkost, økologi, måltider ude, mange madpakker og gæster kan alle gøre et højere budget både forståeligt og nødvendigt.
           </P>
-          <H2>Samme madkurv kan koste 21,3 pct. mere</H2>
+          <H2>Samme madkurv kan koste 40,4 pct. mere</H2>
           <P>
-            Vi sammenlignede den samme ugentlige kurv med 23 varer hos Rema 1000, Netto, Bilka, Føtex, Nemlig.com, Min Købmand og Spar. Hele kurven kostede 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar.
+            Vi sammenlignede den samme ugentlige kurv med 23 varer hos Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand. Hele kurven kostede 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand.
           </P>
           <P>
-            Forskellen var 217,41 kr. om ugen, svarende til op til 11.305 kr. om året. Omregnet svarer kurvene til cirka 3.479 kr. og 4.421 kr. om måneden.
+            Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Omregnet svarer kurvene til cirka 3.392 kr. og 5.694 kr. om måneden.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, koster kurven 722,49 kr. om ugen. Det giver en forskel på op til 15.481 kr. om året sammenlignet med den dyreste samlede kurv, men kræver indkøb på tværs af butikker.
+            Hvis hver vare købes dér, hvor den er billigst, koster kurven 616,86 kr. om ugen. Det giver en forskel på op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv, men kræver indkøb på tværs af butikker.
           </P>
           <P>
             Kurvanalysen kan ikke sammenlignes direkte med Danmarks Statistiks tal. Den dækker én bestemt uges kurv for 2 voksne og 2 teenagere, mens Forbrugsundersøgelsen 2024 omfatter alle årets køb af fødevarer og ikke-alkoholiske drikkevarer.

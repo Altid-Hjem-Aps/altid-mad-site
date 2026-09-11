@@ -19,7 +19,7 @@ const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
 const PAPERS = [
   { name: 'Rema 1000', icon: '/logos/rema.png' },
-  { name: 'Netto', icon: '/logos/netto.png' },
+  { name: 'Netto', icon: '/supermarkets/netto-disc.svg' },
   { name: 'Bilka', icon: '/logos/bilka.png' },
   { name: 'Føtex', icon: '/logos/foetex.png' },
 ]

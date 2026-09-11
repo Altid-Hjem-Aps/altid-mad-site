@@ -30,14 +30,14 @@ const FAQ: FaqItem[] = [
     q: 'Hvor meget kan man realistisk spare på dagligvarer?',
     a: [
       'Det afhænger af jeres nuværende butik, madspild og indkøbsvaner.',
-      'I vores analyse var forskellen på den billigste og dyreste samlede kurv 217,41 kr. om ugen, svarende til op til 11.305 kr. om året.',
+      'I vores analyse var forskellen på den billigste og dyreste samlede kurv 531,24 kr. om ugen, svarende til op til 27.624 kr. om året.',
     ],
   },
   {
     q: 'Hvilket supermarked skal jeg vælge?',
     a: [
       'Vælg den butik, der samlet er billigst for de varer, jeres familie normalt køber.',
-      'Rema 1000 var billigst i vores konkrete analyse, men resultatet kan ændre sig med en anden indkøbsliste og andre tilbud.',
+      'Lidl var billigst i vores konkrete analyse, men resultatet kan ændre sig med en anden indkøbsliste og andre tilbud.',
     ],
   },
   {
@@ -75,7 +75,7 @@ export default function SparPengePaaDagligvarer() {
     <>
       <Nav
         banner={{
-          longPrefix: 'Vores pristjek: op til 11.305 kr. at spare på dagligvarer om året. ',
+          longPrefix: 'Vores pristjek: op til 27.624 kr. at spare på dagligvarer om året. ',
           shortPrefix: 'Spar på dagligvarer? ',
           source: 'spar-penge-banner',
         }}
@@ -90,14 +90,14 @@ export default function SparPengePaaDagligvarer() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Sådan sparer du penge på dagligvarer</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026
+            Opdateret: september 2026
           </p>
 
           <P>
             Du behøver ikke ekstremkuponer eller besværlige regler for at spare penge på mad. De største besparelser kommer ofte fra en gennemtænkt madplan, den rigtige hovedbutik og færre spontane køb.
           </P>
           <P>
-            I vores analyse kostede den samme kurv med 23 varer 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar. Det er en forskel på 217,41 kr. om ugen, svarende til op til 11.305 kr. om året, alene ved at vælge den billigste samlede kurv.
+            I vores analyse kostede den samme kurv med 23 varer 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand. Det er en forskel på 531,24 kr. om ugen, svarende til op til 27.624 kr. om året, alene ved at vælge den billigste samlede kurv.
           </P>
         </div>
 
@@ -108,10 +108,10 @@ export default function SparPengePaaDagligvarer() {
             En billig enkeltvare gør ikke nødvendigvis hele indkøbsturen billig. Se derfor på prisen på de varer, I faktisk køber ofte, frem for at vælge butik efter ugens mest synlige tilbud.
           </P>
           <P>
-            I vores sammenligning af Rema 1000, Netto, Bilka, Føtex, Nemlig.com, Min Købmand og Spar var prisforskellen på den samme kurv 21,3 pct. Den billigste samlede kurv kostede 802,79 kr., mens den dyreste kostede 1.020,20 kr.
+            I vores sammenligning af Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand var prisforskellen på den samme kurv 40,4 pct. Den billigste samlede kurv kostede 782,70 kr., mens den dyreste kostede 1.313,94 kr.
           </P>
           <P>
-            Beløbene svarer til cirka 3.479 kr. og 4.421 kr. om måneden, når ugepriserne skaleres direkte. Analysen gælder en bestemt kurv til 2 voksne og 2 teenagere, så jeres billigste butik kan afhænge af familiens egne vaner.
+            Beløbene svarer til cirka 3.392 kr. og 5.694 kr. om måneden, når ugepriserne skaleres direkte. Analysen gælder en bestemt kurv til 2 voksne og 2 teenagere, så jeres billigste butik kan afhænge af familiens egne vaner.
           </P>
           <P>
             Læs mere om, hvordan du sammenligner butikker, i vores guide til <A href="/billigste-supermarked">det billigste supermarked</A>.
@@ -124,7 +124,7 @@ export default function SparPengePaaDagligvarer() {
             Vælg retter, der deler råvarer, så en pose grøntsager, en bakke kød eller et bæger mejeriprodukt kan bruges flere gange. Tjek køleskab, fryser og skabe, før du skriver indkøbslisten.
           </P>
           <P>
-            Det kan betale sig at fordele indkøbene, hvis butikkerne ligger naturligt på jeres vej. I analysen kostede kurven 722,49 kr. om ugen, hvis hver vare købes dér, hvor den er billigst, svarende til op til 15.481 kr. om året sammenlignet med den dyreste samlede kurv.
+            Det kan betale sig at fordele indkøbene, hvis butikkerne ligger naturligt på jeres vej. I analysen kostede kurven 616,86 kr. om ugen, hvis hver vare købes dér, hvor den er billigst, svarende til op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv.
           </P>
           <P>
             Flere butiksture kræver dog tid og eventuel transport. Brug derfor vores guide til en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og vælg kun ekstra stop, når besparelsen reelt er besværet værd.

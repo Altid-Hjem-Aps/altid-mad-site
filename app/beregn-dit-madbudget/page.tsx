@@ -29,7 +29,7 @@ const FAQ: FaqItem[] = [
     q: 'Hvor præcist er estimatet?',
     a: [
       'Estimatet er et pejlemærke, ikke en garanti.',
-      'Det bygger på Forbrugsundersøgelsen 2024 fra Danmarks Statistik og vores analyse af den samme kurv hos 7 kæder, men jeres madvaner og varevalg kan give et andet resultat.',
+      'Det bygger på Forbrugsundersøgelsen 2024 fra Danmarks Statistik og vores analyse af den samme kurv hos 13 kæder, men jeres madvaner og varevalg kan give et andet resultat.',
     ],
   },
   {
@@ -49,7 +49,7 @@ const FAQ: FaqItem[] = [
   {
     q: 'Kan vi virkelig spare 21 pct.?',
     a: [
-      'Prisforskellen var 21,3 pct. på den samme kurv i vores analyse.',
+      'Prisforskellen var 40,4 pct. på den samme kurv i vores analyse.',
       'I kan spare op til dette niveau, hvis jeres indkøb ligner testkurven, men jeres faktiske besparelse afhænger af varer, butikker, tilbud og muligheden for at handle flere steder.',
     ],
   },
@@ -89,7 +89,7 @@ export default function BeregnDitMadbudget() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Få overblik over jeres madbudget</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026 · Kilde: Danmarks Statistik 2024 og Altid Mads Q2-analyse
+            Opdateret: september 2026 · Kilde: Danmarks Statistik 2024 og Altid Mads Q3-analyse
           </p>
 
           <P>
@@ -112,7 +112,7 @@ export default function BeregnDitMadbudget() {
             Sammenligningen bygger på Forbrugsundersøgelsen 2024. Her bruger en gennemsnitshusstand 41.851 kr. om året på fødevarer og ikke-alkoholiske drikkevarer, svarende til cirka 3.488 kr. om måneden. For 2 voksne med børn er beløbet 65.775 kr. om året, svarende til cirka 5.481 kr. om måneden.
           </P>
           <P>
-            Besparelsesestimatet bygger på vores kurvanalyse fra andet kvartal. Den samme ugentlige kurv med 23 varer blev sammenlignet hos 7 kæder, og prisforskellen var 21,3 pct. Resultatet vises derfor som op til, hvis jeres indkøb ligner testkurven.
+            Besparelsesestimatet bygger på vores kurvanalyse fra tredje kvartal. Den samme ugentlige kurv med 23 varer blev sammenlignet hos 13 kæder, og prisforskellen var 40,4 pct. Resultatet vises derfor som op til, hvis jeres indkøb ligner testkurven.
           </P>
           <H2>Hvad afhænger et realistisk madbudget af?</H2>
           <P>
@@ -129,10 +129,10 @@ export default function BeregnDitMadbudget() {
             Den mulige besparelse opstår ikke automatisk. Den kræver, at I planlægger måltider og indkøb efter de varer, der er billige den pågældende uge.
           </P>
           <P>
-            I vores analyse kostede hele kurven 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar. Det svarer til cirka 3.479 kr. og 4.421 kr. om måneden. Forskellen var 217,41 kr. om ugen, op til 11.305 kr. om året.
+            I vores analyse kostede hele kurven 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand. Det svarer til cirka 3.392 kr. og 5.694 kr. om måneden. Forskellen var 531,24 kr. om ugen, op til 27.624 kr. om året.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 722,49 kr. om ugen. Det giver op til 15.481 kr. om året sammenlignet med den dyreste samlede kurv, men kan kræve indkøb flere steder. Se, hvordan I kan lave en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og læs vores sammenligning af det <A href="/billigste-supermarked">billigste supermarked</A>.
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen. Det giver op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv, men kan kræve indkøb flere steder. Se, hvordan I kan lave en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og læs vores sammenligning af det <A href="/billigste-supermarked">billigste supermarked</A>.
           </P>
           <H2>Hvad Altid Mad skal hjælpe med</H2>
           <P>
