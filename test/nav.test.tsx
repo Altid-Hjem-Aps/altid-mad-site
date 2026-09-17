@@ -95,9 +95,11 @@ describe('Spiir banner', () => {
     expect(screen.getByRole('button', { name: 'Luk menu' })).toHaveAttribute('aria-expanded', 'true')
     // Panel + desktop menu both render the links; the panel adds a second set.
     // "Kommer snart" services are inactive text, so Alarm renders no link —
-    // Mad (home) and Energi are the clickable ones on this site.
+    // Mad (home), Energi and Forsikring are the clickable ones on this site.
     expect(screen.queryAllByRole('link', { name: /Alarm/ })).toHaveLength(0)
     expect(screen.getAllByRole('link', { name: 'Energi' }).length).toBeGreaterThan(1)
+    expect(screen.getAllByRole("link", { name: "Forsikring" }).length).toBeGreaterThan(1)
+    expect(screen.getAllByRole("link", { name: "Forsikring" })[0]).toHaveAttribute("href", "https://altidforsikring.dk")
     fireEvent.click(screen.getAllByRole('link', { name: 'Energi' })[1])
     expect(screen.getByRole('button', { name: 'Åbn menu' })).toHaveAttribute('aria-expanded', 'false')
   })

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 
 export const metadata: Metadata = {
-  title: 'Slet din konto – Altid Hjem',
+  title: 'Slet din konto – Altid Mad',
   description: 'Sådan sletter du din Altid Hjem-konto, og hvad der sker med dine data.',
 }
 
