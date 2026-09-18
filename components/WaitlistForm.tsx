@@ -9,35 +9,18 @@ import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
 type View = 'form' | 'questions' | 'success'
 
-const DK_ELECTRICITY_PROVIDERS = [
-  'Aal El-Net',
-  'Andel Energi',
-  '★ Altid Energi',
-  'AURA Energi',
-  'Clever',
-  'Energi Fyn',
-  'Energi Viborg',
-  'EWII',
-  'Forsyning Helsingør',
-  'Gasel',
-  'Goenergi',
-  'Jysk Energi',
-  'Modstrøm',
-  'Natur-Energi',
-  'Nord Energi',
-  'Norlys',
-  'NRGi',
-  'OK',
-  'Ravdex',
-  'Scanenergi',
-  'SEAS-NVE',
-  'SE (Stofa Energi)',
-  'Strøm Fyn',
-  'TREFOR El',
-  'Velkommen',
-  'Verdo',
-  'Vindstød',
-  'Ørsted',
+const DK_GROCERY_CHAINS = [
+  'Netto',
+  'Rema 1000',
+  'Føtex',
+  'Bilka',
+  'Irma',
+  'Lidl',
+  'Aldi',
+  'SuperBrugsen',
+  'Meny',
+  'Spar',
+  'Fakta',
   'Andet',
 ]
 
@@ -317,10 +300,10 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
               <input value={why} onChange={e => setWhy(e.target.value)} placeholder="Fortæl os kort..." style={darkInputStyle} className="placeholder:text-white/40" />
             </div>
             <div>
-              <label style={darkLabelStyle}>Hvilket elselskab har du i dag?</label>
+              <label style={darkLabelStyle}>Hvor handler du typisk ind?</label>
               <select value={electricity} onChange={e => setElectricity(e.target.value)} style={{ ...darkInputStyle, cursor: 'pointer' }} className="appearance-none">
-                <option value="" disabled>Vælg elselskab</option>
-                {DK_ELECTRICITY_PROVIDERS.map(o => <option key={o}>{o}</option>)}
+                <option value="" disabled>Vælg butik</option>
+                {DK_GROCERY_CHAINS.map(o => <option key={o}>{o}</option>)}
               </select>
             </div>
           </div>
@@ -398,7 +381,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
               { label: 'Alder', el: <input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="Din alder" className="w-full px-4 rounded-xl text-[15px] outline-none placeholder:text-[#999] bg-white" style={{ height: 50, fontFamily: 'var(--font-onest)', color: 'var(--text-dark)' }} /> },
               { label: 'Antal personer i husstanden', el: <select value={household} onChange={e => setHousehold(e.target.value)} className="w-full px-4 rounded-xl text-[15px] outline-none appearance-none bg-white cursor-pointer" style={{ height: 50, fontFamily: 'var(--font-onest)', color: household ? 'var(--text-dark)' : '#999' }}><option value="" disabled>Vælg antal</option>{['1','2','3','4','5+'].map(o => <option key={o}>{o}</option>)}</select> },
               { label: 'Hvorfor har du skrevet dig op?', el: <input value={why} onChange={e => setWhy(e.target.value)} placeholder="Fortæl os kort..." className="w-full px-4 rounded-xl text-[15px] outline-none placeholder:text-[#999] bg-white" style={{ height: 50, fontFamily: 'var(--font-onest)', color: 'var(--text-dark)' }} /> },
-              { label: 'Hvilket elselskab har du i dag?', el: <select value={electricity} onChange={e => setElectricity(e.target.value)} className="w-full px-4 rounded-xl text-[15px] outline-none appearance-none bg-white cursor-pointer" style={{ height: 50, fontFamily: 'var(--font-onest)', color: electricity ? 'var(--text-dark)' : '#999' }}><option value="" disabled>Vælg elselskab</option>{DK_ELECTRICITY_PROVIDERS.map(o => <option key={o}>{o}</option>)}</select> },
+              { label: 'Hvor handler du typisk ind?', el: <select value={electricity} onChange={e => setElectricity(e.target.value)} className="w-full px-4 rounded-xl text-[15px] outline-none appearance-none bg-white cursor-pointer" style={{ height: 50, fontFamily: 'var(--font-onest)', color: electricity ? 'var(--text-dark)' : '#999' }}><option value="" disabled>Vælg butik</option>{DK_GROCERY_CHAINS.map(o => <option key={o}>{o}</option>)}</select> },
             ].map(({ label, el }) => (
               <div key={label} className="pb-0.5">
                 <label className="block text-[11px] font-normal tracking-[0.08em] uppercase mb-1 px-1" style={{ color: '#6f6a61' }}>{label}</label>
