@@ -36,7 +36,7 @@ const STORES: Record<StoreKey, { name: string; dot: string; wash: string; ink: s
 const LOGO: Record<StoreKey, { src: string; name: string }> = {
   bilka: { src: '/logos/bilka.png', name: 'Bilka' },
   rema: { src: '/logos/rema.png', name: 'REMA 1000' },
-  netto: { src: '/logos/netto.png', name: 'Netto' },
+  netto: { src: '/supermarkets/netto-disc.svg', name: 'Netto' },
 }
 
 function StoreLogo({ store, size = 22, shadow = false }: { store: StoreKey; size?: number; shadow?: boolean }) {
@@ -1058,7 +1058,7 @@ type Offer = readonly [Groc, string]
 type Chain = { name: string; logo: string; band: string; dark: boolean; cover: readonly Offer[]; inner: readonly Offer[] }
 const CHAINS: Record<string, Chain> = {
   bilka: { name: 'Bilka', logo: '/logos/bilka.png', band: '#0a5cad', dark: false, cover: [['kaffe', '39,-'], ['smor', '15,-']], inner: [['ost', '25,-'], ['maelk', '8,-']] },
-  netto: { name: 'Netto', logo: '/logos/netto.png', band: '#ffe000', dark: true, cover: [['maelk', '8,-'], ['brod', '12,-']], inner: [['banan', '9,-'], ['ost', '27,-']] },
+  netto: { name: 'Netto', logo: '/supermarkets/netto-disc.svg', band: '#ffe000', dark: true, cover: [['maelk', '8,-'], ['brod', '12,-']], inner: [['banan', '9,-'], ['ost', '27,-']] },
   foetex: { name: 'Føtex', logo: '/logos/foetex.png', band: '#0a1e3f', dark: false, cover: [['ost', '27,-'], ['kaffe', '42,-']], inner: [['smor', '18,-'], ['brod', '13,-']] },
   rema: { name: 'REMA 1000', logo: '/logos/rema.png', band: '#e30613', dark: false, cover: [['smor', '18,-'], ['banan', '9,-']], inner: [['kaffe', '39,-'], ['maelk', '8,-']] },
   lidl: { name: 'Lidl', logo: '/logos/lidl.png', band: '#0050aa', dark: false, cover: [['brod', '10,-'], ['kaffe', '37,-']], inner: [['banan', '8,-'], ['ost', '24,-']] },

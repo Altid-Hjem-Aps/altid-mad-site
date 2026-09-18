@@ -34,7 +34,7 @@ const ITEMS: Item[] = [
   },
   {
     q: 'Hvor meget sparer jeg med Altid Mad?',
-    a: ['Altid Mad Q2-rapporten viser, at prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den dyreste kæde – det svarer til en besparelse på op til 11.305 kr. om året for en familie. Køber du hver vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.'],
+    a: ['Altid Mad Q3-rapporten viser, at prisen på den samme ugentlige indkøbskurv varierer med 40,4 % fra den billigste til den dyreste kæde – det svarer til en besparelse på op til 27.624 kr. om året for en familie. Køber du hver vare dér, hvor den er billigst, kan besparelsen vokse til 36.248 kr. om året, svarende til 53,1 %.'],
   },
   {
     q: 'Er Altid Mad gratis at bruge?',

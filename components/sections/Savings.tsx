@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import { animate } from 'framer-motion'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
-// "Hvor meget kan jeg spare?" — the Mad answer is a RANGE from the Q2-rapport:
+// "Hvor meget kan jeg spare?" — the Mad answer is a RANGE from the Q3-rapport:
 // a mint pill with an on-scroll entrance where both ends count up together.
 
 const SPRING = 'cubic-bezier(0.34, 1.2, 0.64, 1)'
-// From the Q2-rapport: 11.305 kr./år by switching basket to Rema, 15.481 kr./år
-// cherry-picking each item's cheapest chain.
-const RANGE_LO = 11305
-const RANGE_HI = 15481
+// From the Q3-rapport (13 chains): 27.624 kr./år buying the whole basket at
+// Lidl vs the dearest chain, 36.248 kr./år cherry-picking each item's cheapest
+// chain.
+const RANGE_LO = 27624
+const RANGE_HI = 36248
 
 /** 7500 → "7.500" — deterministic, no locale dependency. */
 const fmtKr = (n: number) => {
@@ -130,17 +131,17 @@ export default function Savings() {
             <p className={`mt-9 ${BODY} mx-auto`} style={{ color: '#6f6a61', maxWidth: 700 }}>
               Baseret på{' '}
               <a
-                href="/altid-mad-kvartalsrapport-q2.pdf"
+                href="/altid-mad-kvartalsrapport-q3.pdf"
                 target="_blank"
                 rel="noopener"
                 className="underline underline-offset-2"
                 style={{ color: '#163223' }}
               >
-                Altid Mad Q2-rapporten
+                Altid Mad Q3-rapporten
               </a>
-              . Prisen på den samme ugentlige indkøbskurv varierer med 21,3 % fra den billigste til den
-              dyreste kæde. Det svarer til en mulig besparelse på op til 11.305 kr. om året. Køber du hver
-              vare dér, hvor den er billigst, kan besparelsen vokse til 15.481 kr. om året, svarende til 29,2 %.
+              . Prisen på den samme ugentlige indkøbskurv varierer med 40,4 % fra den billigste til den
+              dyreste kæde. Det svarer til en mulig besparelse på op til 27.624 kr. om året. Køber du hver
+              vare dér, hvor den er billigst, kan besparelsen vokse til 36.248 kr. om året, svarende til 53,1 %.
             </p>
           </div>
         </div>

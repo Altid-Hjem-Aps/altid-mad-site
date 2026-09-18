@@ -120,7 +120,7 @@ export default function MadpakkerPaaBudget() {
             Madpakker på budget, som børnene har lyst til at spise
           </h1>
           <p className="text-xs mb-10" style={{ color: 'rgba(22,50,35,0.5)' }}>
-            Opdateret: juli 2026
+            Opdateret: september 2026
           </p>
 
           <P>
@@ -208,17 +208,16 @@ export default function MadpakkerPaaBudget() {
 
           <H2>Så meget kan valget af supermarked betyde</H2>
           <P>
-            Altid Mad har analyseret den samme ugentlige kurv med 23 varer hos Rema 1000, Netto, Bilka,
-            Føtex, Nemlig.com, Min Købmand og Spar. Kurven kostede 802,79 kr. hos Rema 1000 og 1.020,20 kr.
-            hos Spar, en forskel på 217,41 kr. om ugen og op til 11.305 kr. om året.
+            Altid Mad har analyseret den samme ugentlige kurv med 23 varer hos Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand. Kurven kostede 782,70 kr. hos Lidl og 1.313,94 kr.
+            hos Min Købmand, en forskel på 531,24 kr. om ugen og op til 27.624 kr. om året.
           </P>
           <P>
-            Prisforskellen på den samme kurv var 21,3 pct. Beregningen tager udgangspunkt i en husstand med
+            Prisforskellen på den samme kurv var 40,4 pct. Beregningen tager udgangspunkt i en husstand med
             2 voksne og 2 teenagere.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 722,49 kr. om ugen. Det svarer
-            til op til 15.481 kr. om året sammenlignet med den dyreste samlede kurv. Se hele sammenligningen
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen. Det svarer
+            til op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv. Se hele sammenligningen
             i vores{' '}
             <Link
               href="/billigste-supermarked"
