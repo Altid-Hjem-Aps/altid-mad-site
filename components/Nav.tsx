@@ -27,11 +27,11 @@ const NAV_LINKS: NavLink[] = [
   { label: 'Hjem', href: 'https://altidhjem.dk', tone: 'live' },
   { label: 'Mad', href: '/', tone: 'home' },
   { label: 'Energi', href: 'https://altidenergi.dk', tone: 'live' },
+  { label: 'Forsikring', href: 'https://altidforsikring.dk', tone: 'live' },
   // 'soon' services are muted with a "Kommer snart" sublabel (Figma 26:105)
   // and rendered inactive (no link) until their site launches.
   { label: 'Alarm', href: '#', tone: 'soon' },
   { label: 'Opladning', href: '#', tone: 'soon' },
-  { label: 'Forsikring', href: '#', tone: 'soon' },
   { label: 'Mobil', href: '#', tone: 'soon' },
 ]
 
