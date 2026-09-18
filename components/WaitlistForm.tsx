@@ -10,16 +10,16 @@ import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 type View = 'form' | 'questions' | 'success'
 
 const DK_GROCERY_CHAINS = [
+  '365discount',
   'Aldi',
   'Bilka',
-  'Coop 365',
-  'Fakta',
+  'Brugsen',
   'Føtex',
-  'Irma',
   'Kvickly',
   'Lidl',
   'Løvbjerg',
   'Meny',
+  'Min Købmand',
   'Nemlig.com',
   'Netto',
   'Rema 1000',
