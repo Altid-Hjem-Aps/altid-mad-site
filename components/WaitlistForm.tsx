@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import * as amplitude from '@amplitude/analytics-browser'
 import { DEFAULT_SIGNUP_SOURCE } from '@/lib/signup-source'
 import { DUPLICATE_SIGNUP_HEADING, SIGNUP_CONSENT_MAD, SIGNUP_CONSENT_GROUP, SIGNUP_LAUNCH_NOTICE, CONSENT_VERSION } from '@/lib/copy'
@@ -9,35 +9,22 @@ import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
 type View = 'form' | 'questions' | 'success'
 
-const DK_ELECTRICITY_PROVIDERS = [
-  'Aal El-Net',
-  'Andel Energi',
-  '★ Altid Energi',
-  'AURA Energi',
-  'Clever',
-  'Energi Fyn',
-  'Energi Viborg',
-  'EWII',
-  'Forsyning Helsingør',
-  'Gasel',
-  'Goenergi',
-  'Jysk Energi',
-  'Modstrøm',
-  'Natur-Energi',
-  'Nord Energi',
-  'Norlys',
-  'NRGi',
-  'OK',
-  'Ravdex',
-  'Scanenergi',
-  'SEAS-NVE',
-  'SE (Stofa Energi)',
-  'Strøm Fyn',
-  'TREFOR El',
-  'Velkommen',
-  'Verdo',
-  'Vindstød',
-  'Ørsted',
+const DK_GROCERY_CHAINS = [
+  '365discount',
+  'Aldi',
+  'Bilka',
+  'Brugsen',
+  'Føtex',
+  'Kvickly',
+  'Lidl',
+  'Løvbjerg',
+  'Meny',
+  'Min Købmand',
+  'Nemlig.com',
+  'Netto',
+  'Rema 1000',
+  'Spar',
+  'SuperBrugsen',
   'Andet',
 ]
 
@@ -72,6 +59,56 @@ function ConsentCheckboxes({ dark, mad, group, onMad, onGroup }: {
         <input type="checkbox" checked={group} onChange={e => onGroup(e.target.checked)} style={boxStyle} />
         <span>{SIGNUP_CONSENT_GROUP}</span>
       </label>
+    </div>
+  )
+}
+
+// Checkbox-list dropdown — the grocery-chain question allows more than one
+// answer (people shop at several), unlike the other single-select survey
+// questions. Closes on outside click like a native select.
+function GroceryMultiSelect({ value, onChange, dark }: { value: string[]; onChange: (next: string[]) => void; dark: boolean }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  function toggle(chain: string) {
+    onChange(value.includes(chain) ? value.filter(c => c !== chain) : [...value, chain])
+  }
+
+  const triggerStyle: React.CSSProperties = dark
+    ? { width: '100%', padding: '14px 16px', fontSize: 15, textAlign: 'left', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, color: value.length ? 'white' : 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-onest)' }
+    : { height: 50, width: '100%', padding: '0 16px', fontSize: 15, textAlign: 'left', background: 'white', borderRadius: 12, color: value.length ? 'var(--text-dark)' : '#999', fontFamily: 'var(--font-onest)' }
+
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" onClick={() => setOpen(o => !o)} style={triggerStyle} className="cursor-pointer truncate">
+        {value.length ? value.join(', ') : 'Vælg butik(ker)'}
+      </button>
+      {open && (
+        <div
+          className="absolute z-10 mt-1 w-full rounded-xl overflow-y-auto"
+          style={{
+            maxHeight: 240,
+            background: dark ? '#1c2e22' : 'white',
+            border: dark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e6e2d8',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          }}
+        >
+          {DK_GROCERY_CHAINS.map(chain => (
+            <label key={chain} className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer text-[15px]" style={{ color: dark ? 'white' : 'var(--text-dark)' }}>
+              <input type="checkbox" checked={value.includes(chain)} onChange={() => toggle(chain)} style={{ width: 16, height: 16, accentColor: dark ? '#DCD799' : '#3E6924' }} />
+              {chain}
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -136,7 +173,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [age, setAge] = useState('')
   const [household, setHousehold] = useState('')
   const [why, setWhy] = useState('')
-  const [electricity, setElectricity] = useState('')
+  const [groceryChains, setGroceryChains] = useState<string[]>([])
 
   const isDark = variant === 'dark'
 
@@ -242,7 +279,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: signupId, surveyToken, age, household, why, electricity, step: 2 }),
+        body: JSON.stringify({ id: signupId, surveyToken, age, household, why, electricity: groceryChains.join(', '), step: 2 }),
       })
       ok = res.ok
     } catch {
@@ -254,7 +291,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         has_age: !!age,
         has_household: !!household,
         has_why: !!why,
-        electricity_provider: electricity || null,
+        electricity_provider: groceryChains.join(', ') || null,
       })
     } else {
       amplitude.track('Waitlist Step 2 Failed')
@@ -317,11 +354,8 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
               <input value={why} onChange={e => setWhy(e.target.value)} placeholder="Fortæl os kort..." style={darkInputStyle} className="placeholder:text-white/40" />
             </div>
             <div>
-              <label style={darkLabelStyle}>Hvilket elselskab har du i dag?</label>
-              <select value={electricity} onChange={e => setElectricity(e.target.value)} style={{ ...darkInputStyle, cursor: 'pointer' }} className="appearance-none">
-                <option value="" disabled>Vælg elselskab</option>
-                {DK_ELECTRICITY_PROVIDERS.map(o => <option key={o}>{o}</option>)}
-              </select>
+              <label style={darkLabelStyle}>Hvor handler du typisk ind?</label>
+              <GroceryMultiSelect value={groceryChains} onChange={setGroceryChains} dark />
             </div>
           </div>
           <div className="flex flex-col gap-2.5">
@@ -398,7 +432,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
               { label: 'Alder', el: <input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="Din alder" className="w-full px-4 rounded-xl text-[15px] outline-none placeholder:text-[#999] bg-white" style={{ height: 50, fontFamily: 'var(--font-onest)', color: 'var(--text-dark)' }} /> },
               { label: 'Antal personer i husstanden', el: <select value={household} onChange={e => setHousehold(e.target.value)} className="w-full px-4 rounded-xl text-[15px] outline-none appearance-none bg-white cursor-pointer" style={{ height: 50, fontFamily: 'var(--font-onest)', color: household ? 'var(--text-dark)' : '#999' }}><option value="" disabled>Vælg antal</option>{['1','2','3','4','5+'].map(o => <option key={o}>{o}</option>)}</select> },
               { label: 'Hvorfor har du skrevet dig op?', el: <input value={why} onChange={e => setWhy(e.target.value)} placeholder="Fortæl os kort..." className="w-full px-4 rounded-xl text-[15px] outline-none placeholder:text-[#999] bg-white" style={{ height: 50, fontFamily: 'var(--font-onest)', color: 'var(--text-dark)' }} /> },
-              { label: 'Hvilket elselskab har du i dag?', el: <select value={electricity} onChange={e => setElectricity(e.target.value)} className="w-full px-4 rounded-xl text-[15px] outline-none appearance-none bg-white cursor-pointer" style={{ height: 50, fontFamily: 'var(--font-onest)', color: electricity ? 'var(--text-dark)' : '#999' }}><option value="" disabled>Vælg elselskab</option>{DK_ELECTRICITY_PROVIDERS.map(o => <option key={o}>{o}</option>)}</select> },
+              { label: 'Hvor handler du typisk ind?', el: <GroceryMultiSelect value={groceryChains} onChange={setGroceryChains} dark={false} /> },
             ].map(({ label, el }) => (
               <div key={label} className="pb-0.5">
                 <label className="block text-[11px] font-normal tracking-[0.08em] uppercase mb-1 px-1" style={{ color: '#6f6a61' }}>{label}</label>
