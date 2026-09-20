@@ -139,6 +139,11 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
     return MUTED
   }
 
+  // Marks the current section for assistive tech: the exact page on the front
+  // page, otherwise "current item in this set" (a subpage is inside Mad,
+  // but is not itself the Mad link's target).
+  const homeAriaCurrent = pathname === '/' ? 'page' : 'true'
+
   // Right-aligned desktop menu: links + CTA in ONE flex with a shared gap, so
   // the spacing between the words = the spacing between the last link and the
   // CTA button (per Figma). The whole group is right-aligned (logo on the
@@ -161,6 +166,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
                 href={href}
                 target={external ? '_blank' : undefined}
                 rel={external ? 'noopener noreferrer' : undefined}
+                aria-current={active ? homeAriaCurrent : undefined}
                 className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
                 style={{ color: linkColor(tone, active) }}
               >
@@ -272,6 +278,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
                   href={href}
                   target={external ? '_blank' : undefined}
                   rel={external ? 'noopener noreferrer' : undefined}
+                  aria-current={active ? homeAriaCurrent : undefined}
                   onClick={() => setMenuOpen(false)}
                   className={rowClass}
                   style={rowStyle}
