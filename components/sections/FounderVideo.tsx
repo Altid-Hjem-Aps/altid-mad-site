@@ -312,13 +312,15 @@ export default function FounderVideo() {
           </p>
 
           {/* Hanging quote mark: text-indent pulls the opening " into the
-              margin so the first words align with the subtext + button. Fixed
-              line breaks match the Figma frame. */}
+              margin so the first words align with the subtext + button. No
+              fixed line break: the column is narrow on phones AND at lg, so the
+              lines are balanced instead, and "11.207 kr." never splits (a lone
+              "kr." on its own line looked broken on mobile). */}
           <h2
-            className={`mt-6 ${H2} text-white`}
+            className={`mt-6 ${H2} text-white text-balance`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Spar i gennemsnit <span style={{ color: '#DCD799' }}>11.207 kr.</span><br />
+            &ldquo;Spar i gennemsnit <span className="whitespace-nowrap" style={{ color: '#DCD799' }}>11.207 kr.</span>{' '}
             om året på dagligvarer.&rdquo;
           </h2>
 
