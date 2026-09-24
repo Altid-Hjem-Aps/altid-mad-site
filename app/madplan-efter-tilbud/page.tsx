@@ -37,7 +37,7 @@ const FAQ: FaqItem[] = [
     q: 'Hvor meget sparer en madplan?',
     a: [
       'Besparelsen afhænger af jeres nuværende vaner, butikker og valg af varer.',
-      'I Altid Mads analyse var forskellen på den samme kurv op til 11.305 kr. om året, mens besparelsen var op til 15.481 kr. om året, hvis hver vare købes dér, hvor den er billigst, sammenlignet med den dyreste kurv.',
+      'I Altid Mads analyse var forskellen på den samme kurv op til 27.624 kr. om året, mens besparelsen var op til 37.135 kr. om året, hvis hver vare købes dér, hvor den er billigst, sammenlignet med den dyreste kurv.',
     ],
   },
   {
@@ -90,7 +90,7 @@ export default function MadplanEfterTilbud() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Sådan laver du en madplan efter ugens tilbud</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026
+            Opdateret: september 2026
           </p>
 
           <P>
@@ -121,7 +121,7 @@ export default function MadplanEfterTilbud() {
             Kontrollér køleskab, fryser og skabe, før du skriver indkøbslisten. Notér også, hvilke aftener der skal være hurtige, så planen passer til jeres virkelige uge.
           </P>
           <P>
-            Mange tjenester viser kun tilbud fra én kæde. Men de bedste priser skifter mellem Rema 1000, Netto, Bilka, Føtex, Nemlig.com, Min Købmand og Spar fra uge til uge, så sammenligning kan gøre en reel forskel.
+            Mange tjenester viser kun tilbud fra én kæde. Men de bedste priser skifter mellem Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand fra uge til uge, så sammenligning kan gøre en reel forskel.
           </P>
           <P>
             Vil du arbejde mere systematisk med økonomien, kan du også bruge vores guide til <A href="/madbudget">madbudgettet</A> eller læse om et passende <A href="/madbudget-familie-paa-4">madbudget for en familie på 4</A>.
@@ -129,13 +129,13 @@ export default function MadplanEfterTilbud() {
           <MidCta label="Få madplanen lagt for jer" />
           <H2>Hvad kan det betyde i kroner?</H2>
           <P>
-            Altid Mads analyse sammenlignede den samme ugentlige kurv med 23 varer hos 7 kæder. Kurven kostede 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar, en prisforskel på 21,3 pct.
+            Altid Mads analyse sammenlignede den samme ugentlige kurv med 23 varer hos 13 kæder. Kurven kostede 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand, en prisforskel på 40,4 pct.
           </P>
           <P>
-            Forskellen var 217,41 kr. om ugen, svarende til op til 11.305 kr. om året. Kurven var beregnet til en husstand med 2 voksne og 2 teenagere.
+            Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Kurven var beregnet til en husstand med 2 voksne og 2 teenagere.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 722,49 kr. om ugen. Det svarer til op til 15.481 kr. om året sammenlignet med den dyreste samlede kurv, men kræver, at besparelsen er større end besværet og transporten.
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen. Det svarer til op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv, men kræver, at besparelsen er større end besværet og transporten.
           </P>
           <P>
             Tallene viser en mulig ramme, ikke et løfte om familiens besparelse. Se hele sammenligningen i vores guide til <A href="/billigste-supermarked">det billigste supermarked</A>.

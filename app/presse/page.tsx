@@ -5,7 +5,7 @@ import Nav from '@/components/Nav'
 export const metadata: Metadata = {
   title: 'Presse – Altid Mad',
   description:
-    'Pressemateriale for Altid Mad: pressebilleder til fri redaktionel brug, Q2-rapporten bag besparelsestallene og pressekontakt.',
+    'Pressemateriale for Altid Mad: pressebilleder til fri redaktionel brug, Q3-rapporten bag besparelsestallene og pressekontakt.',
 }
 
 // Photographer credit is a usage condition, not decoration — it must survive
@@ -98,11 +98,11 @@ export default function Presse() {
             <ul className="space-y-2 text-sm" style={{ color: '#6f6a61' }}>
               <li>
                 <a
-                  href="https://altidmad.dk/altid-mad-kvartalsrapport-q2.pdf"
+                  href="https://altidmad.dk/altid-mad-kvartalsrapport-q3.pdf"
                   className="underline underline-offset-2"
                   style={{ color: '#163223' }}
                 >
-                  Q2-rapporten
+                  Q3-rapporten
                 </a>{' '}
                 — beregningerne bag besparelsestallene.
               </li>

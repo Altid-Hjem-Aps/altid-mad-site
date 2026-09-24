@@ -10,7 +10,7 @@ import { H1, BODY } from '@/lib/typography'
 // desktop-only; mobile shows just the centered savings counter.
 const STATS = [
   { value: '0 kr.', label: 'at oprette en konto', color: '#202820', oneLine: false, desktopOnly: true },
-  { value: 'counter' as const, label: 'kan du spare op til årligt med Altid Mad', color: '#163223', oneLine: true, desktopOnly: false },
+  { value: 'counter' as const, label: 'kan du i gennemsnit spare årligt med Altid Mad', color: '#163223', oneLine: true, desktopOnly: false },
 ]
 
 export default function Hero() {

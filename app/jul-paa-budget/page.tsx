@@ -121,7 +121,7 @@ export default function JulPaaBudget() {
             Tilbudsaviserne er fulde af julevarer fra november. Køb ikke-letfordærvelige varer, når de er på tilbud i ugerne op til jul, men undgå at købe noget alene, fordi prisen ser god ud.
           </P>
           <P>
-            Prissammenligning kan gøre en mærkbar forskel året rundt. I Altid Mads analyse kostede den samme kurv med 23 varer til 2 voksne og 2 teenagere 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar, en forskel på 21,3 pct. Det svarer til op til 11.305 kr. om året, og hvis hver vare købes dér, hvor den er billigst, op til 15.481 kr. om året. Læs mere om analysen af <A href="/billigste-supermarked">det billigste supermarked</A>.
+            Prissammenligning kan gøre en mærkbar forskel året rundt. I Altid Mads analyse kostede den samme kurv med 23 varer til 2 voksne og 2 teenagere 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand, en forskel på 40,4 pct. Det svarer til op til 27.624 kr. om året, og hvis hver vare købes dér, hvor den er billigst, op til 37.135 kr. om året. Læs mere om analysen af <A href="/billigste-supermarked">det billigste supermarked</A>.
           </P>
           <H2>Spred indkøbene over ugerne før jul</H2>
           <P>

@@ -32,7 +32,7 @@ describe('parseDanishNumber', () => {
 /* The calculator that used to live on /beregn-dit-madbudget was replaced by an
  * animated mockup. These pin the numbers the mockup asserts, which are the
  * only verified ones: the DST FU13 2024 average for 2 adults with children and
- * the Q2 basket gap. A number drifting here is a compliance problem, not a
+ * the Q3 basket gap. A number drifting here is a compliance problem, not a
  * cosmetic one. */
 describe('MadbudgetSammenligningMockup', () => {
   // Under reduced motion the card pins its finished state, so every figure is
@@ -60,7 +60,7 @@ describe('MadbudgetSammenligningMockup', () => {
   it('states the saving as "op til" with its condition, never a promised amount', () => {
     render(<MadbudgetSammenligningMockup />)
     expect(screen.getByText(/Op til/)).toBeInTheDocument()
-    expect(screen.getByText('21,3 pct.')).toBeInTheDocument()
+    expect(screen.getByText('40,4 pct.')).toBeInTheDocument()
     expect(screen.getByText(/Hvis jeres indkøb ligner testkurven/)).toBeInTheDocument()
   })
 

@@ -50,7 +50,7 @@ const FAQ: FaqItem[] = [
   {
     q: 'Hvad koster den billigste uge i jeres analyse?',
     a: [
-      'Den billigste samlede kurv kostede 802,79 kr. hos Rema 1000.',
+      'Den billigste samlede kurv kostede 782,70 kr. hos Lidl.',
       'Kurven indeholdt 23 varer til en husstand med 2 voksne og 2 teenagere og svarer til cirka 3.479 kr. om måneden.',
     ],
   },
@@ -90,7 +90,7 @@ export default function MadFor3000OmMaaneden() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Kan en familie få mad for 3.000 kr. om måneden?</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026
+            Opdateret: september 2026
           </p>
 
           <P>
@@ -111,7 +111,7 @@ export default function MadFor3000OmMaaneden() {
             Et månedsbudget på 3.000 kr. svarer til cirka 692 kr. om ugen. Det skal dække alle de fødevarer og ikke-alkoholiske drikkevarer, I regner med i budgettet, ikke kun aftensmad.
           </P>
           <P>
-            I vores analyse kostede den samme ugentlige kurv med 23 varer 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar. Forskellen var 217,41 kr. om ugen, svarende til 21,3 pct. eller op til 11.305 kr. om året.
+            I vores analyse kostede den samme ugentlige kurv med 23 varer 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand. Forskellen var 531,24 kr. om ugen, svarende til 40,4 pct. eller op til 27.624 kr. om året.
           </P>
           <P>
             Testkurven er lavet til 2 voksne og 2 teenagere og kan derfor ikke sammenlignes direkte med alle husholdninger. Den viser dog tydeligt, at valg af butik kan afgøre, om budgettet holder.
@@ -134,7 +134,7 @@ export default function MadFor3000OmMaaneden() {
             Lav derefter en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, hvor flere retter bruger de samme grøntsager, basisvarer og rester. Begynd med det, I allerede har, og skriv først derefter indkøbslisten.
           </P>
           <P>
-            I vores analyse kostede hele kurven 722,49 kr. om ugen, hvis hver vare købes dér, hvor den er billigst. Det giver op til 15.481 kr. om året sammenlignet med den dyreste kurv, men besparelsen skal holdes op mod transport, tid og risikoen for ekstra impulskøb.
+            I vores analyse kostede hele kurven 599,81 kr. om ugen, hvis hver vare købes dér, hvor den er billigst. Det giver op til 37.135 kr. om året sammenlignet med den dyreste kurv, men besparelsen skal holdes op mod transport, tid og risikoen for ekstra impulskøb.
           </P>
           <MidCta label="Lad Altid Mad finde besparelsen for jer" />
           <H2>Det skal I ikke gøre for at spare</H2>

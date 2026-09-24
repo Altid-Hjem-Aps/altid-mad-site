@@ -90,7 +90,7 @@ export default function Madbudget() {
 
           <h1 className="text-3xl sm:text-4xl font-normal mb-1 text-balance">Hvad er et normalt madbudget for en familie?</h1>
           <p className="text-xs mb-10" style={{ color: FAINT_INK }}>
-            Opdateret: juli 2026 · Kilde: Danmarks Statistik, Forbrugsundersøgelsen 2024
+            Opdateret: september 2026 · Kilde: Danmarks Statistik, Forbrugsundersøgelsen 2024
           </p>
 
           <P>
@@ -125,13 +125,13 @@ export default function Madbudget() {
           </P>
           <H2>Supermarkedsvalget kan flytte budgettet mærkbart</H2>
           <P>
-            Vores analyse sammenlignede den samme ugentlige kurv med 23 varer hos Rema 1000, Netto, Bilka, Føtex, Nemlig.com, Min Købmand og Spar. Kurven kostede 802,79 kr. hos Rema 1000 og 1.020,20 kr. hos Spar, en prisforskel på 21,3 pct.
+            Vores analyse sammenlignede den samme ugentlige kurv med 23 varer hos Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand. Kurven kostede 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand, en prisforskel på 40,4 pct.
           </P>
           <P>
-            Forskellen var 217,41 kr. om ugen, svarende til op til 11.305 kr. om året. Hvis hver vare købes dér, hvor den er billigst, kostede kurven 722,49 kr. om ugen, svarende til op til 15.481 kr. om året sammenlignet med den dyreste kurv.
+            Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen, svarende til op til 37.135 kr. om året sammenlignet med den dyreste kurv.
           </P>
           <P>
-            Den billigste samlede kurv svarer til ca. 3.479 kr. om måneden, mens den dyreste svarer til ca. 4.421 kr. Beregningen gælder én bestemt kurv til 2 voksne og 2 teenagere, så den kan ikke sidestilles med Danmarks Statistiks helårstal.
+            Den billigste samlede kurv svarer til ca. 3.392 kr. om måneden, mens den dyreste svarer til ca. 5.694 kr. Beregningen gælder én bestemt kurv til 2 voksne og 2 teenagere, så den kan ikke sidestilles med Danmarks Statistiks helårstal.
           </P>
           <P>
             Læs mere om metoden og resultaterne i vores pristjek af <A href="/billigste-supermarked">det billigste supermarked</A>.

@@ -32,15 +32,39 @@ type Chain = {
 // neighbour. Scaling it to sit on Bilka's baseline instead would take 80px and
 // blow the 'n' up to Bilka's cap height. Re-measure if either height moves.
 //
-// The track mounts on the first entry, so Bilka leads. The order is a rotation
-// of the original (Netto, REMA 1000 tail the list) — in a seamless loop the
-// cycle is unchanged, only the card the visitor lands on.
+// The 13 chains in the Altid Mad Q3 price report. The seven added for Q3 are
+// also the chains' own site assets: Lidl's square badge (lidl.dk), MENY's
+// arched wordmark (meny.dk), the 365discount / Kvickly / SuperBrugsen header
+// SVGs from their coop.dk sites, Brugsen's footer mark (a PNG, the only
+// single-brand Brugsen logo coop.dk serves; the header one is the combined
+// Dagli' Brugsen | Brugsen lockup) and Min Købmand's positive logo (the
+// green-and-red PNG minkobmand.dk shows on white, in its cookie banner),
+// cropped above the "Mere lokalt bliver det ik'" tagline the way their own
+// header lockup drops it.
+//
+// Checked against every chain's live site on 11 Sep 2026: nemlig.com and SPAR
+// are byte-identical to what they serve, føtex has identical paths, Bilka is
+// the same artwork in the positive blue. Netto's disc is their current SVG
+// (yellow disc, #242424 dog), replacing an old inverted PNG. REMA 1000 is
+// recoloured to the official #014c8f / #cf142e from rema1000.dk's own
+// schema.org logo (the old file had a faded #456eac / #c94544).
+//
+// The track mounts on the first entry, so Bilka leads. The red boxed marks
+// (Kvickly, SuperBrugsen, Brugsen, Min Købmand) are spread through the cycle
+// so no two sit side by side.
 const CHAINS: Chain[] = [
   { src: '/supermarkets/bilka.svg', alt: 'Bilka', height: 50 },
+  { src: '/supermarkets/lidl.svg', alt: 'Lidl', height: 76 },
   { src: '/supermarkets/nemlig.svg', alt: 'nemlig.com', height: 62 },
+  { src: '/supermarkets/kvickly.svg', alt: 'Kvickly', height: 58 },
   { src: '/supermarkets/foetex.svg', alt: 'føtex', height: 104 },
+  { src: '/supermarkets/365discount.svg', alt: '365discount', height: 64 },
   { src: '/supermarkets/spar.svg', alt: 'SPAR', height: 44 },
-  { src: '/supermarkets/netto-wordmark.svg', alt: 'Netto', height: 42, disc: { src: '/logos/netto.png', height: 54 } },
+  { src: '/supermarkets/superbrugsen.svg', alt: 'SuperBrugsen', height: 58 },
+  { src: '/supermarkets/meny.svg', alt: 'MENY', height: 54 },
+  { src: '/supermarkets/minkobmand.png', alt: 'Min Købmand', height: 42 },
+  { src: '/supermarkets/netto-wordmark.svg', alt: 'Netto', height: 42, disc: { src: '/supermarkets/netto-disc.svg', height: 50 } },
+  { src: '/supermarkets/brugsen.png', alt: 'Brugsen', height: 58 },
   { src: '/supermarkets/rema1000.svg', alt: 'REMA 1000', height: 50 },
 ]
 
@@ -75,9 +99,10 @@ export default function Supermarkets() {
             <div
               key={`${c.alt}-${i}`}
               aria-hidden={clone || undefined}
-              // Cell width + gap must keep one 6-logo cycle wider than the
+              // Cell width + gap must keep one full cycle wider than the
               // viewport at 1920, so the tripled loop never shows the same
-              // logo twice at once (stride ≈ 320+140 = 460px → ~4.2 visible).
+              // logo twice at once (stride ≈ 320+140 = 460px → ~4.2 visible,
+              // 13 logos per cycle).
               // Below sm the cell spans 100vw minus a gap per side, so exactly
               // one logo is in view (neighbours land outside the viewport).
               className="snap-center shrink-0 flex items-center justify-center min-w-[calc(100vw-80px)] sm:min-w-[clamp(160px,16vw,320px)]"
