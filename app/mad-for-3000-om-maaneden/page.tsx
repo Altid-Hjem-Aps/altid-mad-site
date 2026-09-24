@@ -134,7 +134,7 @@ export default function MadFor3000OmMaaneden() {
             Lav derefter en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, hvor flere retter bruger de samme grøntsager, basisvarer og rester. Begynd med det, I allerede har, og skriv først derefter indkøbslisten.
           </P>
           <P>
-            I vores analyse kostede hele kurven 616,86 kr. om ugen, hvis hver vare købes dér, hvor den er billigst. Det giver op til 36.248 kr. om året sammenlignet med den dyreste kurv, men besparelsen skal holdes op mod transport, tid og risikoen for ekstra impulskøb.
+            I vores analyse kostede hele kurven 599,81 kr. om ugen, hvis hver vare købes dér, hvor den er billigst. Det giver op til 37.135 kr. om året sammenlignet med den dyreste kurv, men besparelsen skal holdes op mod transport, tid og risikoen for ekstra impulskøb.
           </P>
           <MidCta label="Lad Altid Mad finde besparelsen for jer" />
           <H2>Det skal I ikke gøre for at spare</H2>

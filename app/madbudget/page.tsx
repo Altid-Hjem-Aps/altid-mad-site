@@ -128,7 +128,7 @@ export default function Madbudget() {
             Vores analyse sammenlignede den samme ugentlige kurv med 23 varer hos Lidl, Rema 1000, Netto, 365discount, Meny, Bilka, Kvickly, Super Brugsen, Føtex, Brugsen, Nemlig.com, Spar og Min Købmand. Kurven kostede 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand, en prisforskel på 40,4 pct.
           </P>
           <P>
-            Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen, svarende til op til 36.248 kr. om året sammenlignet med den dyreste kurv.
+            Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen, svarende til op til 37.135 kr. om året sammenlignet med den dyreste kurv.
           </P>
           <P>
             Den billigste samlede kurv svarer til ca. 3.392 kr. om måneden, mens den dyreste svarer til ca. 5.694 kr. Beregningen gælder én bestemt kurv til 2 voksne og 2 teenagere, så den kan ikke sidestilles med Danmarks Statistiks helårstal.

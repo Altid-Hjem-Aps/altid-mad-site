@@ -39,7 +39,7 @@ const FAQ: { q: string; a: string[] }[] = [
     q: 'Hvor meget kan en familie spare?',
     a: [
       'Forskellen mellem den billigste og dyreste samlede kurv var op til 27.624 kr. om året.',
-      'Besparelsen kan nå op til 36.248 kr. om året, hvis hver vare købes dér, hvor den er billigst.',
+      'Besparelsen kan nå op til 37.135 kr. om året, hvis hver vare købes dér, hvor den er billigst.',
     ],
   },
   {
@@ -149,8 +149,8 @@ export default function BilligsteSupermarked() {
             basisvarer er billigst ét sted, mens ugens tilbud gør andre varer billigere hos en anden kæde.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, falder kurvens pris til 616,86 kr. om ugen.
-            Sammenlignet med den dyreste samlede kurv giver det en besparelse på op til 36.248 kr. om året.
+            Hvis hver vare købes dér, hvor den er billigst, falder kurvens pris til 599,81 kr. om ugen.
+            Sammenlignet med den dyreste samlede kurv giver det en besparelse på op til 37.135 kr. om året.
           </P>
           <P>
             Det er dog sjældent praktisk at besøge alle kæder. Den reelle besparelse skal altid vejes op mod

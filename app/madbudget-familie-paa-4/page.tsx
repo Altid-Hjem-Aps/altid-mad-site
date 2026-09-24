@@ -134,7 +134,7 @@ export default function MadbudgetFamiliePaa4() {
             Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Omregnet svarer kurvene til cirka 3.392 kr. og 5.694 kr. om måneden.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, koster kurven 616,86 kr. om ugen. Det giver en forskel på op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv, men kræver indkøb på tværs af butikker.
+            Hvis hver vare købes dér, hvor den er billigst, koster kurven 599,81 kr. om ugen. Det giver en forskel på op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv, men kræver indkøb på tværs af butikker.
           </P>
           <P>
             Kurvanalysen kan ikke sammenlignes direkte med Danmarks Statistiks tal. Den dækker én bestemt uges kurv for 2 voksne og 2 teenagere, mens Forbrugsundersøgelsen 2024 omfatter alle årets køb af fødevarer og ikke-alkoholiske drikkevarer.

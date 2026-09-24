@@ -216,8 +216,8 @@ export default function MadpakkerPaaBudget() {
             2 voksne og 2 teenagere.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen. Det svarer
-            til op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv. Se hele sammenligningen
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen. Det svarer
+            til op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv. Se hele sammenligningen
             i vores{' '}
             <Link
               href="/billigste-supermarked"

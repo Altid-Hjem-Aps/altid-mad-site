@@ -8,11 +8,12 @@ import { H2, EYEBROW, BODY } from '@/lib/typography'
 // a mint pill with an on-scroll entrance where both ends count up together.
 
 const SPRING = 'cubic-bezier(0.34, 1.2, 0.64, 1)'
-// From the Q3-rapport (13 chains): 27.624 kr./år buying the whole basket at
-// Lidl vs the dearest chain, 36.248 kr./år cherry-picking each item's cheapest
-// chain.
-const RANGE_LO = 27624
-const RANGE_HI = 36248
+// From the corrected Q3-rapport (13 chains, 21 Sep): the same whole basket at
+// Lidl vs the median chain (11.207 kr./år) up to Lidl vs the dearest chain
+// (27.624 kr./år). Both ends are one-store baskets; the multi-store mix
+// (37.135 kr./år) is only named in the text below.
+const RANGE_LO = 11207
+const RANGE_HI = 27624
 
 /** 7500 → "7.500" — deterministic, no locale dependency. */
 const fmtKr = (n: number) => {
@@ -139,9 +140,10 @@ export default function Savings() {
               >
                 Altid Mad Q3-rapporten
               </a>
-              . Prisen på den samme ugentlige indkøbskurv varierer med 40,4 % fra den billigste til den
-              dyreste kæde. Det svarer til en mulig besparelse på op til 27.624 kr. om året. Køber du hver
-              vare dér, hvor den er billigst, kan besparelsen vokse til 36.248 kr. om året, svarende til 53,1 %.
+              . Den samme ugentlige indkøbskurv koster 21,6 % mindre i den billigste kæde end i den
+              midterste af 13 kæder. Det svarer til 11.207 kr. om året. Mod den dyreste kæde er forskellen
+              40,4 %, op til 27.624 kr. om året. Køber du hver vare dér, hvor den er billigst, kan
+              besparelsen vokse til 37.135 kr. om året, svarende til 54,4 %.
             </p>
           </div>
         </div>

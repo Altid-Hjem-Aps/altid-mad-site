@@ -132,7 +132,7 @@ export default function BeregnDitMadbudget() {
             I vores analyse kostede hele kurven 782,70 kr. hos Lidl og 1.313,94 kr. hos Min Købmand. Det svarer til cirka 3.392 kr. og 5.694 kr. om måneden. Forskellen var 531,24 kr. om ugen, op til 27.624 kr. om året.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen. Det giver op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv, men kan kræve indkøb flere steder. Se, hvordan I kan lave en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og læs vores sammenligning af det <A href="/billigste-supermarked">billigste supermarked</A>.
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen. Det giver op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv, men kan kræve indkøb flere steder. Se, hvordan I kan lave en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og læs vores sammenligning af det <A href="/billigste-supermarked">billigste supermarked</A>.
           </P>
           <H2>Hvad Altid Mad skal hjælpe med</H2>
           <P>

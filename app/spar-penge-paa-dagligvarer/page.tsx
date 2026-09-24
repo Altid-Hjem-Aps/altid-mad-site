@@ -124,7 +124,7 @@ export default function SparPengePaaDagligvarer() {
             Vælg retter, der deler råvarer, så en pose grøntsager, en bakke kød eller et bæger mejeriprodukt kan bruges flere gange. Tjek køleskab, fryser og skabe, før du skriver indkøbslisten.
           </P>
           <P>
-            Det kan betale sig at fordele indkøbene, hvis butikkerne ligger naturligt på jeres vej. I analysen kostede kurven 616,86 kr. om ugen, hvis hver vare købes dér, hvor den er billigst, svarende til op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv.
+            Det kan betale sig at fordele indkøbene, hvis butikkerne ligger naturligt på jeres vej. I analysen kostede kurven 599,81 kr. om ugen, hvis hver vare købes dér, hvor den er billigst, svarende til op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv.
           </P>
           <P>
             Flere butiksture kræver dog tid og eventuel transport. Brug derfor vores guide til en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og vælg kun ekstra stop, når besparelsen reelt er besværet værd.

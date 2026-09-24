@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 
-// The hero's "+36.000 kr." stat counts up on load — the altidhjem.dk counter
-// minus the burst: it climbs, lands exactly on 36.000 and stops. An invisible
+// The hero's "+11.207 kr." stat counts up on load — the altidhjem.dk counter
+// minus the burst: it climbs, lands exactly on 11.207 and stops. An invisible
 // sizer keeps the box at its final width so nothing around it shifts while
 // the number grows. Reduced motion (and no-JS/SSR) shows the final value.
-// 36.000 is the Q3-rapport's 36.248 kr./år (cheapest item per chain) rounded
-// down, the same rule the Q2 figure 15.481 → 15.000 followed.
-const TARGET = 36000
+// 11.207 kr./år is the corrected Q3-rapport's headline (21 Sep): the same
+// basket at Lidl (cheapest) vs Nemlig.com (the median of 13 chains). Shown
+// exactly, the same figure the app's welcome sheet uses.
+const TARGET = 11207
 
 const fmtKr = (n: number) => {
   const s = String(Math.round(n))

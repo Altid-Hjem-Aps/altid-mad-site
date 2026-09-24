@@ -318,8 +318,8 @@ export default function FounderVideo() {
             className={`mt-6 ${H2} text-white`}
             style={{ textIndent: '-0.42em' }}
           >
-            &ldquo;Spar op til <span style={{ color: '#DCD799' }}>36.000 kr.</span><br />
-            på familiens indkøb.&rdquo;
+            &ldquo;Spar i gennemsnit <span style={{ color: '#DCD799' }}>11.207 kr.</span><br />
+            om året på dagligvarer.&rdquo;
           </h2>
 
           <p className={`mt-7 max-w-[520px] ${BODY} text-white`}>

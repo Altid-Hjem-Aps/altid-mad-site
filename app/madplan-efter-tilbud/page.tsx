@@ -37,7 +37,7 @@ const FAQ: FaqItem[] = [
     q: 'Hvor meget sparer en madplan?',
     a: [
       'Besparelsen afhænger af jeres nuværende vaner, butikker og valg af varer.',
-      'I Altid Mads analyse var forskellen på den samme kurv op til 27.624 kr. om året, mens besparelsen var op til 36.248 kr. om året, hvis hver vare købes dér, hvor den er billigst, sammenlignet med den dyreste kurv.',
+      'I Altid Mads analyse var forskellen på den samme kurv op til 27.624 kr. om året, mens besparelsen var op til 37.135 kr. om året, hvis hver vare købes dér, hvor den er billigst, sammenlignet med den dyreste kurv.',
     ],
   },
   {
@@ -135,7 +135,7 @@ export default function MadplanEfterTilbud() {
             Forskellen var 531,24 kr. om ugen, svarende til op til 27.624 kr. om året. Kurven var beregnet til en husstand med 2 voksne og 2 teenagere.
           </P>
           <P>
-            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 616,86 kr. om ugen. Det svarer til op til 36.248 kr. om året sammenlignet med den dyreste samlede kurv, men kræver, at besparelsen er større end besværet og transporten.
+            Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen. Det svarer til op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv, men kræver, at besparelsen er større end besværet og transporten.
           </P>
           <P>
             Tallene viser en mulig ramme, ikke et løfte om familiens besparelse. Se hele sammenligningen i vores guide til <A href="/billigste-supermarked">det billigste supermarked</A>.
