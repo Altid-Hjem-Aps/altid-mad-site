@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { isMadTestDevice, type MadTestDevice } from '@/lib/mad-test'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
 // unlike the self-hosted MySQL which is firewalled.
@@ -369,6 +370,8 @@ export async function getSignupByEmail(email: string): Promise<{
 export async function getSignupByUnsubToken(token: string): Promise<{
   publicId: string
   email: string
+  firstName: string | null
+  source: string | null
   unsubscribed: boolean
   consentMad: boolean
   consentGroup: boolean
@@ -377,13 +380,17 @@ export async function getSignupByUnsubToken(token: string): Promise<{
   if (!t) return null
   const { data, error } = await getClient()
     .from('signup')
-    .select('public_id, email, unsubscribed, marketing_consent_mad, marketing_consent_group')
+    .select(
+      'public_id, email, first_name, signup_source, unsubscribed, marketing_consent_mad, marketing_consent_group',
+    )
     .eq('unsub_token', t)
     .maybeSingle()
   if (error) throw new Error(error.message)
   const row = data as {
     public_id?: string | null
     email?: string | null
+    first_name?: string | null
+    signup_source?: string | null
     unsubscribed?: boolean | null
     marketing_consent_mad?: boolean | null
     marketing_consent_group?: boolean | null
@@ -392,10 +399,63 @@ export async function getSignupByUnsubToken(token: string): Promise<{
   return {
     publicId: row.public_id,
     email: row.email,
+    firstName: row.first_name ?? null,
+    source: row.signup_source ?? null,
     unsubscribed: row.unsubscribed === true,
     consentMad: row.marketing_consent_mad === true,
     consentGroup: row.marketing_consent_group === true,
   }
+}
+
+/**
+ * The Mad-testen answer a person already gave (supabase/migrations/20260925…),
+ * or null. Errors throw: the yes-page must show its error screen, never a form
+ * or an "already answered" screen it cannot back up.
+ */
+export async function getMadTestOptin(publicId: string): Promise<{
+  publicId: string
+  createdAt: string
+  copyVersion: string
+  device: MadTestDevice
+} | null> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestOptin: empty publicId')
+  const { data, error } = await getClient()
+    .from('mad_test_optin')
+    .select('public_id, created_at, copy_version, device')
+    .eq('public_id', id)
+    .maybeSingle()
+  if (error) throw new Error(`mad_test_optin read failed: ${error.message}`)
+  const row = data as { public_id: string; created_at: string; copy_version: string; device: unknown } | null
+  if (!row) return null
+  if (!isMadTestDevice(row.device)) {
+    throw new Error(`mad_test_optin row has an unknown device: ${String(row.device)}`)
+  }
+  return { publicId: row.public_id, createdAt: row.created_at, copyVersion: row.copy_version, device: row.device }
+}
+
+/**
+ * Record a Mad-testen answer. Insert with ON CONFLICT DO NOTHING: a repeat
+ * answer (double tap, back button, second visit) keeps the first row's device,
+ * time and wording version, which is what the seat order is built on.
+ */
+export async function recordMadTestOptin(
+  publicId: string,
+  copyVersion: string,
+  device: MadTestDevice,
+): Promise<void> {
+  const id = String(publicId || '').trim()
+  const version = String(copyVersion || '').trim()
+  if (!id) throw new Error('recordMadTestOptin: empty publicId')
+  if (!version) throw new Error('recordMadTestOptin: empty copyVersion')
+  if (!isMadTestDevice(device)) throw new Error(`recordMadTestOptin: unknown device ${String(device)}`)
+  const { error } = await getClient()
+    .from('mad_test_optin')
+    .upsert(
+      { public_id: id, copy_version: version, device },
+      { onConflict: 'public_id', ignoreDuplicates: true },
+    )
+  if (error) throw new Error(`mad_test_optin insert failed: ${error.message}`)
 }
 
 /**
