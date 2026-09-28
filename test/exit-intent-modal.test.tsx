@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import * as amplitude from '@amplitude/analytics-browser'
 import ExitIntentModal from '@/components/ExitIntentModal'
+import { COOKIE_CONSENT_KEY, saveCookieChoice } from '@/lib/cookie-consent'
 
 // The trigger's guards are conversion-critical: a regression either kills the
 // dialog silently (lost signups) or fires it on every mouseout (spams every
@@ -54,6 +55,9 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/')
   nav.path = '/'
   stubPointer(true)
+  // Most tests are about the exit gesture itself: the visitor has already
+  // answered the cookie banner (the popup never arms before that).
+  saveCookieChoice('necessary')
 })
 
 afterEach(() => {
@@ -268,8 +272,10 @@ describe('ExitIntentModal trigger guards', () => {
     render(<ExitIntentModal />)
     await arm()
     act(() => exitTop())
-    // No throw = the site did not blank; the dialog still shows (no guard).
-    expect(await findDialog()).toBeInTheDocument()
+    // No throw = the site did not blank. With storage blocked the cookie
+    // answer can't be remembered, so the banner keeps asking and the popup
+    // never arms: two overlays never stack, even in this browser.
+    expect(await findDialog()).toBeNull()
   })
 
   it('closes when the pathname changes under the open dialog', async () => {
@@ -280,5 +286,25 @@ describe('ExitIntentModal trigger guards', () => {
     nav.path = '/privatlivspolitik'
     rerender(<ExitIntentModal />)
     expect(await findDialog()).toBeNull()
+  })
+})
+
+describe('exit intent and the cookie banner', () => {
+  it('does not arm while the cookie banner is unanswered, and keeps its one showing', async () => {
+    window.localStorage.removeItem(COOKIE_CONSENT_KEY)
+    render(<ExitIntentModal />)
+    await arm()
+    act(() => exitTop())
+    expect(await findDialog()).toBeNull()
+    expect(window.localStorage.getItem('ah-exit-intent-shown')).toBeNull()
+  })
+
+  it('arms once the visitor answers the banner, whichever the answer', async () => {
+    window.localStorage.removeItem(COOKIE_CONSENT_KEY)
+    render(<ExitIntentModal />)
+    act(() => saveCookieChoice('necessary'))
+    await arm()
+    act(() => exitTop())
+    expect(await findDialog()).toBeInTheDocument()
   })
 })

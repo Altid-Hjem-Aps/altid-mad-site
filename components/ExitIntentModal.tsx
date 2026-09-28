@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import * as amplitude from '@amplitude/analytics-browser'
 import { hasJoinedWaitlist, clearWaitlistJoined } from '@/lib/waitlist-joined'
+import { hasCookieChoice, subscribeCookieChoice } from '@/lib/cookie-consent'
 
 // Exit-intent trigger (pattern from altidenergi.dk): when the cursor leaves
 // the viewport through the top edge — headed for the tab bar / URL field —
@@ -68,6 +69,7 @@ const EXIT_MIN_UPWARD_PX = 10
 
 export default function ExitIntentModal() {
   const pathname = usePathname()
+  const cookieAnswered = useSyncExternalStore(subscribeCookieChoice, hasCookieChoice, () => false)
   const [open, setOpen] = useState(false)
 
   const excluded = EXCLUDED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
@@ -96,6 +98,10 @@ export default function ExitIntentModal() {
 
   useEffect(() => {
     if (excluded || open) return
+    // One layer at a time: the cookie banner comes first. Until the visitor
+    // has answered it (either answer), the popup doesn't even arm, so its
+    // single per-browser showing isn't spent on top of the banner.
+    if (!cookieAnswered) return
     // Mouse-driven devices only — there is no exit intent to read on touch.
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
     // Already shown once on this browser (persistent) — never pitch again.
@@ -175,7 +181,7 @@ export default function ExitIntentModal() {
       clearTimeout(armTimer)
       teardown()
     }
-  }, [excluded, open])
+  }, [excluded, open, cookieAnswered])
 
   if (!open) return null
 
