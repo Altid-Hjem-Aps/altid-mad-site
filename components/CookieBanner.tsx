@@ -5,8 +5,9 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import {
   COOKIE_CONSENT_CHANGED,
   OPEN_COOKIE_SETTINGS,
-  readCookieChoice,
+  hasCookieChoice,
   saveCookieChoice,
+  subscribeCookieChoice,
   type CookieChoice,
 } from '@/lib/cookie-consent'
 import { startAnalytics, stopAnalytics } from '@/lib/analytics'
@@ -18,17 +19,12 @@ const BUTTON =
 const BUTTON_STYLE: React.CSSProperties = { background: 'var(--sage)', color: 'var(--forest-dark)' }
 
 // The stored answer is external state (localStorage), read through
-// useSyncExternalStore so the server render and hydration agree: on the
-// server there is no answer yet and the banner renders nothing.
-function subscribe(onChange: () => void) {
-  window.addEventListener(COOKIE_CONSENT_CHANGED, onChange)
-  return () => window.removeEventListener(COOKIE_CONSENT_CHANGED, onChange)
-}
-const answered = () => readCookieChoice() !== null
+// useSyncExternalStore so the server render and hydration agree: the server
+// snapshot counts as answered, so the banner renders nothing there.
 const answeredOnServer = () => true
 
 export default function CookieBanner() {
-  const hasAnswer = useSyncExternalStore(subscribe, answered, answeredOnServer)
+  const hasAnswer = useSyncExternalStore(subscribeCookieChoice, hasCookieChoice, answeredOnServer)
   const [reopened, setReopened] = useState(false)
   const open = !hasAnswer || reopened
 

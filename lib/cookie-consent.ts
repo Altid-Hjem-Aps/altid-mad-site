@@ -50,6 +50,13 @@ export function saveCookieChoice(choice: CookieChoice, now: number = Date.now())
   window.dispatchEvent(new CustomEvent<CookieChoice>(COOKIE_CONSENT_CHANGED, { detail: choice }))
 }
 
+// For useSyncExternalStore: re-read the stored answer whenever it changes.
+export function subscribeCookieChoice(onChange: () => void) {
+  window.addEventListener(COOKIE_CONSENT_CHANGED, onChange)
+  return () => window.removeEventListener(COOKIE_CONSENT_CHANGED, onChange)
+}
+export const hasCookieChoice = () => readCookieChoice() !== null
+
 export function openCookieSettings() {
   window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS))
 }
