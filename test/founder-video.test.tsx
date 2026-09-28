@@ -12,6 +12,8 @@ vi.mock('@mux/mux-player-react', () => ({
       data-playback-id={props.playbackId as string}
       data-poster={props.poster as string}
       data-video-id={(props.metadata as { video_id: string }).video_id}
+      data-disable-tracking={String(props.disableTracking)}
+      data-disable-cookies={String(props.disableCookies)}
     />
   ),
 }))
@@ -57,5 +59,14 @@ describe('FounderVideo ratio-matched assets', () => {
     render(<FounderVideo />)
     const player = await waitFor(() => screen.getByTestId('mux-player'))
     expect(player.dataset.playbackId).toBe(WIDE)
+  })
+})
+
+describe('FounderVideo privacy', () => {
+  it('never runs Mux Data tracking or sets its cookie (not covered by cookie consent)', async () => {
+    renderAt(true)
+    const player = await waitFor(() => screen.getByTestId('mux-player'))
+    expect(player.dataset.disableTracking).toBe('true')
+    expect(player.dataset.disableCookies).toBe('true')
   })
 })
