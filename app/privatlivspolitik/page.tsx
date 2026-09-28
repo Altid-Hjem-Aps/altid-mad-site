@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
+import CookieSettingsLink from '@/components/CookieSettingsLink'
 
 export const metadata: Metadata = {
   title: 'Privatlivspolitik – Altid Hjem',
@@ -20,7 +21,7 @@ export default function Privatlivspolitik() {
 
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">Privatlivspolitik</h1>
 <p className="text-sm mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Altid Hjem ApS · CVR 45637476 · hej@altidhjem.dk</p>
-              <p className="text-xs mb-12" style={{ color: 'rgba(255,255,255,0.55)' }}>Senest opdateret: september 2026</p>
+              <p className="text-xs mb-12" style={{ color: 'rgba(255,255,255,0.55)' }}>Senest opdateret: 28. september 2026</p>
 
           <div className="space-y-10 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
 
@@ -128,6 +129,10 @@ export default function Privatlivspolitik() {
                   <p>Som behandler oplysninger på vores vegne, herunder udbydere af hosting, betalingsinfrastruktur, kundesupport, analyseværktøjer og e-mailudsendelse. Alle databehandlere er underlagt en databehandleraftale og må kun behandle dine oplysninger efter vores instruks.</p>
                 </div>
                 <div>
+                  <p className="font-semibold text-white">Amplitude (analyse af brugen af vores websteder)</p>
+                  <p>Vi bruger Amplitude, Inc. som databehandler til statistik over, hvordan vores websteder bliver brugt, men kun i din browser, hvis du har accepteret statistikcookies, se afsnit 10. Når du skriver dig op på ventelisten, registrerer vi tilmeldingen i Amplitude under et tilfældigt id sammen med, hvilken side du tilmeldte dig fra. Amplitude får ikke dit navn eller din e-mail. Oplysningerne opbevares på Amplitudes servere i EU (Frankfurt, Tyskland).</p>
+                </div>
+                <div>
                   <p className="font-semibold text-white">Offentlige myndigheder</p>
                   <p>Hvis vi er retligt forpligtet hertil.</p>
                 </div>
@@ -138,6 +143,7 @@ export default function Privatlivspolitik() {
             <section>
               <h2 className="text-white font-semibold text-base mb-3">6. Overførsler til tredjelande</h2>
               <p>Hvis vi overfører dine oplysninger til lande uden for EU/EØS, sker det udelukkende på grundlag af et lovligt overførselsgrundlag, herunder EU-Kommissionens standardkontraktbestemmelser. Du kan få nærmere oplysninger ved at kontakte os.</p>
+              <p className="mt-3">Amplitude, Inc. er en amerikansk virksomhed. Oplysningerne opbevares i EU, men hvis Amplitude tilgår dem fra USA, sker det på grundlag af EU-US Data Privacy Framework, som Amplitude er certificeret under, og EU-Kommissionens standardkontraktbestemmelser.</p>
             </section>
 
             <section>
@@ -183,8 +189,24 @@ export default function Privatlivspolitik() {
               </div>
             </section>
 
+            <section id="cookies" className="scroll-mt-28">
+              <h2 className="text-white font-semibold text-base mb-3">10. Cookies</h2>
+              <p className="mb-3">Vi bruger cookies og lignende lagring i din browser (localStorage) til to ting: det, siden skal bruge for at virke, og statistik, hvis du siger ja. Første gang du besøger siden, spørger vi dig. Dit valg gemmes i 12 måneder, og derefter spørger vi igen. Du kan til enhver tid ændre dit valg: <CookieSettingsLink className="underline underline-offset-2 transition-colors hover:text-white" /></p>
+              <p className="font-semibold text-white">Nødvendige (kræver ikke samtykke)</p>
+              <ul className="space-y-1.5 list-disc list-outside ml-5 mb-3">
+                <li><span className="font-medium text-white/80">ah-cookie-consent:</span> Husker dit cookievalg. Gemmes i 12 måneder.</li>
+                <li><span className="font-medium text-white/80">am_confirm:</span> Bruges et kort øjeblik, når du bekræfter din tilmelding til ventelisten via linket i vores e-mail. Slettes efter 30 minutter.</li>
+                <li><span className="font-medium text-white/80">ah-waitlist-joined:</span> Husker, at du er skrevet op på ventelisten, så vi ikke spørger dig igen. Gemmes, indtil du rydder din browser.</li>
+                <li><span className="font-medium text-white/80">ah-exit-intent-shown:</span> Husker, at vi har vist dig invitationen til ventelisten, så den kun vises én gang. Gemmes, indtil du rydder din browser.</li>
+              </ul>
+              <p className="font-semibold text-white">Statistik (kun hvis du siger ja)</p>
+              <ul className="space-y-1.5 list-disc list-outside ml-5">
+                <li><span className="font-medium text-white/80">AMP_* (Amplitude):</span> Et tilfældigt id for din browser, så vi kan se, hvordan siden bliver brugt på tværs af besøg: hvilke sider du ser, hvad du klikker på, og hvor du kom fra. Oplysningerne behandles af vores databehandler Amplitude i EU, se afsnit 5. Gemmes i op til 12 måneder. Siger du nej, eller trækker du dit ja tilbage, stopper vi statistikken og sletter disse cookies fra din browser.</li>
+              </ul>
+            </section>
+
             <section>
-              <h2 className="text-white font-semibold text-base mb-3">10. Ændringer</h2>
+              <h2 className="text-white font-semibold text-base mb-3">11. Ændringer</h2>
               <p>Vi opdaterer løbende denne privatlivspolitik. Den gældende version er altid tilgængelig i appen og på vores hjemmeside. Væsentlige ændringer vil blive kommunikeret til dig via appen eller e-mail.</p>
             </section>
 

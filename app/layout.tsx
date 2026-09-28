@@ -3,6 +3,7 @@ import { Onest, Afacad } from 'next/font/google'
 import './globals.css'
 import ResetScrollOnLoad from '@/components/ResetScrollOnLoad'
 import ExitIntentModal from '@/components/ExitIntentModal'
+import CookieBanner from '@/components/CookieBanner'
 
 const onest = Onest({
   subsets: ['latin'],
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ResetScrollOnLoad />
         {children}
         <ExitIntentModal />
+        <CookieBanner />
       </body>
     </html>
   )

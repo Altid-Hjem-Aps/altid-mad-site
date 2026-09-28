@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
 import { FINE_PRINT } from '@/lib/typography'
+import CookieSettingsLink from '@/components/CookieSettingsLink'
 
 const SEP = ' · '
 
@@ -97,6 +98,8 @@ export default function Footer() {
         ))}
         {SEP}
         <InternalLink href="/slet-konto" label="Slet konto" />
+        {SEP}
+        <CookieSettingsLink style={linkStyle} />
       </p>
 
       <p className={`${FINE_PRINT} lg:hidden flex flex-col gap-1.5 w-full text-center`} style={{ color: 'rgba(255,255,255,0.6)' }}>
@@ -117,6 +120,8 @@ export default function Footer() {
           ))}
           {SEP}
           <InternalLink href="/slet-konto" label="Slet konto" />
+          {SEP}
+          <CookieSettingsLink style={linkStyle} />
         </span>
         <span>
           <Copyright />
