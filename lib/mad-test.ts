@@ -161,7 +161,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
         body: `<p class="hello">${greeting(screen.firstName)},</p>
 <h1>Vil du teste Altid&nbsp;Mad før alle andre?</h1>
 <p class="lead">Vi åbner for 300 testere. <strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.</p>
-<p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, når testversionen til din telefon er klar.</p>
+<p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail: først til iPhone, derefter til Android, så langt pladserne rækker.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
   <button type="submit" name="device" value="iphone" class="primary">${ANSWER_LABEL.iphone}</button>
   <button type="submit" name="device" value="android" class="secondary">${ANSWER_LABEL.android}</button>

@@ -151,7 +151,7 @@ describe('renderMadTestScreen', () => {
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html).toContain('<strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.')
     expect(html).toContain(
-      'Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, når testversionen til din telefon er klar.',
+      'Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail: først til iPhone, derefter til Android, så langt pladserne rækker.',
     )
     expect(html).not.toContain('Har du ikke en iPhone')
     // A disabled submitter drops its device value from the request.
