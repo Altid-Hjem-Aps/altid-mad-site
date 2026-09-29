@@ -135,7 +135,7 @@ const postAndroid = (token: string, account = 'anna.hansen@gmail.com') =>
   post(token, 'android', { google_account: account })
 
 const ANDROID_NEXT =
-  'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når Android-versionen er klar.'
+  'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når der er en plads til dig i Android-testen.'
 
 function answered(device: string, googleAccount: string | null = device === 'android' ? 'anna.hansen@gmail.com' : null): OptinRow {
   return {
@@ -371,7 +371,7 @@ describe('POST /api/mad-testen', () => {
     expect(db.upserts.map((u) => u.row.google_account)).toEqual([null])
   })
 
-  it('Android button: asks for the Google account, prefilled with the signup email, writes nothing', async () => {
+  it('Android button: asks for the Google account, empty for a non-Gmail signup, writes nothing', async () => {
     db.signups.set(TOKEN, eligible())
     const res = await post(TOKEN, 'android')
     const html = await res.text()
@@ -381,9 +381,16 @@ describe('POST /api/mad-testen', () => {
     expect(html).toContain('<h1>Hvilken Google-konto bruger du på din telefon?</h1>')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('<input type="hidden" name="device" value="android"/>')
-    expect(html).toContain('name="google_account" value="anna@example.dk"')
+    expect(html).toContain('name="google_account" value=""')
     expect(html).not.toContain('aria-invalid="true"')
     expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+  })
+
+  it('Android button for a Gmail signup: the field starts with that address', async () => {
+    db.signups.set(TOKEN, eligible({ email: 'Anna.Hansen@Gmail.com' }))
+    const html = await (await post(TOKEN, 'android')).text()
+    expect(html).toContain('name="google_account" value="anna.hansen@gmail.com"')
+    expect(db.upserts).toHaveLength(0)
   })
 
   it('Android with the Google account: records it normalised and says what happens next', async () => {
@@ -400,7 +407,7 @@ describe('POST /api/mad-testen', () => {
         google_account: 'anna.hansen@gmail.com',
       },
     ])
-    expect(html).toContain('<h1>Tak, du er med</h1>')
+    expect(html).toContain('<h1>Tak for dit ja</h1>')
     expect(html).toContain(ANDROID_NEXT)
     expect(html).toContain('mailto:hej@altidmad.dk')
   })

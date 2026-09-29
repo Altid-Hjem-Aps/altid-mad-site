@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   escapeHtml,
   isMadTestDevice,
+  googleAccountPrefill,
   normalizeGoogleAccount,
   isMadTestEligible,
   renderMadTestScreen,
@@ -64,6 +65,16 @@ describe('normalizeGoogleAccount', () => {
   })
 })
 
+describe('googleAccountPrefill', () => {
+  it('prefills Gmail addresses only, normalised', () => {
+    expect(googleAccountPrefill(' Anna@Gmail.com ')).toBe('anna@gmail.com')
+    expect(googleAccountPrefill('bo@googlemail.com')).toBe('bo@googlemail.com')
+    for (const v of ['anna@hotmail.com', 'anna@live.dk', 'anna@firma.dk', 'anna@gmail.com.evil.dk', 'ikke en mail', '']) {
+      expect(googleAccountPrefill(v)).toBe('')
+    }
+  })
+})
+
 describe('escapeHtml', () => {
   it('escapes all five HTML-significant characters', () => {
     expect(escapeHtml(`<a href="x" title='y'>&</a>`)).toBe(
@@ -98,13 +109,13 @@ describe('renderMadTestScreen', () => {
   })
 
   it.each([
-    ['thanks', 'android', 'Tak, du er med'],
+    ['thanks', 'android', 'Tak for dit ja'],
     ['already', 'android', 'Vi har allerede dit ja'],
-  ] as const)('%s android: Android follows, login mail with a Google Play link, no waitlist wording', (kind, device, heading) => {
+  ] as const)('%s android: Android follows, a mail when there is a place, no waitlist wording', (kind, device, heading) => {
     const html = renderMadTestScreen({ kind, device })
     expect(html).toContain(`<h1>${heading}</h1>`)
     expect(html).toContain(
-      '<p class="lead">Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når Android-versionen er klar.</p>',
+      '<p class="lead">Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når der er en plads til dig i Android-testen.</p>',
     )
     expect(html).toContain('mailto:hej@altidmad.dk')
     expect(html).not.toContain('ventelisten til')
@@ -126,8 +137,8 @@ describe('renderMadTestScreen', () => {
 
   it('the Google-account retry points the field at its error text', () => {
     const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true })
-    expect(html).toContain('aria-invalid="true" aria-describedby="ga-err"')
-    expect(html).toContain('<p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv den som navn@gmail.com.</p>')
+    expect(html).toContain('aria-invalid="true" aria-describedby="ga-err" autofocus')
+    expect(html).toContain('<p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>')
   })
 
   it('the form offers exactly the two answers in one POST form, iPhone first', () => {

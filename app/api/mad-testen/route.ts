@@ -4,6 +4,7 @@ import {
   MAD_TEST_COPY_VERSION,
   isMadTestDevice,
   isMadTestEligible,
+  googleAccountPrefill,
   normalizeGoogleAccount,
   renderMadTestScreen,
   type MadTestScreen,
@@ -89,8 +90,9 @@ export async function POST(req: NextRequest) {
       const typed = form.get('google_account')
       if (typed === null) {
         // The Android button: ask for the Google account, write nothing yet.
-        // The field starts with the signup email, which is the account for most.
-        return respond({ kind: 'google', token: found.token, value: found.signup.email, retry: false }, 200)
+        // A Gmail signup address starts the field; any other starts it empty.
+        const value = googleAccountPrefill(found.signup.email)
+        return respond({ kind: 'google', token: found.token, value, retry: false }, 200)
       }
       googleAccount = normalizeGoogleAccount(typed)
       if (googleAccount === null) {

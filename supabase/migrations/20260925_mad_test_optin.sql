@@ -7,7 +7,9 @@
 -- device, when (created_at), under which screen wording (copy_version, resolves
 -- to the text in lib/mad-test.ts), and for Android the Google account
 -- (google_account): Google Play lets only listed Google accounts install an
--- internal test build.
+-- internal test build. The check holds the account to the yes-page's pattern
+-- (lower case; letters, digits and . _ % + -): the Android login mail prints it
+-- raw, so a row typed into the SQL editor must not get past it either.
 --
 -- The export picks the 'iphone' rows for TestFlight and the 'android' rows for
 -- the Google Play tester list (export-mad-test-seats.py in altid-dashboard).
@@ -29,7 +31,8 @@ create table if not exists public.mad_test_optin (
                   constraint mad_test_optin_device_check check (device in ('iphone', 'android')),
   google_account  text,
   constraint mad_test_optin_google_account_check
-    check ((device = 'android') = (google_account is not null))
+    check ((device = 'iphone' and google_account is null)
+        or (device = 'android' and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'))
 );
 
 -- A table created by an earlier version of this file lacks device or
@@ -55,7 +58,8 @@ begin
   ) then
     alter table public.mad_test_optin
       add constraint mad_test_optin_google_account_check
-      check ((device = 'android') = (google_account is not null));
+      check ((device = 'iphone' and google_account is null)
+          or (device = 'android' and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'));
   end if;
 end $$;
 

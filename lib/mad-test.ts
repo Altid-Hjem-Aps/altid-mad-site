@@ -61,6 +61,18 @@ export function normalizeGoogleAccount(value: unknown): string | null {
   return /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(v) ? v : null
 }
 
+/**
+ * What the Google-account field starts with: the signup email when it is a
+ * Gmail address (then it is a Google account), else empty. A Hotmail or work
+ * address is usually not the account on the phone, and a person who taps Send
+ * without reading would land on the tester list with an address that can
+ * never install the build.
+ */
+export function googleAccountPrefill(signupEmail: string): string {
+  const v = normalizeGoogleAccount(signupEmail)
+  return v !== null && /@(gmail|googlemail)\.com$/.test(v) ? v : ''
+}
+
 /** HTML-escape a value for text content and double-quoted attributes. */
 export function escapeHtml(value: string): string {
   return value
@@ -98,7 +110,9 @@ const SUPPORT_MAIL = 'hej@altidmad.dk'
 // share it: the next step is the same whichever way the person got here.
 const NEXT_STEP: Record<MadTestDevice, string> = {
   iphone: 'Du får en mail med dit login, så snart Apple har godkendt testversionen.',
-  android: 'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når Android-versionen er klar.',
+  // Google Play's internal test takes at most 100 testers, so an Android yes is
+  // promised a mail when there is a place, not a place.
+  android: 'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når der er en plads til dig i Android-testen.',
 }
 
 const QUESTIONS = `Har du spørgsmål, så skriv til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
@@ -159,18 +173,18 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
         title: 'Din Google-konto',
         onPageShow: RESET_GOOGLE,
         body: `<h1>Hvilken Google-konto bruger du på din telefon?</h1>
-<p class="lead">Google&nbsp;Play giver kun adgang til testversionen for den Google-konto, der er logget ind på telefonen. Tit er det en Gmail-adresse.</p>
+<p class="lead">Google&nbsp;Play giver kun adgang til testversionen for den Google-konto, der er logget ind på telefonen. Ofte er det en Gmail-adresse.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
   <input type="hidden" name="device" value="android"/>
   <label for="ga">Google-konto</label>
-  <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err"' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv den som navn@gmail.com.</p>` : ''}
+  <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="navn@gmail.com" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err" autofocus' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>` : ''}
   <button type="submit" class="primary">${GOOGLE_LABEL}</button>
 </form>
 <p class="note">Vi bruger den kun til at give dig adgang til testen i Google&nbsp;Play. Dit login til appen bliver din <span class="nw">e-mailadresse</span> fra ventelisten.</p>
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'thanks':
-      return answered('Tak, du er med', screen.device)
+      return answered(screen.device === 'iphone' ? 'Tak, du er med' : 'Tak for dit ja', screen.device)
     case 'already':
       return answered('Vi har allerede dit ja', screen.device)
     case 'invalid':
