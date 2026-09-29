@@ -103,7 +103,7 @@ export type MadTestScreen =
   | { kind: 'invalid' }
   | { kind: 'error' }
 
-const COLOR = {
+export const COLOR = {
   forestDeep: '#163223',
   cream: '#fdfaf4',
   // Altid Mad accent, from the mad-referral-welcome Resend template.
@@ -113,7 +113,7 @@ const COLOR = {
   error: '#a33a1f',
 } as const
 
-const SUPPORT_MAIL = 'hej@altidmad.dk'
+export const SUPPORT_MAIL = 'hej@altidmad.dk'
 
 // What happens next, per answer. The thank-you and already-answered screens
 // share it: the next step is the same whichever way the person got here.
@@ -124,9 +124,9 @@ const NEXT_STEP: Record<MadTestDevice, string> = {
 
 const QUESTIONS = `Har du spørgsmål, kan du skrive til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
 
-const CHECK = `<div class="mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="24" fill="${COLOR.khaki}"/><path d="M15 24.5l6 6 12-13" fill="none" stroke="${COLOR.forestDeep}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
+export const CHECK = `<div class="mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="24" fill="${COLOR.khaki}"/><path d="M15 24.5l6 6 12-13" fill="none" stroke="${COLOR.forestDeep}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
 
-function greeting(firstName: string | null): string {
+export function greeting(firstName: string | null): string {
   const name = (firstName ?? '').trim()
   return name ? `Hej ${escapeHtml(name)}` : 'Hej'
 }
@@ -142,7 +142,7 @@ const GOOGLE_LABEL = 'Fortsæt med Android'
 // buttons are NOT disabled: a disabled submitter drops its device=… value from
 // the request. pageshow puts the labels back when the browser restores this page
 // from its back/forward cache, so a person who comes back can answer again.
-const ON_SUBMIT = `if(this.dataset.sent){return false}this.dataset.sent='1';if(event.submitter){event.submitter.textContent='Et øjeblik'}`
+export const ON_SUBMIT = `if(this.dataset.sent){return false}this.dataset.sent='1';if(event.submitter){event.submitter.textContent='Et øjeblik'}`
 // Every button carries its own label in data-l, so one script serves all forms.
 const RESET_BUTTONS = `var f=document.querySelector('form');if(f){delete f.dataset.sent;f.querySelectorAll('button').forEach(function(b){b.textContent=b.dataset.l})}`
 
@@ -310,6 +310,16 @@ button:focus-visible{border-radius:999px}
 /** A complete HTML document for one screen. Every interpolated value is escaped. */
 export function renderMadTestScreen(screen: MadTestScreen): string {
   const { title, body, onPageShow } = content(screen)
+  return renderMadTestShell(title, body, onPageShow)
+}
+
+/**
+ * The page around a screen: head, the green header with the logo, main, footer.
+ * Shared with the day-5 survey (lib/mad-test-survey.ts), which adds its own
+ * rules after STYLE through `extraStyle`. `title` is escaped here; `body` and
+ * `onPageShow` are trusted markup the caller built with escaped values.
+ */
+export function renderMadTestShell(title: string, body: string, onPageShow?: string, extraStyle = ''): string {
   return `<!doctype html>
 <html lang="da"><head>
 <meta charset="utf-8"/>
@@ -319,7 +329,7 @@ export function renderMadTestScreen(screen: MadTestScreen): string {
 <meta name="theme-color" content="${COLOR.forestDeep}"/>
 <title>${escapeHtml(title)} | Altid Mad</title>
 <link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin/>
-<style>${STYLE}</style>
+<style>${STYLE}${extraStyle}</style>
 </head>
 <body${onPageShow ? ` onpageshow="${onPageShow}"` : ''}>
 <header class="bar"><div class="bar-in"><img src="/email/mad/altid-mad-logo-white.png" alt="Altid Mad" width="88" height="47"/></div></header>

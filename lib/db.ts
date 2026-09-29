@@ -1,5 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { isMadTestDevice, normalizeGoogleAccount, type MadTestDevice } from '@/lib/mad-test'
+import {
+  isSurveyDays,
+  isSurveyProgress,
+  isSurveyRecommend,
+  isSurveyText,
+  type SurveyAnswers,
+} from '@/lib/mad-test-survey'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
 // unlike the self-hosted MySQL which is firewalled.
@@ -486,6 +493,90 @@ export async function recordMadTestOptin(
       { onConflict: 'public_id', ignoreDuplicates: true },
     )
   if (error) throw new Error(`mad_test_optin insert failed: ${error.message}`)
+}
+
+/**
+ * The day-5 survey answer a tester already gave (supabase/migrations/20260929…),
+ * or null. Errors throw: the survey must show its error screen, never a form or
+ * a "we have your answers" screen it cannot back up. A row outside the table's
+ * checks was not written by this code and throws too.
+ */
+export async function getMadTestSurvey(publicId: string): Promise<({
+  publicId: string
+  createdAt: string
+  copyVersion: string
+} & SurveyAnswers) | null> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestSurvey: empty publicId')
+  const { data, error } = await getClient()
+    .from('mad_test_survey')
+    .select('public_id, created_at, copy_version, days_used, progress, recommend, worked_best, fix_first')
+    .eq('public_id', id)
+    .maybeSingle()
+  if (error) throw new Error(`mad_test_survey read failed: ${error.message}`)
+  const row = data as {
+    public_id: string
+    created_at: string
+    copy_version: string
+    days_used: unknown
+    progress: unknown
+    recommend: unknown
+    worked_best: unknown
+    fix_first: unknown
+  } | null
+  if (!row) return null
+  if (!isSurveyDays(row.days_used)) throw new Error(`mad_test_survey row has an unknown days_used: ${String(row.days_used)}`)
+  if (!isSurveyProgress(row.progress)) throw new Error(`mad_test_survey row has an unknown progress: ${String(row.progress)}`)
+  if (!isSurveyRecommend(row.recommend)) throw new Error(`mad_test_survey row has an out-of-range recommend: ${String(row.recommend)}`)
+  if (!isSurveyText(row.worked_best)) throw new Error('mad_test_survey row has an invalid worked_best')
+  if (!isSurveyText(row.fix_first)) throw new Error('mad_test_survey row has an invalid fix_first')
+  return {
+    publicId: row.public_id,
+    createdAt: row.created_at,
+    copyVersion: row.copy_version,
+    daysUsed: row.days_used,
+    progress: row.progress,
+    recommend: row.recommend,
+    workedBest: row.worked_best,
+    fixFirst: row.fix_first,
+  }
+}
+
+/**
+ * Record a tester's day-5 survey answer. Insert with ON CONFLICT DO NOTHING:
+ * one answer per person, and a repeat (double tap, back button, second visit)
+ * keeps the first. Every value is checked here against the table's checks, so a
+ * wrong one is refused before it can be a 500 there.
+ */
+export async function recordMadTestSurvey(
+  publicId: string,
+  copyVersion: string,
+  answers: SurveyAnswers,
+): Promise<void> {
+  const id = String(publicId || '').trim()
+  const version = String(copyVersion || '').trim()
+  if (!id) throw new Error('recordMadTestSurvey: empty publicId')
+  if (!version) throw new Error('recordMadTestSurvey: empty copyVersion')
+  if (!isSurveyDays(answers.daysUsed)) throw new Error(`recordMadTestSurvey: unknown daysUsed ${String(answers.daysUsed)}`)
+  if (!isSurveyProgress(answers.progress)) throw new Error(`recordMadTestSurvey: unknown progress ${String(answers.progress)}`)
+  if (!isSurveyRecommend(answers.recommend)) throw new Error(`recordMadTestSurvey: recommend out of range ${String(answers.recommend)}`)
+  if (!isSurveyText(answers.workedBest)) throw new Error('recordMadTestSurvey: workedBest is not a stored text answer')
+  if (!isSurveyText(answers.fixFirst)) throw new Error('recordMadTestSurvey: fixFirst is not a stored text answer')
+  const { error } = await getClient()
+    .from('mad_test_survey')
+    .upsert(
+      {
+        public_id: id,
+        copy_version: version,
+        days_used: answers.daysUsed,
+        progress: answers.progress,
+        recommend: answers.recommend,
+        worked_best: answers.workedBest,
+        fix_first: answers.fixFirst,
+      },
+      { onConflict: 'public_id', ignoreDuplicates: true },
+    )
+  if (error) throw new Error(`mad_test_survey insert failed: ${error.message}`)
 }
 
 /**
