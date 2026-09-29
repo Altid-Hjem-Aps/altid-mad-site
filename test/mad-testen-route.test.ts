@@ -12,7 +12,13 @@ function project(row: Record<string, unknown> | undefined, cols: string) {
   return Object.fromEntries(cols.split(',').map((c) => c.trim()).map((c) => [c, row[c]]))
 }
 
-type OptinRow = { public_id: string; created_at: string; copy_version: string; device: string }
+type OptinRow = {
+  public_id: string
+  created_at: string
+  copy_version: string
+  device: string
+  google_account: string | null
+}
 
 type SignupRow = {
   public_id: string
@@ -77,6 +83,7 @@ vi.mock('@supabase/supabase-js', () => ({
             created_at: new Date().toISOString(),
             copy_version: row.copy_version as string,
             device: row.device as string,
+            google_account: row.google_account as string | null,
           })
         }
         return Promise.resolve({ error: null })
@@ -111,19 +118,33 @@ function url(token?: string) {
 }
 
 const get = (token?: string) => GET(new NextRequest(url(token)))
-// What the form sends: the pressed button's name=value, urlencoded.
-function post(token?: string, device: string | null = 'iphone') {
+// What the form sends: the pressed button's name=value, urlencoded, plus the
+// Google-account field on the Android step.
+function post(token?: string, device: string | null = 'iphone', extra: Record<string, string> = {}) {
+  const fields = { ...(device === null ? {} : { device }), ...extra }
   return POST(
     new NextRequest(url(token), {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: device === null ? '' : new URLSearchParams({ device }).toString(),
+      body: new URLSearchParams(fields).toString(),
     }),
   )
 }
+// The whole Android answer: the button, then the Google-account step.
+const postAndroid = (token: string, account = 'anna.hansen@gmail.com') =>
+  post(token, 'android', { google_account: account })
 
-function answered(device: string): OptinRow {
-  return { public_id: PUBLIC_ID, created_at: '2026-09-25T10:00:00Z', copy_version: MAD_TEST_COPY_VERSION, device }
+const ANDROID_NEXT =
+  'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når Android-versionen er klar.'
+
+function answered(device: string, googleAccount: string | null = device === 'android' ? 'anna.hansen@gmail.com' : null): OptinRow {
+  return {
+    public_id: PUBLIC_ID,
+    created_at: '2026-09-25T10:00:00Z',
+    copy_version: MAD_TEST_COPY_VERSION,
+    device,
+    google_account: googleAccount,
+  }
 }
 
 beforeAll(() => {
@@ -187,7 +208,7 @@ describe('GET /api/mad-testen', () => {
     expect(res.status).toBe(200)
     expect(html).toContain('Hej Anna,')
     expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary">Ja, jeg har en iPhone</button>')
-    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary">Ja, men jeg har Android</button>')
+    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary">Ja, jeg har Android</button>')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('href="/privatlivspolitik"')
     expect(html.match(/<button/g)).toHaveLength(2)
@@ -254,22 +275,27 @@ describe('GET /api/mad-testen', () => {
     expect(db.upserts).toHaveLength(0)
   })
 
-  it('already answered Android: the Android message, no form', async () => {
+  it('already answered Android: the Android next step, no form', async () => {
     db.signups.set(TOKEN, eligible())
     db.optins.set(PUBLIC_ID, answered('android'))
     const res = await get(TOKEN)
     const html = await res.text()
 
     expect(res.status).toBe(200)
-    expect(html).toContain('<h1>Vi har allerede dit svar</h1>')
-    expect(html).toContain('Testen kører kun på iPhone')
-    expect(html).not.toContain('login')
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(html).toContain(ANDROID_NEXT)
     expect(html).not.toContain('<form')
+    expect(db.selects.find((q) => q.table === 'mad_test_optin')?.cols).toContain('google_account')
   })
 
-  it('a stored row with an unknown device: 500, never a guessed screen', async () => {
+  it.each([
+    ['an unknown device', answered('windows')],
+    ['Android without a Google account', answered('android', null)],
+    ['iPhone with a Google account', answered('iphone', 'anna@gmail.com')],
+    ['Android with a stored value that is not an address', answered('android', 'not an address')],
+  ])('a stored row with %s: 500, never a guessed screen', async (_, row) => {
     db.signups.set(TOKEN, eligible())
-    db.optins.set(PUBLIC_ID, answered('windows'))
+    db.optins.set(PUBLIC_ID, row)
     expect((await get(TOKEN)).status).toBe(500)
   })
 
@@ -327,7 +353,7 @@ describe('POST /api/mad-testen', () => {
     expect(res.status).toBe(200)
     expect(db.upserts).toEqual([
       {
-        row: { public_id: PUBLIC_ID, copy_version: MAD_TEST_COPY_VERSION, device: 'iphone' },
+        row: { public_id: PUBLIC_ID, copy_version: MAD_TEST_COPY_VERSION, device: 'iphone', google_account: null },
         opts: { onConflict: 'public_id', ignoreDuplicates: true },
       },
     ])
@@ -337,33 +363,97 @@ describe('POST /api/mad-testen', () => {
     expect(res.headers.get('Cache-Control')).toBe('private, no-store')
   })
 
-  it('Android: records the answer with device android and says the test is iPhone only', async () => {
+  it('iPhone with a stray google_account field: recorded as iPhone, the field ignored', async () => {
+    db.signups.set(TOKEN, eligible())
+    const res = await post(TOKEN, 'iphone', { google_account: 'x@gmail.com' })
+
+    expect(res.status).toBe(200)
+    expect(db.upserts.map((u) => u.row.google_account)).toEqual([null])
+  })
+
+  it('Android button: asks for the Google account, prefilled with the signup email, writes nothing', async () => {
     db.signups.set(TOKEN, eligible())
     const res = await post(TOKEN, 'android')
     const html = await res.text()
 
     expect(res.status).toBe(200)
+    expect(db.upserts).toHaveLength(0)
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din telefon?</h1>')
+    expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
+    expect(html).toContain('<input type="hidden" name="device" value="android"/>')
+    expect(html).toContain('name="google_account" value="anna@example.dk"')
+    expect(html).not.toContain('aria-invalid="true"')
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+  })
+
+  it('Android with the Google account: records it normalised and says what happens next', async () => {
+    db.signups.set(TOKEN, eligible())
+    const res = await postAndroid(TOKEN, '  Anna.Hansen@Gmail.COM ')
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
     expect(db.upserts.map((u) => u.row)).toEqual([
-      { public_id: PUBLIC_ID, copy_version: MAD_TEST_COPY_VERSION, device: 'android' },
+      {
+        public_id: PUBLIC_ID,
+        copy_version: MAD_TEST_COPY_VERSION,
+        device: 'android',
+        google_account: 'anna.hansen@gmail.com',
+      },
     ])
-    expect(html).toContain('<h1>Tak for dit svar</h1>')
-    expect(html).toContain('Testen kører kun på iPhone, så du er ikke med denne gang.')
-    expect(html).not.toContain('login')
+    expect(html).toContain('<h1>Tak, du er med</h1>')
+    expect(html).toContain(ANDROID_NEXT)
+    expect(html).toContain('mailto:hej@altidmad.dk')
   })
 
   it.each([
-    ['iphone', 'Vi har allerede dit ja'],
-    ['android', 'Vi har allerede dit svar'],
-  ])('a repeat answer after %s keeps the first row and shows its already screen', async (first, heading) => {
+    ['empty', ''],
+    ['spaces only', '   '],
+    ['no @', 'anna.gmail.com'],
+    ['two addresses', 'a@gmail.com b@gmail.com'],
+    ['no dot in the domain', 'anna@gmail'],
+    ['overlong', `${'a'.repeat(250)}@gmail.com`],
+  ])('Android with a Google account that is %s: asks again, keeps the text escaped, writes nothing', async (_, typed) => {
     db.signups.set(TOKEN, eligible())
-    await post(TOKEN, first)
-    const row = db.optins.get(PUBLIC_ID)
-    const other = first === 'iphone' ? 'android' : 'iphone'
+    const res = await postAndroid(TOKEN, typed)
+    const html = await res.text()
 
-    for (const device of [first, other]) {
-      const res = await post(TOKEN, device)
+    expect(res.status).toBe(200)
+    expect(db.upserts).toHaveLength(0)
+    expect(html).toContain('aria-invalid="true"')
+    expect(html).toContain('Det ligner ikke en e-mailadresse.')
+    expect(html).toContain(`value="${typed.slice(0, 254)}"`)
+  })
+
+  it('Android retry escapes what was typed', async () => {
+    db.signups.set(TOKEN, eligible())
+    const html = await (await postAndroid(TOKEN, '"><script>x</script>')).text()
+
+    expect(html).not.toContain('<script>x')
+    expect(html).toContain('value="&quot;&gt;&lt;script&gt;x&lt;/script&gt;"')
+  })
+
+  it('the Android step on a link that is already answered: the already screen, nothing written', async () => {
+    db.signups.set(TOKEN, eligible())
+    db.optins.set(PUBLIC_ID, answered('iphone'))
+    for (const res of [await post(TOKEN, 'android'), await postAndroid(TOKEN)]) {
+      expect(await res.text()).toContain('<h1>Vi har allerede dit ja</h1>')
+    }
+    expect(db.upserts).toHaveLength(0)
+  })
+
+  it.each([
+    ['iphone', 'Du får en mail med dit login, så snart Apple har godkendt testversionen.'],
+    ['android', ANDROID_NEXT],
+  ])('a repeat answer after %s keeps the first row and shows its already screen', async (first, next) => {
+    db.signups.set(TOKEN, eligible())
+    await (first === 'iphone' ? post(TOKEN, 'iphone') : postAndroid(TOKEN))
+    const row = db.optins.get(PUBLIC_ID)
+
+    for (const res of [await post(TOKEN, 'iphone'), await post(TOKEN, 'android'), await postAndroid(TOKEN, 'b@gmail.com')]) {
       expect(res.status).toBe(200)
-      expect(await res.text()).toContain(`<h1>${heading}</h1>`)
+      const html = await res.text()
+      expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+      expect(html).toContain(next)
     }
     expect(db.upserts).toHaveLength(1)
     expect(db.optins.size).toBe(1)
@@ -378,7 +468,9 @@ describe('POST /api/mad-testen', () => {
     const res = await post(TOKEN, 'iphone')
 
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('<h1>Vi har allerede dit svar</h1>')
+    const html = await res.text()
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(html).toContain(ANDROID_NEXT)
     expect(db.optins.get(PUBLIC_ID)?.device).toBe('android')
   })
 

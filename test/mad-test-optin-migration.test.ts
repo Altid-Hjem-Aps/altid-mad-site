@@ -17,7 +17,7 @@ const statements = sql
   .toLowerCase()
 
 describe('20260925_mad_test_optin migration', () => {
-  it('creates the table idempotently with the four columns', () => {
+  it('creates the table idempotently with the five columns', () => {
     expect(statements).toContain('create table if not exists public.mad_test_optin')
     expect(statements).toMatch(
       /public_id\s+text\s+primary key references public\.signup \(public_id\) on delete cascade,/,
@@ -25,8 +25,20 @@ describe('20260925_mad_test_optin migration', () => {
     expect(statements).toMatch(/created_at\s+timestamptz\s+not null default now\(\)/)
     expect(statements).toMatch(/copy_version\s+text\s+not null,/)
     expect(statements).toMatch(
-      /device\s+text\s+not null\s+constraint mad_test_optin_device_check check \(device in \('iphone', 'android'\)\)\s*\);/,
+      /device\s+text\s+not null\s+constraint mad_test_optin_device_check check \(device in \('iphone', 'android'\)\),/,
     )
+    expect(statements).toMatch(
+      /google_account\s+text,\s+constraint mad_test_optin_google_account_check\s+check \(\(device = 'android'\) = \(google_account is not null\)\)\s*\);/,
+    )
+  })
+
+  it('brings a table from the version without google_account up to shape on re-run', () => {
+    const add = statements.indexOf('alter table public.mad_test_optin add column if not exists google_account text;')
+    const guard = statements.search(
+      /if not exists \(\s*select 1 from pg_constraint\s+where conname = 'mad_test_optin_google_account_check'\s+and conrelid = 'public\.mad_test_optin'::regclass\s*\) then\s+alter table public\.mad_test_optin\s+add constraint mad_test_optin_google_account_check\s+check \(\(device = 'android'\) = \(google_account is not null\)\);\s+end if;/,
+    )
+    expect(add).toBeGreaterThan(statements.indexOf('create table if not exists public.mad_test_optin'))
+    expect(guard).toBeGreaterThan(add)
   })
 
   it('brings a table from the earlier version (no device column) up to shape on re-run', () => {
@@ -41,9 +53,9 @@ describe('20260925_mad_test_optin migration', () => {
     expect(notNull).toBeGreaterThan(add)
     expect(guard).toBeGreaterThan(notNull)
     // Every add is guarded, so a second run cannot fail on "already exists".
-    expect(statements.match(/add constraint/g)).toHaveLength(1)
-    expect(statements.match(/add column/g)).toHaveLength(1)
-    expect(statements.match(/add column if not exists/g)).toHaveLength(1)
+    expect(statements.match(/add constraint/g)).toHaveLength(2)
+    expect(statements.match(/add column/g)).toHaveLength(2)
+    expect(statements.match(/add column if not exists/g)).toHaveLength(2)
   })
 
   it('enables row level security, grants no policy, revokes the public roles', () => {

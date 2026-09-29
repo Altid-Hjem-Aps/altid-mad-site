@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   escapeHtml,
   isMadTestDevice,
+  normalizeGoogleAccount,
   isMadTestEligible,
   renderMadTestScreen,
   MAD_TEST_COPY_VERSION,
@@ -12,6 +13,8 @@ import {
 
 const SCREENS: MadTestScreen[] = [
   { kind: 'form', firstName: 'Anna', token: 'tok' },
+  { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false },
+  { kind: 'google', token: 'tok', value: 'anna', retry: true },
   { kind: 'thanks', device: 'iphone' },
   { kind: 'thanks', device: 'android' },
   { kind: 'already', device: 'iphone' },
@@ -42,6 +45,22 @@ describe('isMadTestDevice', () => {
     expect(isMadTestDevice('iphone')).toBe(true)
     expect(isMadTestDevice('android')).toBe(true)
     for (const v of ['IPHONE', 'ios', '', null, undefined, 1]) expect(isMadTestDevice(v)).toBe(false)
+  })
+})
+
+describe('normalizeGoogleAccount', () => {
+  it('trims and lower-cases one address', () => {
+    expect(normalizeGoogleAccount('  Anna.Hansen@Gmail.COM ')).toBe('anna.hansen@gmail.com')
+    expect(normalizeGoogleAccount('bo+test@firma.dk')).toBe('bo+test@firma.dk')
+    expect(normalizeGoogleAccount('Ib_Ok-1%x@mail.firma-navn.co.uk')).toBe('ib_ok-1%x@mail.firma-navn.co.uk')
+  })
+
+  it('refuses anything that is not one address', () => {
+    for (const v of ['', '  ', 'anna', 'anna@gmail', '@gmail.com', 'a b@gmail.com', 'a@gmail.com, b@gmail.com',
+      '<b>@gmail.com', 'a"b@gmail.com', "a'b@gmail.com", 'a&b@gmail.com', 'anna@gmail.c', 'anna@-.dk.',
+      `${'a'.repeat(250)}@gmail.com`, null, undefined, 1]) {
+      expect(normalizeGoogleAccount(v)).toBeNull()
+    }
   })
 })
 
@@ -79,16 +98,36 @@ describe('renderMadTestScreen', () => {
   })
 
   it.each([
-    ['thanks', 'android', 'Tak for dit svar'],
-    ['already', 'android', 'Vi har allerede dit svar'],
-  ] as const)('%s android: iPhone only, still on the waitlist, no login promise', (kind, device, heading) => {
+    ['thanks', 'android', 'Tak, du er med'],
+    ['already', 'android', 'Vi har allerede dit ja'],
+  ] as const)('%s android: Android follows, login mail with a Google Play link, no waitlist wording', (kind, device, heading) => {
     const html = renderMadTestScreen({ kind, device })
     expect(html).toContain(`<h1>${heading}</h1>`)
     expect(html).toContain(
-      '<p class="lead">Testen kører kun på iPhone, så du er ikke med denne gang. Du står stadig på ventelisten til Altid&nbsp;Mad.</p>',
+      '<p class="lead">Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når Android-versionen er klar.</p>',
     )
-    expect(html.toLowerCase()).not.toContain('login')
+    expect(html).toContain('mailto:hej@altidmad.dk')
+    expect(html).not.toContain('ventelisten til')
     expect(html.toLowerCase()).not.toContain('henvis')
+  })
+
+  it('the Google-account step: one field prefilled, a hidden android answer, one button, the privacy link', () => {
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false })
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din telefon?</h1>')
+    expect(html.match(/<form /g)).toHaveLength(1)
+    expect(html.match(/<button/g)).toHaveLength(1)
+    expect(html).toContain('<input type="hidden" name="device" value="android"/>')
+    expect(html).toContain('<label for="ga">Google-konto</label>')
+    expect(html).toMatch(/<input id="ga" type="email" name="google_account" value="anna@example.dk" autocomplete="email"[^>]* required\/>/)
+    expect(html).toContain('href="/privatlivspolitik"')
+    expect(html).toContain('Dit login til appen bliver din <span class="nw">e-mailadresse</span> fra ventelisten.')
+    expect(html).not.toContain('aria-invalid="true"')
+  })
+
+  it('the Google-account retry points the field at its error text', () => {
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true })
+    expect(html).toContain('aria-invalid="true" aria-describedby="ga-err"')
+    expect(html).toContain('<p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv den som navn@gmail.com.</p>')
   })
 
   it('the form offers exactly the two answers in one POST form, iPhone first', () => {
@@ -96,11 +135,12 @@ describe('renderMadTestScreen', () => {
     const buttons = [...html.matchAll(/<button type="submit" name="device" value="(\w+)" class="(\w+)">([^<]+)<\/button>/g)]
     expect(buttons.map((m) => [m[1], m[2], m[3]])).toEqual([
       ['iphone', 'primary', 'Ja, jeg har en iPhone'],
-      ['android', 'secondary', 'Ja, men jeg har Android'],
+      ['android', 'secondary', 'Ja, jeg har Android'],
     ])
     expect(html.match(/<form /g)).toHaveLength(1)
+    expect(html).toContain('<strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.')
     expect(html).toContain(
-      'Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart Apple har godkendt testversionen.',
+      'Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, når testversionen til din telefon er klar.',
     )
     expect(html).not.toContain('Har du ikke en iPhone')
     // A disabled submitter drops its device value from the request.
@@ -126,7 +166,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the wording version names today and the test', () => {
-    expect(MAD_TEST_COPY_VERSION).toBe('2026-09-25-mad-test-2')
+    expect(MAD_TEST_COPY_VERSION).toBe('2026-09-29-mad-test-3')
   })
 
   it('the self-hosted font file the pages point at exists', () => {

@@ -4,6 +4,7 @@ import {
   MAD_TEST_COPY_VERSION,
   isMadTestDevice,
   isMadTestEligible,
+  normalizeGoogleAccount,
   renderMadTestScreen,
   type MadTestScreen,
 } from '@/lib/mad-test'
@@ -11,7 +12,9 @@ import {
 // Mad-testen yes-page (ALT-345). The invitation mail links here with
 // ?t=<unsub_token>. GET only SHOWS the two answer buttons and writes nothing, so
 // a mail scanner opening the link cannot answer for anyone. POST (a button,
-// device=iphone|android) writes.
+// device=iphone|android) writes. Android takes a second POST with the Google
+// account on the phone; the first Android POST writes nothing and shows that
+// step.
 // No cookie: the token rides in the form action's query string, as in
 // /api/unsubscribe.
 
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
   try {
     const found = await eligibleSignup(req)
     if (!found) return invalid()
-    // Only our two buttons can send an answer. A POST without one (a scanner, a
+    // Only our buttons can send an answer. A POST without one (a scanner, a
     // hand-made request) is refused and writes nothing. A body that is not form
     // data at all (JSON, text/plain, no content type) makes formData() throw;
     // that is the same refusal, not a server error.
@@ -81,7 +84,22 @@ export async function POST(req: NextRequest) {
     const earlier = await getMadTestOptin(found.signup.publicId)
     if (earlier) return respond({ kind: 'already', device: earlier.device }, 200)
 
-    await recordMadTestOptin(found.signup.publicId, MAD_TEST_COPY_VERSION, device)
+    let googleAccount: string | null = null
+    if (device === 'android') {
+      const typed = form.get('google_account')
+      if (typed === null) {
+        // The Android button: ask for the Google account, write nothing yet.
+        // The field starts with the signup email, which is the account for most.
+        return respond({ kind: 'google', token: found.token, value: found.signup.email, retry: false }, 200)
+      }
+      googleAccount = normalizeGoogleAccount(typed)
+      if (googleAccount === null) {
+        const value = typeof typed === 'string' ? typed.slice(0, 254) : ''
+        return respond({ kind: 'google', token: found.token, value, retry: true }, 200)
+      }
+    }
+
+    await recordMadTestOptin(found.signup.publicId, MAD_TEST_COPY_VERSION, device, googleAccount)
     // Read back what is stored: if two answers raced, the first row won and the
     // screen must describe that row, not the losing request.
     const stored = await getMadTestOptin(found.signup.publicId)

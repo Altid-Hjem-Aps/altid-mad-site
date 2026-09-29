@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { isMadTestDevice, type MadTestDevice } from '@/lib/mad-test'
+import { isMadTestDevice, normalizeGoogleAccount, type MadTestDevice } from '@/lib/mad-test'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
 // unlike the self-hosted MySQL which is firewalled.
@@ -417,42 +417,72 @@ export async function getMadTestOptin(publicId: string): Promise<{
   createdAt: string
   copyVersion: string
   device: MadTestDevice
+  googleAccount: string | null
 } | null> {
   const id = String(publicId || '').trim()
   if (!id) throw new Error('getMadTestOptin: empty publicId')
   const { data, error } = await getClient()
     .from('mad_test_optin')
-    .select('public_id, created_at, copy_version, device')
+    .select('public_id, created_at, copy_version, device, google_account')
     .eq('public_id', id)
     .maybeSingle()
   if (error) throw new Error(`mad_test_optin read failed: ${error.message}`)
-  const row = data as { public_id: string; created_at: string; copy_version: string; device: unknown } | null
+  const row = data as {
+    public_id: string
+    created_at: string
+    copy_version: string
+    device: unknown
+    google_account: unknown
+  } | null
   if (!row) return null
   if (!isMadTestDevice(row.device)) {
     throw new Error(`mad_test_optin row has an unknown device: ${String(row.device)}`)
   }
-  return { publicId: row.public_id, createdAt: row.created_at, copyVersion: row.copy_version, device: row.device }
+  const googleAccount = row.google_account === null ? null : normalizeGoogleAccount(row.google_account)
+  // The table's check constraint ties the account to the device; a row that
+  // breaks it was not written by this code.
+  if ((row.device === 'android') !== (googleAccount !== null)) {
+    throw new Error(`mad_test_optin row for ${row.device} has ${googleAccount === null ? 'no' : 'a'} google_account`)
+  }
+  return {
+    publicId: row.public_id,
+    createdAt: row.created_at,
+    copyVersion: row.copy_version,
+    device: row.device,
+    googleAccount,
+  }
 }
 
 /**
  * Record a Mad-testen answer. Insert with ON CONFLICT DO NOTHING: a repeat
  * answer (double tap, back button, second visit) keeps the first row's device,
  * time and wording version, which is what the seat order is built on.
+ * An Android answer carries the Google account on the phone (Google Play lists
+ * testers by it); an iPhone answer carries none. The table's check constraint
+ * says the same, so a wrong pair is refused here before it can be a 500 there.
  */
 export async function recordMadTestOptin(
   publicId: string,
   copyVersion: string,
   device: MadTestDevice,
+  googleAccount: string | null,
 ): Promise<void> {
   const id = String(publicId || '').trim()
   const version = String(copyVersion || '').trim()
   if (!id) throw new Error('recordMadTestOptin: empty publicId')
   if (!version) throw new Error('recordMadTestOptin: empty copyVersion')
   if (!isMadTestDevice(device)) throw new Error(`recordMadTestOptin: unknown device ${String(device)}`)
+  if (device === 'android') {
+    if (googleAccount === null || normalizeGoogleAccount(googleAccount) !== googleAccount) {
+      throw new Error('recordMadTestOptin: an Android answer needs a normalised Google account')
+    }
+  } else if (googleAccount !== null) {
+    throw new Error('recordMadTestOptin: an iPhone answer carries no Google account')
+  }
   const { error } = await getClient()
     .from('mad_test_optin')
     .upsert(
-      { public_id: id, copy_version: version, device },
+      { public_id: id, copy_version: version, device, google_account: googleAccount },
       { onConflict: 'public_id', ignoreDuplicates: true },
     )
   if (error) throw new Error(`mad_test_optin insert failed: ${error.message}`)
