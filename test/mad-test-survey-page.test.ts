@@ -123,11 +123,11 @@ describe('renderSurveyScreen', () => {
     )
     const legends = [...html.matchAll(/<legend><span class="qn" aria-hidden="true">(\d)<\/span>([^<]+)<\/legend>/g)]
     expect(legends.map((m) => [m[1], m[2]])).toEqual([
-      ['1', 'Hvor mange dage har du brugt Altid&nbsp;Mad den sidste uge?'],
+      ['1', 'Hvor mange dage har du brugt Altid&nbsp;Mad indtil nu?'],
       ['2', 'Hvor langt nåede du?'],
       ['3', 'Hvor sandsynligt er det, at du vil anbefale Altid&nbsp;Mad til en ven eller kollega?'],
     ])
-    expect(html.match(/<fieldset class="q">/g)).toHaveLength(3)
+    expect(html.match(/<fieldset id="q-[a-z_]+" class="q">/g)).toHaveLength(3)
     expect(html).toContain(
       '<label for="worked_best" class="qlabel"><span class="qn" aria-hidden="true">4</span>Hvad virkede bedst? <span class="optional">(valgfrit)</span></label>',
     )
@@ -152,7 +152,7 @@ describe('renderSurveyScreen', () => {
       [...html.matchAll(new RegExp(`<label class="opt"><input type="radio" name="${name}" value="([^"]+)" required/><span>([^<]+)</span></label>`, 'g'))]
         .map((m) => [m[1], m[2]])
     expect(opts('days_used')).toEqual([
-      ['0', 'Ingen'],
+      ['0', 'Ingen dage'],
       ['1', '1 dag'],
       ['2-3', '2-3 dage'],
       ['4+', '4 dage eller flere'],
@@ -188,7 +188,11 @@ describe('renderSurveyScreen', () => {
   it('the form with errors: an alert on top, each bad question points at its error, given answers kept', () => {
     const html = renderSurveyScreen(ERRORS)
 
-    expect(html).toContain('<p class="err-top" role="alert">Tjek de markerede spørgsmål, og send igen.</p>')
+    expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p><ul>')
+    // Each failed question is named and linked, in page order; the link targets exist.
+    const links = [...html.matchAll(/<li><a href="#(q-[a-z_]+)">Spørgsmål (\d)<\/a><\/li>/g)].map((m) => [m[1], m[2]])
+    expect(links).toEqual([['q-days_used', '1'], ['q-recommend', '3'], ['q-fix_first', '5']])
+    for (const [id] of links) expect(html).toContain(`id="${id}"`)
     expect(html).toContain('<p id="days_used-err" class="err">Vælg et svar.</p>')
     expect(html).toContain('<p id="recommend-err" class="err">Vælg et svar.</p>')
     expect(html).toContain('<p id="fix_first-err" class="err">Svaret er for langt. Skriv højst 2000 tegn.</p>')
@@ -199,7 +203,7 @@ describe('renderSurveyScreen', () => {
     expect(html).toContain('<textarea id="fix_first" name="fix_first" rows="4" maxlength="2000" aria-invalid="true" aria-describedby="fix_first-err">x</textarea>')
     expect(html).toContain('<textarea id="worked_best" name="worked_best" rows="4" maxlength="2000">Godt</textarea>')
     expect(html).toContain('<input type="radio" name="progress" value="plan" required checked/>')
-    expect(html.match(/<fieldset class="q has-err">/g)).toHaveLength(2)
+    expect(html.match(/<fieldset id="q-[a-z_]+" class="q has-err">/g)).toHaveLength(2)
   })
 
   it('escapes the token in the form action', () => {

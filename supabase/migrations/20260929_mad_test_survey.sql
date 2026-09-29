@@ -21,12 +21,15 @@
 --
 -- Run in the Supabase SQL editor, before the survey mail
 -- (send-mad-test-survey.py in altid-dashboard checks that the table exists).
--- Safe to re-run.
+-- Safe to re-run. The checks hold rows to what the page stores (trimmed,
+-- never empty, at most 2000 characters), so a row typed into the SQL editor
+-- cannot make the page fail for that tester later.
 
 create table if not exists public.mad_test_survey (
   public_id     text        primary key references public.signup (public_id) on delete cascade,
   created_at    timestamptz not null default now(),
-  copy_version  text        not null,
+  copy_version  text        not null
+                constraint mad_test_survey_copy_version_check check (copy_version <> ''),
   days_used     text        not null
                 constraint mad_test_survey_days_used_check check (days_used in ('0', '1', '2-3', '4+')),
   progress      text        not null
@@ -34,9 +37,11 @@ create table if not exists public.mad_test_survey (
   recommend     smallint    not null
                 constraint mad_test_survey_recommend_check check (recommend between 0 and 10),
   worked_best   text
-                constraint mad_test_survey_worked_best_check check (length(worked_best) <= 2000),
+                constraint mad_test_survey_worked_best_check check (length(worked_best) between 1 and 2000
+                  and worked_best = btrim(worked_best, E' \t\n\r')),
   fix_first     text
-                constraint mad_test_survey_fix_first_check check (length(fix_first) <= 2000)
+                constraint mad_test_survey_fix_first_check check (length(fix_first) between 1 and 2000
+                  and fix_first = btrim(fix_first, E' \t\n\r'))
 );
 
 comment on table public.mad_test_survey is

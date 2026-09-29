@@ -3,6 +3,7 @@ import { getMadTestOptin, getMadTestSurvey, getSignupByUnsubToken, recordMadTest
 import { isMadTestEligible } from '@/lib/mad-test'
 import {
   MAD_TEST_SURVEY_COPY_VERSION,
+  SURVEY_FIELD_NAMES,
   parseSurvey,
   renderSurveyScreen,
   type SurveyAnswers,
@@ -88,6 +89,9 @@ export async function POST(req: NextRequest) {
     } catch {
       return invalid()
     }
+    // Our form sends each field at most once. A repeated field is a hand-made
+    // request: refused like any other, never a first-or-last guess.
+    if (SURVEY_FIELD_NAMES.some((name) => form.getAll(name).length > 1)) return invalid()
 
     if (await getMadTestSurvey(found.signup.publicId)) return respond({ kind: 'already' }, 200)
 

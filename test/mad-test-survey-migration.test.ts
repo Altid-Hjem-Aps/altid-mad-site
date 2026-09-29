@@ -23,7 +23,7 @@ describe('20260929_mad_test_survey migration', () => {
       /public_id\s+text\s+primary key references public\.signup \(public_id\) on delete cascade,/,
     )
     expect(statements).toMatch(/created_at\s+timestamptz\s+not null default now\(\),/)
-    expect(statements).toMatch(/copy_version\s+text\s+not null,/)
+    expect(statements).toMatch(/copy_version\s+text\s+not null\s+constraint mad_test_survey_copy_version_check check \(copy_version <> ''\),/)
     expect(statements).toMatch(
       /days_used\s+text\s+not null\s+constraint mad_test_survey_days_used_check check \(days_used in \('0', '1', '2-3', '4\+'\)\),/,
     )
@@ -34,10 +34,10 @@ describe('20260929_mad_test_survey migration', () => {
       /recommend\s+smallint\s+not null\s+constraint mad_test_survey_recommend_check check \(recommend between 0 and 10\),/,
     )
     expect(statements).toMatch(
-      /worked_best\s+text\s+constraint mad_test_survey_worked_best_check check \(length\(worked_best\) <= 2000\),/,
+      /worked_best\s+text\s+constraint mad_test_survey_worked_best_check check \(length\(worked_best\) between 1 and 2000\s+and worked_best = btrim\(worked_best, e' \\t\\n\\r'\)\),/,
     )
     expect(statements).toMatch(
-      /fix_first\s+text\s+constraint mad_test_survey_fix_first_check check \(length\(fix_first\) <= 2000\)\s*\);/,
+      /fix_first\s+text\s+constraint mad_test_survey_fix_first_check check \(length\(fix_first\) between 1 and 2000\s+and fix_first = btrim\(fix_first, e' \\t\\n\\r'\)\)\s*\);/,
     )
   })
 

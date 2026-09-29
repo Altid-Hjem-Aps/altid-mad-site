@@ -488,7 +488,7 @@ describe('POST /api/mad-testen/survey', () => {
 
       expect(res.status).toBe(200)
       expect(db.upserts).toHaveLength(0)
-      expect(html).toContain('<p class="err-top" role="alert">Tjek de markerede spørgsmål, og send igen.</p>')
+      expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p>')
       for (const name of ['days_used', 'progress', 'recommend', 'worked_best', 'fix_first']) {
         const err = `id="${name}-err"`
         if (bad.includes(name)) {
@@ -594,6 +594,27 @@ describe('POST /api/mad-testen/survey', () => {
     const res = await post(TOKEN)
     expect(res.status).toBe(500)
     expect(await res.text()).not.toContain('Tak')
+  })
+
+  it.each([
+    ['days_used', 'days_used=0&days_used=4%2B'],
+    ['progress', 'progress=plan&progress=none'],
+    ['recommend', 'recommend=7&recommend=10'],
+    ['worked_best', 'worked_best=a&worked_best=b'],
+  ])('a repeated %s field (a hand-made request): the invalid-link screen, nothing written', async (name, dup) => {
+    tester()
+    const rest = new URLSearchParams(FULL)
+    rest.delete(name)
+    const res = await POST(
+      new NextRequest(url(TOKEN), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `${rest.toString()}&${dup}`,
+      }),
+    )
+    expect(res.status).toBe(400)
+    expect(db.upserts).toHaveLength(0)
+    expect(await res.text()).toContain('Linket virker ikke')
   })
 
   it.each([

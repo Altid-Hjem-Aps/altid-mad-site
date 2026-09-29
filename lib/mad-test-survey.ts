@@ -90,6 +90,9 @@ const FIELD = {
 } as const
 type Field = keyof typeof FIELD
 
+/** Every field name the form sends, each at most once. */
+export const SURVEY_FIELD_NAMES: readonly string[] = Object.values(FIELD)
+
 /** What the form shows: the given answers as raw strings ('' = none). */
 export type SurveyValues = Record<Field, string>
 export type SurveyErrors = Partial<Record<Field, 'missing' | 'too-long'>>
@@ -105,9 +108,11 @@ export type SurveyParse =
   | { ok: true; answers: SurveyAnswers }
   | { ok: false; values: SurveyValues; errors: SurveyErrors }
 
+// Exactly one string value, or null. A repeated field (only a hand-made request
+// can send one) counts as not answered, so no first-or-last guess is stored.
 function field(form: FormData, name: string): string | null {
-  const v = form.get(name)
-  return typeof v === 'string' ? v : null
+  const all = form.getAll(name)
+  return all.length === 1 && typeof all[0] === 'string' ? all[0] : null
 }
 
 /**
@@ -157,7 +162,7 @@ export type SurveyScreen =
   | { kind: 'error' }
 
 const DAYS_LABEL: Record<SurveyDays, string> = {
-  '0': 'Ingen',
+  '0': 'Ingen dage',
   '1': '1 dag',
   '2-3': '2-3 dage',
   '4+': '4 dage eller flere',
@@ -170,12 +175,14 @@ const PROGRESS_LABEL: Record<SurveyProgress, string> = {
 }
 
 const QUESTION: Record<Field, string> = {
-  daysUsed: 'Hvor mange dage har du brugt Altid&nbsp;Mad den sidste uge?',
+  daysUsed: 'Hvor mange dage har du brugt Altid&nbsp;Mad indtil nu?',
   progress: 'Hvor langt nåede du?',
   recommend: 'Hvor sandsynligt er det, at du vil anbefale Altid&nbsp;Mad til en ven eller kollega?',
   workedBest: 'Hvad virkede bedst?',
   fixFirst: 'Hvad skal vi rette først?',
 }
+
+const QUESTION_NO: Record<Field, number> = { daysUsed: 1, progress: 2, recommend: 3, workedBest: 4, fixFirst: 5 }
 
 const SCALE_LOW = 'Slet ikke sandsynligt'
 const SCALE_HIGH = 'Meget sandsynligt'
@@ -222,7 +229,7 @@ function choiceQuestion<V extends string>(
   values: SurveyValues,
   errors: SurveyErrors,
 ): string {
-  return `<fieldset class="q${errors[key] ? ' has-err' : ''}">
+  return `<fieldset id="q-${FIELD[key]}" class="q${errors[key] ? ' has-err' : ''}">
   ${legend(n, key)}${errorLine(key, errors)}
   <div class="opts">
     ${options.map((v) => radio(key, v, labels[v], values, errors)).join('\n    ')}
@@ -240,7 +247,7 @@ function scaleQuestion(n: number, values: SurveyValues, errors: SurveyErrors): s
     const end = i === 0 ? `<span class="vh">, ${SCALE_LOW}</span>` : i === 10 ? `<span class="vh">, ${SCALE_HIGH}</span>` : ''
     return `<label class="pt"><input type="radio" name="${FIELD[key]}" value="${v}" required${checked}${errorAttrs(key, errors)}/><span>${v}${end}</span></label>`
   })
-  return `<fieldset class="q${errors[key] ? ' has-err' : ''}">
+  return `<fieldset id="q-${FIELD[key]}" class="q${errors[key] ? ' has-err' : ''}">
   ${legend(n, key)}${errorLine(key, errors)}
   <p class="ends" aria-hidden="true"><span>0 = ${SCALE_LOW}</span><span>10 = ${SCALE_HIGH}</span></p>
   <div class="scale">
@@ -251,7 +258,7 @@ function scaleQuestion(n: number, values: SurveyValues, errors: SurveyErrors): s
 
 function textQuestion(n: number, key: Field, values: SurveyValues, errors: SurveyErrors): string {
   const id = FIELD[key]
-  return `<div class="q${errors[key] ? ' has-err' : ''}">
+  return `<div id="q-${id}" class="q${errors[key] ? ' has-err' : ''}">
   <label for="${id}" class="qlabel"><span class="qn" aria-hidden="true">${n}</span>${QUESTION[key]} <span class="optional">(valgfrit)</span></label>${errorLine(key, errors)}
   <textarea id="${id}" name="${id}" rows="4" maxlength="${SURVEY_TEXT_MAX}"${errorAttrs(key, errors)}>${escapeHtml(values[key])}</textarea>
 </div>`
@@ -260,8 +267,13 @@ function textQuestion(n: number, key: Field, values: SurveyValues, errors: Surve
 function formBody(screen: Extract<SurveyScreen, { kind: 'form' }>): string {
   const values = screen.values ?? EMPTY
   const errors = screen.errors ?? {}
-  const summary = Object.keys(errors).length
-    ? `\n<p class="err-top" role="alert">Tjek de markerede spørgsmål, og send igen.</p>`
+  // Names each question that needs an answer, as a link to it, so a reader who
+  // lands at the top knows where to go (the page works without JavaScript).
+  const failed = (Object.keys(QUESTION) as Field[]).filter((k) => errors[k])
+  const summary = failed.length
+    ? `\n<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p><ul>${failed
+        .map((k) => `<li><a href="#q-${FIELD[k]}">Spørgsmål ${QUESTION_NO[k]}</a></li>`)
+        .join('')}</ul></div>`
     : ''
   return `<p class="hello">${greeting(screen.firstName)},</p>
 <h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>
@@ -301,6 +313,8 @@ legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weigh
 .optional{font-weight:400;color:${COLOR.muted};font-size:15px}
 .q .err{margin:-4px 0 12px}
 .err-top{font-size:15px;line-height:1.5;color:${COLOR.error};margin:0 0 8px}
+.err-top ul{margin:4px 0 0;padding-left:20px}
+.err-top a{color:${COLOR.error}}
 .opts{display:flex;flex-direction:column;gap:8px}
 .opt{display:flex;align-items:center;gap:12px;margin:0;min-height:52px;padding:12px 16px;border:1.5px solid rgba(22,50,35,.25);border-radius:16px;background:#fff;color:${COLOR.forestDeep};font-size:16px;line-height:1.35;cursor:pointer}
 .opt input{flex:none;width:20px;height:20px;margin:0;accent-color:${COLOR.forestDeep}}
