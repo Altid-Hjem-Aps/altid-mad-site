@@ -57,11 +57,13 @@ async function tester(req: NextRequest) {
 
 function sameAnswers(a: SurveyAnswers, b: SurveyAnswers): boolean {
   return (
-    a.daysUsed === b.daysUsed &&
-    a.progress === b.progress &&
-    a.recommend === b.recommend &&
-    a.workedBest === b.workedBest &&
-    a.fixFirst === b.fixFirst
+    a.planFit === b.planFit &&
+    a.planFitNote === b.planFitNote &&
+    a.easyToUse === b.easyToUse &&
+    a.easyNote === b.easyNote &&
+    a.missing === b.missing &&
+    a.otherFeedback === b.otherFeedback &&
+    a.panel === b.panel
   )
 }
 

@@ -34,11 +34,13 @@ type SurveyRow = {
   public_id: string
   created_at: string
   copy_version: string
-  days_used: unknown
-  progress: unknown
-  recommend: unknown
-  worked_best: unknown
-  fix_first: unknown
+  plan_fit: unknown
+  plan_fit_note: unknown
+  easy_to_use: unknown
+  easy_note: unknown
+  missing: unknown
+  other_feedback: unknown
+  panel: unknown
 }
 
 const db = {
@@ -101,11 +103,13 @@ vi.mock('@supabase/supabase-js', () => ({
             public_id: id,
             created_at: new Date().toISOString(),
             copy_version: row.copy_version as string,
-            days_used: row.days_used,
-            progress: row.progress,
-            recommend: row.recommend,
-            worked_best: row.worked_best,
-            fix_first: row.fix_first,
+            plan_fit: row.plan_fit,
+            plan_fit_note: row.plan_fit_note,
+            easy_to_use: row.easy_to_use,
+            easy_note: row.easy_note,
+            missing: row.missing,
+            other_feedback: row.other_feedback,
+            panel: row.panel,
           })
         }
         return Promise.resolve({ error: null })
@@ -154,11 +158,13 @@ function stored(overrides: Partial<SurveyRow> = {}): SurveyRow {
     public_id: PUBLIC_ID,
     created_at: '2026-10-04T08:00:00Z',
     copy_version: MAD_TEST_SURVEY_COPY_VERSION,
-    days_used: '2-3',
-    progress: 'shopped',
-    recommend: 8,
-    worked_best: null,
-    fix_first: null,
+    plan_fit: 'delvist',
+    plan_fit_note: null,
+    easy_to_use: 'ja',
+    easy_note: null,
+    missing: null,
+    other_feedback: null,
+    panel: true,
     ...overrides,
   }
 }
@@ -173,12 +179,26 @@ const get = (token?: string) => GET(new NextRequest(url(token)))
 
 // What the form sends, urlencoded like a browser.
 const FULL = {
-  days_used: '4+',
-  progress: 'plan',
-  recommend: '9',
-  worked_best: '  Madplanen på to minutter.\r\nOg tilbuddene.  ',
-  fix_first: 'Indkøbslisten hopper.',
+  plan_fit: 'delvist',
+  plan_fit_note: '  Vi er fire, planen var til to.\r\nMen retterne var gode.  ',
+  easy_to_use: 'ja',
+  easy_note: 'Indkøbslisten hopper.',
+  missing: 'Aftensmad til børn.',
+  other_feedback: '\nTak for testen.\n',
+  panel: 'ja',
 }
+// FULL as it is stored.
+const FULL_ROW = {
+  plan_fit: 'delvist',
+  plan_fit_note: 'Vi er fire, planen var til to.\nMen retterne var gode.',
+  easy_to_use: 'ja',
+  easy_note: 'Indkøbslisten hopper.',
+  missing: 'Aftensmad til børn.',
+  other_feedback: 'Tak for testen.',
+  panel: true,
+}
+const TEXT_FIELDS = ['plan_fit_note', 'easy_note', 'missing', 'other_feedback'] as const
+const ALL_FIELDS = ['plan_fit', 'plan_fit_note', 'easy_to_use', 'easy_note', 'missing', 'other_feedback', 'panel']
 function post(token: string | undefined, fields: Record<string, string> = FULL) {
   return POST(
     new NextRequest(url(token), {
@@ -251,15 +271,16 @@ describe('GET /api/mad-testen/survey', () => {
     const html = await res.text()
 
     expect(res.status).toBe(200)
-    expect(html).toContain('<p class="hello">Hej Anna,</p>')
+    expect(html).toContain('<p class="hello">Hej Anna</p>')
     expect(html).toContain('<h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
     expect(html).toContain(
-      '<p class="lead">Fem korte spørgsmål. Det tager to minutter, og dine svar går direkte til holdet bag appen.</p>',
+      '<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>',
     )
     expect(html).toContain(`<form method="POST" action="/api/mad-testen/survey?t=${TOKEN}" class="survey"`)
     expect(html.match(/<fieldset/g)).toHaveLength(3)
-    expect(html.match(/<textarea/g)).toHaveLength(2)
-    expect(html).toContain('<button type="submit" class="primary">Send svar</button>')
+    expect(html.match(/<textarea/g)).toHaveLength(4)
+    for (const name of ALL_FIELDS) expect(html).toContain(`name="${name}"`)
+    expect(html).toContain('<button type="submit" class="primary">Send mine svar</button>')
     expect(html).not.toContain(' checked')
     expect(html).not.toContain('aria-invalid="true"')
     expect(db.upserts).toHaveLength(0)
@@ -270,7 +291,7 @@ describe('GET /api/mad-testen/survey', () => {
       { table: 'mad_test_survey', col: 'public_id', value: PUBLIC_ID },
     ])
     expect(db.selects.find((q) => q.table === 'mad_test_survey')?.cols).toBe(
-      'public_id, created_at, copy_version, days_used, progress, recommend, worked_best, fix_first',
+      'public_id, created_at, copy_version, plan_fit, plan_fit_note, easy_to_use, easy_note, missing, other_feedback, panel',
     )
   })
 
@@ -279,19 +300,19 @@ describe('GET /api/mad-testen/survey', () => {
     db.optins.set(PUBLIC_ID, yes('android'))
     const res = await get(TOKEN)
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('Send svar</button>')
+    expect(await res.text()).toContain('Send mine svar</button>')
   })
 
   it('greets without a name when the signup has none', async () => {
     tester({ first_name: null })
-    expect(await (await get(TOKEN)).text()).toContain('<p class="hello">Hej,</p>')
+    expect(await (await get(TOKEN)).text()).toContain('<p class="hello">Hej</p>')
   })
 
   it('escapes the first name', async () => {
     tester({ first_name: '<script>alert("x")</script>' })
     const html = await (await get(TOKEN)).text()
     expect(html).not.toContain('<script>alert')
-    expect(html).toContain('Hej &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;,')
+    expect(html).toContain('<p class="hello">Hej &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</p>')
   })
 
   it('never cached, never indexed, never leaks the link in a Referer, no cookie', async () => {
@@ -330,18 +351,21 @@ describe('GET /api/mad-testen/survey', () => {
     const html = await res.text()
 
     expect(res.status).toBe(200)
-    expect(html).toContain('<h1>Tak, vi har allerede dine svar</h1>')
+    expect(html).toContain('<h1>Tak, vi har allerede dine svar</h1>\n<p class="lead">Du behøver ikke gøre mere.</p>')
     expect(html).not.toContain('<form')
     expect(db.upserts).toHaveLength(0)
   })
 
   it.each([
-    ['an unknown days_used', stored({ days_used: '7' })],
-    ['an unknown progress', stored({ progress: 'cooked' })],
-    ['recommend out of range', stored({ recommend: 11 })],
-    ['recommend as text', stored({ recommend: '8' })],
-    ['an empty text answer (should be null)', stored({ worked_best: '' })],
-    ['an over-long text answer', stored({ fix_first: 'x'.repeat(2001) })],
+    ['an unknown plan_fit', stored({ plan_fit: 'maaske' })],
+    ['a missing plan_fit', stored({ plan_fit: null })],
+    ['an unknown easy_to_use', stored({ easy_to_use: 'Ja' })],
+    ['panel as text', stored({ panel: 'ja' })],
+    ['a missing panel', stored({ panel: null })],
+    ['an empty plan_fit_note (should be null)', stored({ plan_fit_note: '' })],
+    ['an untrimmed easy_note', stored({ easy_note: ' x' })],
+    ['an over-long missing', stored({ missing: 'x'.repeat(2001) })],
+    ['a non-text other_feedback', stored({ other_feedback: 5 })],
   ])('a stored survey row with %s: 500, never a guessed screen', async (_, row) => {
     tester()
     db.surveys.set(PUBLIC_ID, row)
@@ -397,39 +421,41 @@ describe('POST /api/mad-testen/survey', () => {
     expect(db.upserts).toEqual([
       {
         table: 'mad_test_survey',
-        row: {
-          public_id: PUBLIC_ID,
-          copy_version: MAD_TEST_SURVEY_COPY_VERSION,
-          days_used: '4+',
-          progress: 'plan',
-          recommend: 9,
-          worked_best: 'Madplanen på to minutter.\nOg tilbuddene.',
-          fix_first: 'Indkøbslisten hopper.',
-        },
+        row: { public_id: PUBLIC_ID, copy_version: MAD_TEST_SURVEY_COPY_VERSION, ...FULL_ROW },
         opts: { onConflict: 'public_id', ignoreDuplicates: true },
       },
     ])
-    expect(html).toContain('<h1>Tak for dine svar</h1>')
+    expect(html).toContain('<h1>Tak for dine svar</h1>\n<p class="lead">Vi læser dem alle.</p>')
     expect(html).toContain(
-      '<p class="lead">Vi læser dem alle. Har du mere på hjerte, så tryk på Feedback i appen eller skriv til <a href="mailto:hej@altidmad.dk">hej@altidmad.dk</a>.</p>',
+      '<p class="note">Har du mere på hjerte, kan du altid trykke på Feedback i Altid&nbsp;Mad eller skrive til <a href="mailto:hej@altidmad.dk">hej@altidmad.dk</a>.</p>',
     )
     expect(html).not.toContain('<form')
   })
 
-  it('the two text questions are optional: empty or whitespace is stored as null', async () => {
+  it('the four text answers are optional: empty or whitespace is stored as null', async () => {
     tester()
-    const res = await post(TOKEN, { days_used: '0', progress: 'none', recommend: '0', worked_best: '  \r\n ', fix_first: '' })
+    const res = await post(TOKEN, {
+      plan_fit: 'nej',
+      plan_fit_note: '  \r\n ',
+      easy_to_use: 'nej',
+      easy_note: '',
+      missing: '\t',
+      other_feedback: ' ',
+      panel: 'nej',
+    })
 
     expect(res.status).toBe(200)
     expect(db.upserts.map((u) => u.row)).toEqual([
       {
         public_id: PUBLIC_ID,
         copy_version: MAD_TEST_SURVEY_COPY_VERSION,
-        days_used: '0',
-        progress: 'none',
-        recommend: 0,
-        worked_best: null,
-        fix_first: null,
+        plan_fit: 'nej',
+        plan_fit_note: null,
+        easy_to_use: 'nej',
+        easy_note: null,
+        missing: null,
+        other_feedback: null,
+        panel: false,
       },
     ])
     expect(await res.text()).toContain('<h1>Tak for dine svar</h1>')
@@ -437,59 +463,71 @@ describe('POST /api/mad-testen/survey', () => {
 
   it('text fields left out of the body entirely are null too', async () => {
     tester()
-    await post(TOKEN, { days_used: '1', progress: 'shopped', recommend: '10' })
-    expect(db.upserts.map((u) => [u.row.worked_best, u.row.fix_first, u.row.recommend])).toEqual([[null, null, 10]])
+    await post(TOKEN, { plan_fit: 'ja', easy_to_use: 'delvist', panel: 'ja' })
+    expect(db.upserts.map((u) => TEXT_FIELDS.map((f) => u.row[f]))).toEqual([[null, null, null, null]])
+    expect(db.upserts[0].row.panel).toBe(true)
   })
 
   it.each([
-    ['1', '1'],
-    ['2-3', '2-3'],
-  ])('days_used %s is stored as the string %s', async (sent, want) => {
+    ['ja', 'nej', true],
+    ['delvist', 'ja', false],
+    ['nej', 'delvist', true],
+  ])('plan_fit %s, easy_to_use %s are stored as sent, panel as a boolean', async (planFit, easy, panel) => {
     tester()
-    await post(TOKEN, { ...FULL, days_used: sent })
-    expect(db.upserts[0].row.days_used).toBe(want)
+    await post(TOKEN, { ...FULL, plan_fit: planFit, easy_to_use: easy, panel: panel ? 'ja' : 'nej' })
+    expect([db.upserts[0].row.plan_fit, db.upserts[0].row.easy_to_use, db.upserts[0].row.panel]).toEqual([planFit, easy, panel])
   })
 
-  it('2000 characters is accepted, emoji counted as one character each (as Postgres counts)', async () => {
+  it.each(TEXT_FIELDS)('%s: 2000 characters is accepted, emoji counted as one character each (as Postgres counts)', async (name) => {
     tester()
     const text = '🥕'.repeat(2000)
-    const res = await post(TOKEN, { ...FULL, worked_best: text })
+    const res = await post(TOKEN, { ...FULL, [name]: text })
     expect(res.status).toBe(200)
-    expect(db.upserts[0].row.worked_best).toBe(text)
+    expect(db.upserts[0].row[name]).toBe(text)
   })
 
-  it('NUL characters are removed before storing (Postgres text cannot hold them)', async () => {
+  it.each(TEXT_FIELDS)('%s: NUL characters are removed before storing (Postgres text cannot hold them)', async (name) => {
     tester()
-    await post(TOKEN, { ...FULL, fix_first: 'a\u0000b' })
-    expect(db.upserts[0].row.fix_first).toBe('ab')
+    await post(TOKEN, { ...FULL, [name]: 'a\u0000b' })
+    expect(db.upserts[0].row[name]).toBe('ab')
   })
 
+  const without = (name: string) => Object.fromEntries(Object.entries(FULL).filter(([k]) => k !== name))
   it.each([
-    ['nothing at all', {}, ['days_used', 'progress', 'recommend']],
-    ['question 1 missing', { ...FULL, days_used: '' }, ['days_used']],
-    ['question 1 out of range', { ...FULL, days_used: '7' }, ['days_used']],
-    ['question 1 as a label', { ...FULL, days_used: '4 dage eller flere' }, ['days_used']],
-    ['question 2 missing', { ...FULL, progress: '' }, ['progress']],
-    ['question 2 out of range', { ...FULL, progress: 'PLAN' }, ['progress']],
-    ['question 3 missing', { ...FULL, recommend: '' }, ['recommend']],
-    ['question 3 above 10', { ...FULL, recommend: '11' }, ['recommend']],
-    ['question 3 below 0', { ...FULL, recommend: '-1' }, ['recommend']],
-    ['question 3 not an integer', { ...FULL, recommend: '7.5' }, ['recommend']],
-    ['question 3 with a leading zero', { ...FULL, recommend: '07' }, ['recommend']],
-    ['question 3 with spaces', { ...FULL, recommend: ' 7' }, ['recommend']],
-    ['question 4 over 2000 characters', { ...FULL, worked_best: 'x'.repeat(2001) }, ['worked_best']],
-    ['question 5 over 2000 characters', { ...FULL, fix_first: 'x'.repeat(2001) }, ['fix_first']],
-  ] as Array<[string, Record<string, string>, string[]]>)(
+    ['nothing at all', {}, ['plan_fit', 'easy_to_use', 'panel'], ['1', '2', '5']],
+    ['question 1 left out', without('plan_fit'), ['plan_fit'], ['1']],
+    ['question 1 empty', { ...FULL, plan_fit: '' }, ['plan_fit'], ['1']],
+    ['question 1 out of range', { ...FULL, plan_fit: 'maaske' }, ['plan_fit'], ['1']],
+    ['question 1 as a label', { ...FULL, plan_fit: 'Ja' }, ['plan_fit'], ['1']],
+    ['question 1 with spaces', { ...FULL, plan_fit: ' ja' }, ['plan_fit'], ['1']],
+    ['question 1 elaboration over 2000 characters', { ...FULL, plan_fit_note: 'x'.repeat(2001) }, ['plan_fit_note'], ['1']],
+    ['question 2 left out', without('easy_to_use'), ['easy_to_use'], ['2']],
+    ['question 2 out of range', { ...FULL, easy_to_use: 'DELVIST' }, ['easy_to_use'], ['2']],
+    ['question 2 elaboration over 2000 characters', { ...FULL, easy_note: 'x'.repeat(2001) }, ['easy_note'], ['2']],
+    ['question 3 over 2000 characters', { ...FULL, missing: 'x'.repeat(2001) }, ['missing'], ['3']],
+    ['question 4 over 2000 characters', { ...FULL, other_feedback: 'x'.repeat(2001) }, ['other_feedback'], ['4']],
+    ['question 5 left out', without('panel'), ['panel'], ['5']],
+    ['question 5 delvist (not an option there)', { ...FULL, panel: 'delvist' }, ['panel'], ['5']],
+    ['question 5 as a boolean', { ...FULL, panel: 'true' }, ['panel'], ['5']],
+    ['question 1 and its elaboration both wrong', { ...FULL, plan_fit: '', plan_fit_note: 'x'.repeat(2001) }, ['plan_fit', 'plan_fit_note'], ['1']],
+    [
+      'question 1 and 5 unanswered, question 2 answered with an elaboration',
+      { plan_fit_note: '', easy_to_use: 'delvist', easy_note: 'Svært at finde tilbud.' },
+      ['plan_fit', 'panel'],
+      ['1', '5'],
+    ],
+  ] as Array<[string, Record<string, string>, string[], string[]]>)(
     '%s: the form again with an inline error per question, status 200, nothing written',
-    async (_, fields, bad) => {
+    async (_, fields, bad, questions) => {
       tester()
       const res = await post(TOKEN, fields)
       const html = await res.text()
 
       expect(res.status).toBe(200)
       expect(db.upserts).toHaveLength(0)
-      expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p>')
-      for (const name of ['days_used', 'progress', 'recommend', 'worked_best', 'fix_first']) {
+      expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen.</p><ul>')
+      expect([...html.matchAll(/<li><a href="#q-[a-z_]+">Spørgsmål (\d)<\/a><\/li>/g)].map((m) => m[1])).toEqual(questions)
+      for (const name of ALL_FIELDS) {
         const err = `id="${name}-err"`
         if (bad.includes(name)) {
           expect(html).toContain(err)
@@ -506,28 +544,40 @@ describe('POST /api/mad-testen/survey', () => {
 
   it('keeps the valid answers of a failed submission, and not the invalid ones', async () => {
     tester()
-    const html = await (await post(TOKEN, { days_used: '2-3', progress: 'bogus', recommend: '6', worked_best: 'Godt', fix_first: '' })).text()
+    const html = await (
+      await post(TOKEN, {
+        plan_fit: 'bogus',
+        plan_fit_note: ' Til to ',
+        easy_to_use: 'delvist',
+        easy_note: 'Indkøbslisten',
+        missing: 'Godt',
+        other_feedback: '',
+        panel: 'nej',
+      })
+    ).text()
 
     expect(html.match(/ checked/g)).toHaveLength(2)
-    expect(html).toMatch(/name="days_used" value="2-3" required checked/)
-    expect(html).toMatch(/name="recommend" value="6" required checked/)
-    expect(html).not.toMatch(/name="progress"[^>]* checked/)
-    expect(html).toMatch(/<textarea id="worked_best" name="worked_best"[^>]*>Godt<\/textarea>/)
-    expect(html).toMatch(/<textarea id="fix_first" name="fix_first"[^>]*><\/textarea>/)
-    expect(html).toContain('Vælg et svar.')
+    expect(html).toMatch(/name="easy_to_use" value="delvist" required checked/)
+    expect(html).toMatch(/name="panel" value="nej" required checked/)
+    expect(html).not.toMatch(/name="plan_fit"[^>]* checked/)
+    expect(html).toMatch(/<textarea id="plan_fit_note" name="plan_fit_note"[^>]*>Til to<\/textarea>/)
+    expect(html).toMatch(/<textarea id="easy_note" name="easy_note"[^>]*>Indkøbslisten<\/textarea>/)
+    expect(html).toMatch(/<textarea id="missing" name="missing"[^>]*>Godt<\/textarea>/)
+    expect(html).toMatch(/<textarea id="other_feedback" name="other_feedback"[^>]*><\/textarea>/)
+    expect(html).toContain('<p id="plan_fit-err" class="err">Vælg et svar.</p>')
   })
 
-  it('an over-long text answer is shown again so it can be shortened, with the length error', async () => {
+  it.each(TEXT_FIELDS)('%s over the limit is shown again so it can be shortened, with the length error', async (name) => {
     tester()
     const long = 'ø'.repeat(2001)
-    const html = await (await post(TOKEN, { ...FULL, fix_first: long })).text()
+    const html = await (await post(TOKEN, { ...FULL, [name]: long })).text()
     expect(html).toContain(`>${long}</textarea>`)
-    expect(html).toContain('<p id="fix_first-err" class="err">Svaret er for langt. Skriv højst 2000 tegn.</p>')
+    expect(html).toContain(`<p id="${name}-err" class="err">Svaret er for langt. Skriv højst 2.000 tegn.</p>`)
   })
 
   it('a huge text answer is echoed only up to 20000 characters', async () => {
     tester()
-    const html = await (await post(TOKEN, { ...FULL, worked_best: 'a'.repeat(50_000) })).text()
+    const html = await (await post(TOKEN, { ...FULL, missing: 'a'.repeat(50_000) })).text()
     expect(html).toContain(`>${'a'.repeat(20_000)}</textarea>`)
     expect(html).not.toContain('a'.repeat(20_001))
     expect(db.upserts).toHaveLength(0)
@@ -536,18 +586,29 @@ describe('POST /api/mad-testen/survey', () => {
   it('escapes the text answers when showing the form again', async () => {
     tester()
     const html = await (
-      await post(TOKEN, { days_used: '', progress: 'plan', recommend: '5', worked_best: '</textarea><script>x</script>', fix_first: '"&\'' })
+      await post(TOKEN, {
+        plan_fit: '',
+        plan_fit_note: '</textarea><script>x</script>',
+        easy_to_use: 'ja',
+        easy_note: '"&\'',
+        missing: '<img src=x>',
+        other_feedback: '&lt;',
+        panel: 'ja',
+      })
     ).text()
 
     expect(html).not.toContain('<script>x')
+    expect(html).not.toContain('<img src=x>')
     expect(html).toContain('>&lt;/textarea&gt;&lt;script&gt;x&lt;/script&gt;</textarea>')
     expect(html).toContain('>&quot;&amp;&#39;</textarea>')
+    expect(html).toContain('>&lt;img src=x&gt;</textarea>')
+    expect(html).toContain('>&amp;lt;</textarea>')
   })
 
   it('stores text answers raw (escaping is for display only)', async () => {
     tester()
-    await post(TOKEN, { ...FULL, worked_best: '<b>Tak & "hej"</b>' })
-    expect(db.upserts[0].row.worked_best).toBe('<b>Tak & "hej"</b>')
+    await post(TOKEN, { ...FULL, easy_note: '<b>Tak & "hej"</b>' })
+    expect(db.upserts[0].row.easy_note).toBe('<b>Tak & "hej"</b>')
   })
 
   it('a repeat answer keeps the first row and shows the already screen', async () => {
@@ -555,7 +616,7 @@ describe('POST /api/mad-testen/survey', () => {
     await post(TOKEN)
     const first = db.surveys.get(PUBLIC_ID)
 
-    for (const res of [await post(TOKEN, { ...FULL, recommend: '2' }), await post(TOKEN, {}), await get(TOKEN)]) {
+    for (const res of [await post(TOKEN, { ...FULL, plan_fit: 'nej' }), await post(TOKEN, {}), await get(TOKEN)]) {
       expect(res.status).toBe(200)
       expect(await res.text()).toContain('<h1>Tak, vi har allerede dine svar</h1>')
     }
@@ -567,22 +628,46 @@ describe('POST /api/mad-testen/survey', () => {
   it('a competing answer that lands first wins, and the screen says the answers are already in', async () => {
     tester()
     db.beforeUpsert = () => {
-      db.surveys.set(PUBLIC_ID, stored({ recommend: 3 }))
+      db.surveys.set(PUBLIC_ID, stored({ plan_fit: 'nej' }))
     }
     const res = await post(TOKEN)
 
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('<h1>Tak, vi har allerede dine svar</h1>')
-    expect(db.surveys.get(PUBLIC_ID)?.recommend).toBe(3)
+    expect(db.surveys.get(PUBLIC_ID)?.plan_fit).toBe('nej')
+  })
+
+  it.each([
+    ['plan_fit_note', { plan_fit_note: null }],
+    ['easy_note', { easy_note: 'Noget andet' }],
+    ['missing', { missing: null }],
+    ['other_feedback', { other_feedback: null }],
+    ['panel', { panel: false }],
+  ] as Array<[string, Partial<SurveyRow>]>)(
+    'a competing answer that differs only in %s: the already screen, the first row kept',
+    async (_, diff) => {
+      tester()
+      db.beforeUpsert = () => {
+        db.surveys.set(PUBLIC_ID, stored({ ...FULL_ROW, ...diff }))
+      }
+      const res = await post(TOKEN)
+      expect(await res.text()).toContain('<h1>Tak, vi har allerede dine svar</h1>')
+      expect(db.surveys.get(PUBLIC_ID)).toMatchObject(diff)
+    },
+  )
+
+  it('a competing identical answer under an older wording: the already screen', async () => {
+    tester()
+    db.beforeUpsert = () => {
+      db.surveys.set(PUBLIC_ID, stored({ ...FULL_ROW, copy_version: '2026-09-29-mad-test-survey-1' }))
+    }
+    expect(await (await post(TOKEN)).text()).toContain('<h1>Tak, vi har allerede dine svar</h1>')
   })
 
   it('a competing identical answer (double tap): thank-you, one row', async () => {
     tester()
     db.beforeUpsert = () => {
-      db.surveys.set(
-        PUBLIC_ID,
-        stored({ days_used: '4+', progress: 'plan', recommend: 9, worked_best: 'Madplanen på to minutter.\nOg tilbuddene.', fix_first: 'Indkøbslisten hopper.' }),
-      )
+      db.surveys.set(PUBLIC_ID, stored(FULL_ROW))
     }
     expect(await (await post(TOKEN)).text()).toContain('<h1>Tak for dine svar</h1>')
     expect(db.surveys.size).toBe(1)
@@ -597,14 +682,18 @@ describe('POST /api/mad-testen/survey', () => {
   })
 
   it.each([
-    ['days_used', 'days_used=0&days_used=4%2B'],
-    ['progress', 'progress=plan&progress=none'],
-    ['recommend', 'recommend=7&recommend=10'],
-    ['worked_best', 'worked_best=a&worked_best=b'],
+    ['plan_fit', 'plan_fit=ja&plan_fit=nej'],
+    ['plan_fit (same value twice)', 'plan_fit=ja&plan_fit=ja'],
+    ['plan_fit_note', 'plan_fit_note=a&plan_fit_note=b'],
+    ['easy_to_use', 'easy_to_use=ja&easy_to_use=delvist'],
+    ['easy_note', 'easy_note=a&easy_note='],
+    ['missing', 'missing=a&missing=b'],
+    ['other_feedback', 'other_feedback=&other_feedback=b'],
+    ['panel', 'panel=ja&panel=nej'],
   ])('a repeated %s field (a hand-made request): the invalid-link screen, nothing written', async (name, dup) => {
     tester()
     const rest = new URLSearchParams(FULL)
-    rest.delete(name)
+    rest.delete(name.split(' ')[0])
     const res = await POST(
       new NextRequest(url(TOKEN), {
         method: 'POST',

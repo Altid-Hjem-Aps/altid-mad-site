@@ -1,12 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { isMadTestDevice, normalizeGoogleAccount, type MadTestDevice } from '@/lib/mad-test'
-import {
-  isSurveyDays,
-  isSurveyProgress,
-  isSurveyRecommend,
-  isSurveyText,
-  type SurveyAnswers,
-} from '@/lib/mad-test-survey'
+import { isSurveyRating, isSurveyText, type SurveyAnswers } from '@/lib/mad-test-survey'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
 // unlike the self-hosted MySQL which is firewalled.
@@ -510,7 +504,7 @@ export async function getMadTestSurvey(publicId: string): Promise<({
   if (!id) throw new Error('getMadTestSurvey: empty publicId')
   const { data, error } = await getClient()
     .from('mad_test_survey')
-    .select('public_id, created_at, copy_version, days_used, progress, recommend, worked_best, fix_first')
+    .select('public_id, created_at, copy_version, plan_fit, plan_fit_note, easy_to_use, easy_note, missing, other_feedback, panel')
     .eq('public_id', id)
     .maybeSingle()
   if (error) throw new Error(`mad_test_survey read failed: ${error.message}`)
@@ -518,27 +512,33 @@ export async function getMadTestSurvey(publicId: string): Promise<({
     public_id: string
     created_at: string
     copy_version: string
-    days_used: unknown
-    progress: unknown
-    recommend: unknown
-    worked_best: unknown
-    fix_first: unknown
+    plan_fit: unknown
+    plan_fit_note: unknown
+    easy_to_use: unknown
+    easy_note: unknown
+    missing: unknown
+    other_feedback: unknown
+    panel: unknown
   } | null
   if (!row) return null
-  if (!isSurveyDays(row.days_used)) throw new Error(`mad_test_survey row has an unknown days_used: ${String(row.days_used)}`)
-  if (!isSurveyProgress(row.progress)) throw new Error(`mad_test_survey row has an unknown progress: ${String(row.progress)}`)
-  if (!isSurveyRecommend(row.recommend)) throw new Error(`mad_test_survey row has an out-of-range recommend: ${String(row.recommend)}`)
-  if (!isSurveyText(row.worked_best)) throw new Error('mad_test_survey row has an invalid worked_best')
-  if (!isSurveyText(row.fix_first)) throw new Error('mad_test_survey row has an invalid fix_first')
+  if (!isSurveyRating(row.plan_fit)) throw new Error(`mad_test_survey row has an unknown plan_fit: ${String(row.plan_fit)}`)
+  if (!isSurveyRating(row.easy_to_use)) throw new Error(`mad_test_survey row has an unknown easy_to_use: ${String(row.easy_to_use)}`)
+  if (!isSurveyText(row.plan_fit_note)) throw new Error('mad_test_survey row has an invalid plan_fit_note')
+  if (!isSurveyText(row.easy_note)) throw new Error('mad_test_survey row has an invalid easy_note')
+  if (!isSurveyText(row.missing)) throw new Error('mad_test_survey row has an invalid missing')
+  if (!isSurveyText(row.other_feedback)) throw new Error('mad_test_survey row has an invalid other_feedback')
+  if (typeof row.panel !== 'boolean') throw new Error(`mad_test_survey row has a non-boolean panel: ${String(row.panel)}`)
   return {
     publicId: row.public_id,
     createdAt: row.created_at,
     copyVersion: row.copy_version,
-    daysUsed: row.days_used,
-    progress: row.progress,
-    recommend: row.recommend,
-    workedBest: row.worked_best,
-    fixFirst: row.fix_first,
+    planFit: row.plan_fit,
+    planFitNote: row.plan_fit_note,
+    easyToUse: row.easy_to_use,
+    easyNote: row.easy_note,
+    missing: row.missing,
+    otherFeedback: row.other_feedback,
+    panel: row.panel,
   }
 }
 
@@ -557,22 +557,26 @@ export async function recordMadTestSurvey(
   const version = String(copyVersion || '').trim()
   if (!id) throw new Error('recordMadTestSurvey: empty publicId')
   if (!version) throw new Error('recordMadTestSurvey: empty copyVersion')
-  if (!isSurveyDays(answers.daysUsed)) throw new Error(`recordMadTestSurvey: unknown daysUsed ${String(answers.daysUsed)}`)
-  if (!isSurveyProgress(answers.progress)) throw new Error(`recordMadTestSurvey: unknown progress ${String(answers.progress)}`)
-  if (!isSurveyRecommend(answers.recommend)) throw new Error(`recordMadTestSurvey: recommend out of range ${String(answers.recommend)}`)
-  if (!isSurveyText(answers.workedBest)) throw new Error('recordMadTestSurvey: workedBest is not a stored text answer')
-  if (!isSurveyText(answers.fixFirst)) throw new Error('recordMadTestSurvey: fixFirst is not a stored text answer')
+  if (!isSurveyRating(answers.planFit)) throw new Error(`recordMadTestSurvey: unknown planFit ${String(answers.planFit)}`)
+  if (!isSurveyRating(answers.easyToUse)) throw new Error(`recordMadTestSurvey: unknown easyToUse ${String(answers.easyToUse)}`)
+  if (!isSurveyText(answers.planFitNote)) throw new Error('recordMadTestSurvey: planFitNote is not a stored text answer')
+  if (!isSurveyText(answers.easyNote)) throw new Error('recordMadTestSurvey: easyNote is not a stored text answer')
+  if (!isSurveyText(answers.missing)) throw new Error('recordMadTestSurvey: missing is not a stored text answer')
+  if (!isSurveyText(answers.otherFeedback)) throw new Error('recordMadTestSurvey: otherFeedback is not a stored text answer')
+  if (typeof answers.panel !== 'boolean') throw new Error(`recordMadTestSurvey: panel is not a boolean ${String(answers.panel)}`)
   const { error } = await getClient()
     .from('mad_test_survey')
     .upsert(
       {
         public_id: id,
         copy_version: version,
-        days_used: answers.daysUsed,
-        progress: answers.progress,
-        recommend: answers.recommend,
-        worked_best: answers.workedBest,
-        fix_first: answers.fixFirst,
+        plan_fit: answers.planFit,
+        plan_fit_note: answers.planFitNote,
+        easy_to_use: answers.easyToUse,
+        easy_note: answers.easyNote,
+        missing: answers.missing,
+        other_feedback: answers.otherFeedback,
+        panel: answers.panel,
       },
       { onConflict: 'public_id', ignoreDuplicates: true },
     )

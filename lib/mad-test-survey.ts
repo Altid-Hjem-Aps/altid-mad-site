@@ -10,6 +10,10 @@
  * Works without JavaScript: native radios and textareas in one POST form. A
  * submission with a missing or out-of-range answer shows the form again with
  * what was given kept (escaped) and an error under each question it concerns.
+ *
+ * Questions and copy: Thor, 30/9. Q1, Q2 and Q5 are required choices (one
+ * option component for all three); Q1 and Q2 carry an optional elaboration;
+ * Q3 and Q4 are optional free text.
  */
 import {
   CHECK,
@@ -26,39 +30,42 @@ import {
  * Stored on every survey row. Bump it whenever a question or an answer's
  * wording changes, so each row resolves to the exact text the person answered.
  */
-export const MAD_TEST_SURVEY_COPY_VERSION = '2026-09-29-mad-test-survey-1'
+export const MAD_TEST_SURVEY_COPY_VERSION = '2026-09-30-mad-test-survey-2'
 
-/** Question 1: days with Altid Mad in the last week. */
-export const SURVEY_DAYS = ['0', '1', '2-3', '4+'] as const
-export type SurveyDays = (typeof SURVEY_DAYS)[number]
+/** Questions 1 and 2: yes, partly, no. */
+export const SURVEY_RATINGS = ['ja', 'delvist', 'nej'] as const
+export type SurveyRating = (typeof SURVEY_RATINGS)[number]
 
-/** Question 2: how far they got. 'shopped' implies a plan; only one value is stored. */
-export const SURVEY_PROGRESS = ['plan', 'shopped', 'none'] as const
-export type SurveyProgress = (typeof SURVEY_PROGRESS)[number]
+/** Question 5, the user panel, as the form sends it. Stored as a boolean. */
+export const SURVEY_PANEL = ['ja', 'nej'] as const
+type SurveyPanel = (typeof SURVEY_PANEL)[number]
 
 /** Longest text answer, in characters (code points, as Postgres length() counts). */
 export const SURVEY_TEXT_MAX = 2000
 
 export type SurveyAnswers = {
-  daysUsed: SurveyDays
-  progress: SurveyProgress
-  /** 0 to 10, the recommend question. */
-  recommend: number
-  /** Trimmed, line breaks kept, null when empty. */
-  workedBest: string | null
-  fixFirst: string | null
+  /** Q1: did the meal plan fit the household's needs. */
+  planFit: SurveyRating
+  /** Q1's optional "why". Every text answer: trimmed, line breaks kept, null when empty. */
+  planFitNote: string | null
+  /** Q2: was Altid Mad easy to use. */
+  easyToUse: SurveyRating
+  /** Q2's optional "what was hard or unclear". */
+  easyNote: string | null
+  /** Q3: what was missing. */
+  missing: string | null
+  /** Q4: anything else. */
+  otherFeedback: string | null
+  /** Q5: true = invite me to future tests (the user panel). */
+  panel: boolean
 }
 
-export function isSurveyDays(value: unknown): value is SurveyDays {
-  return typeof value === 'string' && (SURVEY_DAYS as readonly string[]).includes(value)
+export function isSurveyRating(value: unknown): value is SurveyRating {
+  return typeof value === 'string' && (SURVEY_RATINGS as readonly string[]).includes(value)
 }
 
-export function isSurveyProgress(value: unknown): value is SurveyProgress {
-  return typeof value === 'string' && (SURVEY_PROGRESS as readonly string[]).includes(value)
-}
-
-export function isSurveyRecommend(value: unknown): value is number {
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10
+function isSurveyPanel(value: unknown): value is SurveyPanel {
+  return typeof value === 'string' && (SURVEY_PANEL as readonly string[]).includes(value)
 }
 
 /** A text answer that may be stored: null, or a trimmed non-empty string of at most SURVEY_TEXT_MAX characters. */
@@ -82,13 +89,18 @@ function textLength(value: string): number {
 
 // The field names in the form. They are also the keys of the error map.
 const FIELD = {
-  daysUsed: 'days_used',
-  progress: 'progress',
-  recommend: 'recommend',
-  workedBest: 'worked_best',
-  fixFirst: 'fix_first',
+  planFit: 'plan_fit',
+  planFitNote: 'plan_fit_note',
+  easyToUse: 'easy_to_use',
+  easyNote: 'easy_note',
+  missing: 'missing',
+  otherFeedback: 'other_feedback',
+  panel: 'panel',
 } as const
 type Field = keyof typeof FIELD
+
+const TEXT_FIELDS = ['planFitNote', 'easyNote', 'missing', 'otherFeedback'] as const
+type TextField = (typeof TEXT_FIELDS)[number]
 
 /** Every field name the form sends, each at most once. */
 export const SURVEY_FIELD_NAMES: readonly string[] = Object.values(FIELD)
@@ -97,7 +109,15 @@ export const SURVEY_FIELD_NAMES: readonly string[] = Object.values(FIELD)
 export type SurveyValues = Record<Field, string>
 export type SurveyErrors = Partial<Record<Field, 'missing' | 'too-long'>>
 
-const EMPTY: SurveyValues = { daysUsed: '', progress: '', recommend: '', workedBest: '', fixFirst: '' }
+const EMPTY: SurveyValues = {
+  planFit: '',
+  planFitNote: '',
+  easyToUse: '',
+  easyNote: '',
+  missing: '',
+  otherFeedback: '',
+  panel: '',
+}
 
 // A text answer over the limit is shown again so it can be shortened. Anything
 // longer than this was not typed into our form (maxlength stops it), so the
@@ -123,19 +143,17 @@ export function parseSurvey(form: FormData): SurveyParse {
   const values: SurveyValues = { ...EMPTY }
   const errors: SurveyErrors = {}
 
-  const days = field(form, FIELD.daysUsed)
-  if (isSurveyDays(days)) values.daysUsed = days
-  else errors.daysUsed = 'missing'
+  for (const key of ['planFit', 'easyToUse'] as const) {
+    const v = field(form, FIELD[key])
+    if (isSurveyRating(v)) values[key] = v
+    else errors[key] = 'missing'
+  }
 
-  const progress = field(form, FIELD.progress)
-  if (isSurveyProgress(progress)) values.progress = progress
-  else errors.progress = 'missing'
+  const panel = field(form, FIELD.panel)
+  if (isSurveyPanel(panel)) values.panel = panel
+  else errors.panel = 'missing'
 
-  const recommend = field(form, FIELD.recommend)
-  if (recommend !== null && /^(?:[0-9]|10)$/.test(recommend)) values.recommend = recommend
-  else errors.recommend = 'missing'
-
-  for (const key of ['workedBest', 'fixFirst'] as const) {
+  for (const key of TEXT_FIELDS) {
     const text = normalizeText(field(form, FIELD[key]) ?? '')
     values[key] = [...text].slice(0, ECHO_MAX).join('')
     if (textLength(text) > SURVEY_TEXT_MAX) errors[key] = 'too-long'
@@ -145,11 +163,13 @@ export function parseSurvey(form: FormData): SurveyParse {
   return {
     ok: true,
     answers: {
-      daysUsed: values.daysUsed as SurveyDays,
-      progress: values.progress as SurveyProgress,
-      recommend: Number(values.recommend),
-      workedBest: values.workedBest || null,
-      fixFirst: values.fixFirst || null,
+      planFit: values.planFit as SurveyRating,
+      planFitNote: values.planFitNote || null,
+      easyToUse: values.easyToUse as SurveyRating,
+      easyNote: values.easyNote || null,
+      missing: values.missing || null,
+      otherFeedback: values.otherFeedback || null,
+      panel: values.panel === 'ja',
     },
   }
 }
@@ -161,40 +181,52 @@ export type SurveyScreen =
   | { kind: 'invalid' }
   | { kind: 'error' }
 
-const DAYS_LABEL: Record<SurveyDays, string> = {
-  '0': 'Ingen dage',
-  '1': '1 dag',
-  '2-3': '2-3 dage',
-  '4+': '4 dage eller flere',
+const RATING_LABEL: Record<SurveyRating, string> = { ja: 'Ja', delvist: 'Delvist', nej: 'Nej' }
+const PANEL_LABEL: Record<SurveyPanel, string> = { ja: 'Ja', nej: 'Nej' }
+
+// The five questions, in page order. Each text field belongs to one question:
+// its error sends the reader to that question.
+const QUESTION = {
+  planFit: 'Passede madplanen til jeres behov?',
+  easyToUse: 'Var Altid&nbsp;Mad nem at bruge?',
+  missing: 'Var der noget, du manglede i Altid&nbsp;Mad?',
+  otherFeedback: 'Er der andet fra din oplevelse, som du synes, vi bør vide?',
+  panel: 'Vil du være en del af vores brugerpanel?',
+} as const
+type Question = keyof typeof QUESTION
+const QUESTION_ORDER: readonly Question[] = ['planFit', 'easyToUse', 'missing', 'otherFeedback', 'panel']
+const QUESTION_OF: Record<Field, Question> = {
+  planFit: 'planFit',
+  planFitNote: 'planFit',
+  easyToUse: 'easyToUse',
+  easyNote: 'easyToUse',
+  missing: 'missing',
+  otherFeedback: 'otherFeedback',
+  panel: 'panel',
 }
 
-const PROGRESS_LABEL: Record<SurveyProgress, string> = {
-  plan: 'Jeg lavede en madplan',
-  shopped: 'Jeg handlede ind efter den',
-  none: 'Ingen af delene',
-}
+// The optional elaboration under Q1 and Q2.
+const NOTE_LABEL = {
+  planFitNote: 'Uddyb gerne hvorfor',
+  easyNote: 'Var der noget, der var svært eller uklart?',
+} as const
+type NoteField = keyof typeof NOTE_LABEL
 
-const QUESTION: Record<Field, string> = {
-  daysUsed: 'Hvor mange dage har du brugt Altid&nbsp;Mad indtil nu?',
-  progress: 'Hvor langt nåede du?',
-  recommend: 'Hvor sandsynligt er det, at du vil anbefale Altid&nbsp;Mad til en ven eller kollega?',
-  workedBest: 'Hvad virkede bedst?',
-  fixFirst: 'Hvad skal vi rette først?',
-}
+const PANEL_HELP = 'Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.'
+const TEXT_PLACEHOLDER = 'Skriv dit svar'
+const OPTIONAL = '<span class="optional">Valgfrit</span>'
+const SEND_LABEL = 'Send mine svar'
 
-const QUESTION_NO: Record<Field, number> = { daysUsed: 1, progress: 2, recommend: 3, workedBest: 4, fixFirst: 5 }
-
-const SCALE_LOW = 'Slet ikke sandsynligt'
-const SCALE_HIGH = 'Meget sandsynligt'
-const SEND_LABEL = 'Send svar'
+// 2000 written the Danish way, with a thousands separator.
+const TEXT_MAX_DA = String(SURVEY_TEXT_MAX).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 
 const ERROR_TEXT: Record<'missing' | 'too-long', string> = {
   missing: 'Vælg et svar.',
-  'too-long': `Svaret er for langt. Skriv højst ${SURVEY_TEXT_MAX} tegn.`,
+  'too-long': `Svaret er for langt. Skriv højst ${TEXT_MAX_DA} tegn.`,
 }
 
-// Back from the back/forward cache: the button says "Send svar" again and the
-// form may be sent again (the server keeps only the first answer).
+// Back from the back/forward cache: the button says "Send mine svar" again and
+// the form may be sent again (the server keeps only the first answer).
 const RESET_SEND = `var f=document.querySelector('form');if(f){delete f.dataset.sent;f.querySelector('button').textContent='${SEND_LABEL}'}`
 
 function actionFor(token: string): string {
@@ -205,13 +237,13 @@ function errorAttrs(key: Field, errors: SurveyErrors): string {
   return errors[key] ? ` aria-invalid="true" aria-describedby="${FIELD[key]}-err"` : ''
 }
 
-function errorLine(key: Field, errors: SurveyErrors): string {
+function errorLine(key: Field, errors: SurveyErrors, indent = '  '): string {
   const e = errors[key]
-  return e ? `\n  <p id="${FIELD[key]}-err" class="err">${ERROR_TEXT[e]}</p>` : ''
+  return e ? `\n${indent}<p id="${FIELD[key]}-err" class="err">${ERROR_TEXT[e]}</p>` : ''
 }
 
-function legend(n: number, key: Field): string {
-  return `<legend><span class="qn" aria-hidden="true">${n}</span>${QUESTION[key]}</legend>`
+function number(q: Question): string {
+  return `<span class="qn" aria-hidden="true">${QUESTION_ORDER.indexOf(q) + 1}</span>`
 }
 
 // The native radio stays in the page (keyboard, screen readers, no JavaScript);
@@ -221,96 +253,105 @@ function radio(key: Field, value: string, label: string, values: SurveyValues, e
   return `<label class="opt"><input type="radio" name="${FIELD[key]}" value="${value}" required${checked}${errorAttrs(key, errors)}/><span>${label}</span></label>`
 }
 
+function textarea(key: TextField, rows: number, values: SurveyValues, errors: SurveyErrors, placeholder?: string): string {
+  const id = FIELD[key]
+  const ph = placeholder ? ` placeholder="${placeholder}"` : ''
+  return `<textarea id="${id}" name="${id}" rows="${rows}" maxlength="${SURVEY_TEXT_MAX}"${ph}${errorAttrs(key, errors)}>${escapeHtml(values[key])}</textarea>`
+}
+
+// The optional elaboration under Q1's and Q2's options: a smaller, quieter
+// label and field than the question and its options.
+function note(key: NoteField, values: SurveyValues, errors: SurveyErrors): string {
+  return `
+  <div class="sub">
+    <label for="${FIELD[key]}" class="sublabel">${NOTE_LABEL[key]} ${OPTIONAL}</label>${errorLine(key, errors, '    ')}
+    ${textarea(key, 3, values, errors)}
+  </div>`
+}
+
+// Q1, Q2 and Q5: a fieldset of option cards, one component for all three.
+// `help` sits directly under the question; `extra` after the options.
 function choiceQuestion<V extends string>(
-  n: number,
-  key: Field,
+  key: 'planFit' | 'easyToUse' | 'panel',
   options: readonly V[],
   labels: Record<V, string>,
   values: SurveyValues,
   errors: SurveyErrors,
+  more: { help?: string; extra?: string } = {},
 ): string {
-  return `<fieldset id="q-${FIELD[key]}" class="q${errors[key] ? ' has-err' : ''}">
-  ${legend(n, key)}${errorLine(key, errors)}
+  const id = FIELD[key]
+  const described = more.help ? ` aria-describedby="${id}-help"` : ''
+  const help = more.help ? `\n  <p id="${id}-help" class="qhelp">${more.help}</p>` : ''
+  return `<fieldset id="q-${id}" class="q${errors[key] ? ' has-err' : ''}"${described}>
+  <legend>${number(key)}${QUESTION[key]}</legend>${help}${errorLine(key, errors)}
   <div class="opts">
     ${options.map((v) => radio(key, v, labels[v], values, errors)).join('\n    ')}
-  </div>
+  </div>${more.extra ?? ''}
 </fieldset>`
 }
 
-function scaleQuestion(n: number, values: SurveyValues, errors: SurveyErrors): string {
-  const key: Field = 'recommend'
-  const points = Array.from({ length: 11 }, (_, i) => {
-    const v = String(i)
-    const checked = values[key] === v ? ' checked' : ''
-    // The end labels are part of the 0 and 10 radios' names for screen readers;
-    // sighted readers get them in the line above the scale.
-    const end = i === 0 ? `<span class="vh">, ${SCALE_LOW}</span>` : i === 10 ? `<span class="vh">, ${SCALE_HIGH}</span>` : ''
-    return `<label class="pt"><input type="radio" name="${FIELD[key]}" value="${v}" required${checked}${errorAttrs(key, errors)}/><span>${v}${end}</span></label>`
-  })
-  return `<fieldset id="q-${FIELD[key]}" class="q${errors[key] ? ' has-err' : ''}">
-  ${legend(n, key)}${errorLine(key, errors)}
-  <p class="ends" aria-hidden="true"><span>0 = ${SCALE_LOW}</span><span>10 = ${SCALE_HIGH}</span></p>
-  <div class="scale">
-    ${points.join('\n    ')}
-  </div>
-</fieldset>`
-}
-
-function textQuestion(n: number, key: Field, values: SurveyValues, errors: SurveyErrors): string {
+// Q3 and Q4: the question is the textarea's label.
+function textQuestion(key: 'missing' | 'otherFeedback', values: SurveyValues, errors: SurveyErrors): string {
   const id = FIELD[key]
   return `<div id="q-${id}" class="q${errors[key] ? ' has-err' : ''}">
-  <label for="${id}" class="qlabel"><span class="qn" aria-hidden="true">${n}</span>${QUESTION[key]} <span class="optional">(valgfrit)</span></label>${errorLine(key, errors)}
-  <textarea id="${id}" name="${id}" rows="4" maxlength="${SURVEY_TEXT_MAX}"${errorAttrs(key, errors)}>${escapeHtml(values[key])}</textarea>
+  <label for="${id}" class="qlabel">${number(key)}${QUESTION[key]} ${OPTIONAL}</label>${errorLine(key, errors)}
+  ${textarea(key, 4, values, errors, TEXT_PLACEHOLDER)}
 </div>`
 }
 
 function formBody(screen: Extract<SurveyScreen, { kind: 'form' }>): string {
   const values = screen.values ?? EMPTY
   const errors = screen.errors ?? {}
-  // Names each question that needs an answer, as a link to it, so a reader who
+  // Names each question that needs attention, as a link to it, so a reader who
   // lands at the top knows where to go (the page works without JavaScript).
-  const failed = (Object.keys(QUESTION) as Field[]).filter((k) => errors[k])
+  const failedFields = Object.keys(errors) as Field[]
+  const failed = QUESTION_ORDER.filter((q) => failedFields.some((k) => QUESTION_OF[k] === q))
   const summary = failed.length
-    ? `\n<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p><ul>${failed
-        .map((k) => `<li><a href="#q-${FIELD[k]}">Spørgsmål ${QUESTION_NO[k]}</a></li>`)
+    ? `\n<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen.</p><ul>${failed
+        .map((q) => `<li><a href="#q-${FIELD[q]}">Spørgsmål ${QUESTION_ORDER.indexOf(q) + 1}</a></li>`)
         .join('')}</ul></div>`
     : ''
-  return `<p class="hello">${greeting(screen.firstName)},</p>
+  return `<p class="hello">${greeting(screen.firstName)}</p>
 <h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>
-<p class="lead">Fem korte spørgsmål. Det tager to minutter, og dine svar går direkte til holdet bag appen.</p>${summary}
+<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>${summary}
 <form method="POST" action="${actionFor(screen.token)}" class="survey" onsubmit="${ON_SUBMIT}">
-${choiceQuestion(1, 'daysUsed', SURVEY_DAYS, DAYS_LABEL, values, errors)}
-${choiceQuestion(2, 'progress', SURVEY_PROGRESS, PROGRESS_LABEL, values, errors)}
-${scaleQuestion(3, values, errors)}
-${textQuestion(4, 'workedBest', values, errors)}
-${textQuestion(5, 'fixFirst', values, errors)}
+${choiceQuestion('planFit', SURVEY_RATINGS, RATING_LABEL, values, errors, { extra: note('planFitNote', values, errors) })}
+${choiceQuestion('easyToUse', SURVEY_RATINGS, RATING_LABEL, values, errors, { extra: note('easyNote', values, errors) })}
+${textQuestion('missing', values, errors)}
+${textQuestion('otherFeedback', values, errors)}
+${choiceQuestion('panel', SURVEY_PANEL, PANEL_LABEL, values, errors, { help: PANEL_HELP })}
 <button type="submit" class="primary">${SEND_LABEL}</button>
 </form>
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`
 }
 
-const THANKS_LEAD = `Vi læser dem alle. Har du mere på hjerte, så tryk på Feedback i appen eller skriv til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
-
-function done(title: string): { title: string; body: string } {
+function done(title: string, lines: string): { title: string; body: string } {
   return {
     title,
     body: `${CHECK}
 <h1>${title}</h1>
-<p class="lead">${THANKS_LEAD}</p>`,
+${lines}`,
   }
 }
 
+const THANKS = done(
+  'Tak for dine svar',
+  `<p class="lead">Vi læser dem alle.</p>
+<p class="note">Har du mere på hjerte, kan du altid trykke på Feedback i Altid&nbsp;Mad eller skrive til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.</p>`,
+)
+const ALREADY = done('Tak, vi har allerede dine svar', '<p class="lead">Du behøver ikke gøre mere.</p>')
+
 // Rules on top of the yes-page's STYLE, whose bare `label` rule (for the
-// Google-account field) is reset here for the option labels. Fieldsets for the
-// radio groups, option rows as large tap targets, the 0 to 10 scale in two rows
-// on a phone (6 + 5, every point at least 44 px wide at 375 px) and one row
-// from 600 px.
+// Google-account field) is reset here for the survey's labels. Fieldsets for
+// the radio groups, option cards stacked as large tap targets at every width,
+// and the elaborations under Q1 and Q2 quieter than the options above them.
 const SURVEY_STYLE = `
 form.survey{display:block;margin:28px 0 20px}
-.q{border:0;margin:0 0 32px;padding:0;min-width:0}
+.q{border:0;margin:0 0 36px;padding:0;min-width:0}
 legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weight:500;line-height:1.4;color:${COLOR.forestDeep};text-wrap:pretty}
 .qn{display:inline-block;min-width:1.6em;color:${COLOR.muted};font-weight:400}
-.optional{font-weight:400;color:${COLOR.muted};font-size:15px}
+.optional{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:rgba(22,50,35,.07);color:${COLOR.muted};font-size:13px;font-weight:400;line-height:1.5;vertical-align:1px;white-space:nowrap}
+.qhelp{font-size:15px;line-height:1.5;color:${COLOR.muted};margin:-6px 0 12px;text-wrap:pretty}
 .q .err{margin:-4px 0 12px}
 .err-top{font-size:15px;line-height:1.5;color:${COLOR.error};margin:0 0 8px}
 .err-top ul{margin:4px 0 0;padding-left:20px}
@@ -319,21 +360,18 @@ legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weigh
 .opt{display:flex;align-items:center;gap:12px;margin:0;min-height:52px;padding:12px 16px;border:1.5px solid rgba(22,50,35,.25);border-radius:16px;background:#fff;color:${COLOR.forestDeep};font-size:16px;line-height:1.35;cursor:pointer}
 .opt input{flex:none;width:20px;height:20px;margin:0;accent-color:${COLOR.forestDeep}}
 .opt:has(input:checked){border-color:${COLOR.forestDeep};background:rgba(220,215,153,.35)}
-.has-err .opt,.has-err .pt span{border-color:${COLOR.error}}
-.ends{display:flex;justify-content:space-between;gap:16px;font-size:13px;line-height:1.35;color:${COLOR.muted};margin:0 0 8px}
-.ends span:last-child{text-align:right}
-.scale{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.pt{position:relative;display:block;margin:0;cursor:pointer}
-.pt input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-.pt span{display:flex;align-items:center;justify-content:center;min-height:48px;border:1.5px solid rgba(22,50,35,.25);border-radius:12px;background:#fff;color:${COLOR.forestDeep};font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
-.pt input:checked+span{border-color:${COLOR.forestDeep};background:${COLOR.khaki}}
-.pt input:focus-visible+span,.opt:has(input:focus-visible){outline:3px solid ${COLOR.forestDeep};outline-offset:2px}
-.vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.opt:has(input:focus-visible){outline:3px solid ${COLOR.forestDeep};outline-offset:2px}
+.has-err .opt{border-color:${COLOR.error}}
+.sub{margin-top:16px}
+.sublabel{display:block;margin:0 0 8px;font-size:15px;line-height:1.45;color:${COLOR.muted}}
+.sub .err{margin:-2px 0 8px}
 textarea{display:block;width:100%;min-height:112px;padding:12px 16px;border:1.5px solid rgba(22,50,35,.35);border-radius:16px;background:#fff;color:${COLOR.forestDeep};font:inherit;font-size:16px;line-height:1.5;resize:vertical}
-textarea[aria-invalid=true]{border-color:${COLOR.error}}
+.sub textarea{min-height:88px;border-color:rgba(22,50,35,.2);border-radius:14px}
+textarea::placeholder{color:${COLOR.muted};opacity:.8}
+textarea[aria-invalid=true],.sub textarea[aria-invalid=true]{border-color:${COLOR.error}}
 textarea:focus-visible{outline:3px solid ${COLOR.forestDeep};outline-offset:3px}
-form.survey button{margin-top:8px}
-@media (min-width:600px){.scale{grid-template-columns:repeat(11,minmax(0,1fr))}form.survey button{width:auto;min-width:240px}}
+form.survey button{margin-top:4px}
+@media (min-width:600px){form.survey button{width:auto;min-width:240px}}
 `
 
 /** A complete HTML document for one survey screen. Every interpolated value is escaped. */
@@ -341,14 +379,10 @@ export function renderSurveyScreen(screen: SurveyScreen): string {
   switch (screen.kind) {
     case 'form':
       return renderMadTestShell('Fem korte spørgsmål', formBody(screen), RESET_SEND, SURVEY_STYLE)
-    case 'thanks': {
-      const { title, body } = done('Tak for dine svar')
-      return renderMadTestShell(title, body)
-    }
-    case 'already': {
-      const { title, body } = done('Tak, vi har allerede dine svar')
-      return renderMadTestShell(title, body)
-    }
+    case 'thanks':
+      return renderMadTestShell(THANKS.title, THANKS.body)
+    case 'already':
+      return renderMadTestShell(ALREADY.title, ALREADY.body)
     // The yes-page's own screens, byte for byte: a refused survey link looks
     // exactly like a refused yes-link, and the mail script's preflight checks
     // for the same "Linket virker ikke".

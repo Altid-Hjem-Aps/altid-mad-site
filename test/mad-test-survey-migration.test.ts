@@ -17,36 +17,52 @@ const statements = sql
   .toLowerCase()
 
 describe('20260929_mad_test_survey migration', () => {
-  it('creates the table idempotently with the eight columns', () => {
+  it('creates the table idempotently with the ten columns', () => {
     expect(statements).toContain('create table if not exists public.mad_test_survey')
     expect(statements).toMatch(
       /public_id\s+text\s+primary key references public\.signup \(public_id\) on delete cascade,/,
     )
     expect(statements).toMatch(/created_at\s+timestamptz\s+not null default now\(\),/)
     expect(statements).toMatch(/copy_version\s+text\s+not null\s+constraint mad_test_survey_copy_version_check check \(copy_version <> ''\),/)
-    expect(statements).toMatch(
-      /days_used\s+text\s+not null\s+constraint mad_test_survey_days_used_check check \(days_used in \('0', '1', '2-3', '4\+'\)\),/,
-    )
-    expect(statements).toMatch(
-      /progress\s+text\s+not null\s+constraint mad_test_survey_progress_check check \(progress in \('plan', 'shopped', 'none'\)\),/,
-    )
-    expect(statements).toMatch(
-      /recommend\s+smallint\s+not null\s+constraint mad_test_survey_recommend_check check \(recommend between 0 and 10\),/,
-    )
-    expect(statements).toMatch(
-      /worked_best\s+text\s+constraint mad_test_survey_worked_best_check check \(length\(worked_best\) between 1 and 2000\s+and worked_best = btrim\(worked_best, e' \\t\\n\\r'\)\),/,
-    )
-    expect(statements).toMatch(
-      /fix_first\s+text\s+constraint mad_test_survey_fix_first_check check \(length\(fix_first\) between 1 and 2000\s+and fix_first = btrim\(fix_first, e' \\t\\n\\r'\)\)\s*\);/,
-    )
+    for (const col of ['plan_fit', 'easy_to_use']) {
+      expect(statements).toMatch(
+        new RegExp(`${col}\\s+text\\s+not null\\s+constraint mad_test_survey_${col}_check check \\(${col} in \\('ja', 'delvist', 'nej'\\)\\),`),
+      )
+    }
+    for (const col of ['plan_fit_note', 'easy_note', 'missing', 'other_feedback']) {
+      expect(statements).toMatch(
+        new RegExp(
+          `\\n\\s+${col}\\s+text\\s+constraint mad_test_survey_${col}_check check \\(length\\(${col}\\) between 1 and 2000\\s+and ${col} = btrim\\(${col}, e' \\\\t\\\\n\\\\r'\\)\\),`,
+        ),
+      )
+    }
+    expect(statements).toMatch(/,\s+panel\s+boolean\s+not null\s*\);/)
   })
 
-  it('the two text answers may be null (optional questions); the rest may not', () => {
+  it('the columns in order, and nothing else in the table', () => {
     const body = statements.slice(statements.indexOf('create table'), statements.indexOf(');'))
-    // created_at, copy_version and the three required answers; public_id is the primary key.
+    const cols = [...body.matchAll(/\n\s+(\w+)\s+(text|timestamptz|boolean)\b/g)].map((m) => m[1])
+    expect(cols).toEqual([
+      'public_id',
+      'created_at',
+      'copy_version',
+      'plan_fit',
+      'plan_fit_note',
+      'easy_to_use',
+      'easy_note',
+      'missing',
+      'other_feedback',
+      'panel',
+    ])
+  })
+
+  it('the four text answers may be null (optional); the rest may not', () => {
+    const body = statements.slice(statements.indexOf('create table'), statements.indexOf(');'))
+    // created_at, copy_version, the two ratings and panel; public_id is the primary key.
     expect(body.match(/not null/g)).toHaveLength(5)
-    expect(body).not.toMatch(/worked_best\s+text\s+not null/)
-    expect(body).not.toMatch(/fix_first\s+text\s+not null/)
+    for (const col of ['plan_fit_note', 'easy_note', 'missing', 'other_feedback']) {
+      expect(body).not.toMatch(new RegExp(`\\n\\s+${col}\\s+text\\s+not null`))
+    }
   })
 
   it('enables row level security, grants no policy, revokes the public roles', () => {
@@ -68,8 +84,11 @@ describe('20260929_mad_test_survey migration', () => {
     expect(new Set(tables)).toEqual(new Set(['mad_test_survey', 'signup']))
   })
 
-  it('documents retention and the one use on the table itself', () => {
+  it('documents retention, the one use and what panel means on the table itself', () => {
     expect(statements).toMatch(/comment on table public\.mad_test_survey is\s+'[^']*delete all rows when the mad-testen ends/)
     expect(statements).toMatch(/comment on table public\.mad_test_survey is\s+'[^']*read only for the mad-testen summary/)
+    expect(statements).toMatch(
+      /comment on table public\.mad_test_survey is\s+'[^']*panel = true means the person asked to be invited to future tests/,
+    )
   })
 })

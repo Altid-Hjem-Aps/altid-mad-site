@@ -2,23 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { renderMadTestScreen } from '@/lib/mad-test'
 import {
   MAD_TEST_SURVEY_COPY_VERSION,
-  SURVEY_DAYS,
-  SURVEY_PROGRESS,
-  isSurveyDays,
-  isSurveyProgress,
-  isSurveyRecommend,
+  SURVEY_FIELD_NAMES,
+  SURVEY_PANEL,
+  SURVEY_RATINGS,
+  SURVEY_TEXT_MAX,
+  isSurveyRating,
   isSurveyText,
   parseSurvey,
   renderSurveyScreen,
   type SurveyScreen,
 } from '@/lib/mad-test-survey'
 
+const EMPTY_VALUES = {
+  planFit: '',
+  planFitNote: '',
+  easyToUse: '',
+  easyNote: '',
+  missing: '',
+  otherFeedback: '',
+  panel: '',
+}
+
+// Q1 and Q5 unanswered, Q2 = delvist with an elaboration, Q4 too long.
 const ERRORS: SurveyScreen = {
   kind: 'form',
   firstName: 'Anna',
   token: 'tok',
-  values: { daysUsed: '', progress: 'plan', recommend: '', workedBest: 'Godt', fixFirst: 'x' },
-  errors: { daysUsed: 'missing', recommend: 'missing', fixFirst: 'too-long' },
+  values: { ...EMPTY_VALUES, easyToUse: 'delvist', easyNote: 'Indkøbslisten', otherFeedback: 'x' },
+  errors: { planFit: 'missing', otherFeedback: 'too-long', panel: 'missing' },
 }
 
 const SCREENS: SurveyScreen[] = [
@@ -37,24 +48,18 @@ function form(fields: Record<string, string>): FormData {
 }
 
 describe('the answer checks', () => {
-  it('days_used: exactly the four values', () => {
-    expect(SURVEY_DAYS).toEqual(['0', '1', '2-3', '4+'])
-    for (const v of SURVEY_DAYS) expect(isSurveyDays(v)).toBe(true)
-    for (const v of ['2', '4', '2–3', ' 1', '', null, 0, 1]) expect(isSurveyDays(v)).toBe(false)
+  it('ratings: exactly ja, delvist, nej', () => {
+    expect(SURVEY_RATINGS).toEqual(['ja', 'delvist', 'nej'])
+    for (const v of SURVEY_RATINGS) expect(isSurveyRating(v)).toBe(true)
+    for (const v of ['Ja', 'JA', ' ja', 'maaske', 'yes', '', null, 1, true]) expect(isSurveyRating(v)).toBe(false)
   })
 
-  it('progress: exactly the three values', () => {
-    expect(SURVEY_PROGRESS).toEqual(['plan', 'shopped', 'none'])
-    for (const v of SURVEY_PROGRESS) expect(isSurveyProgress(v)).toBe(true)
-    for (const v of ['PLAN', 'shop', '', null]) expect(isSurveyProgress(v)).toBe(false)
-  })
-
-  it('recommend: the integers 0 to 10', () => {
-    for (let i = 0; i <= 10; i++) expect(isSurveyRecommend(i)).toBe(true)
-    for (const v of [-1, 11, 7.5, NaN, '7', null]) expect(isSurveyRecommend(v)).toBe(false)
+  it('panel: exactly ja and nej on the form', () => {
+    expect(SURVEY_PANEL).toEqual(['ja', 'nej'])
   })
 
   it('a stored text answer: null, or trimmed, non-empty and at most 2000 characters', () => {
+    expect(SURVEY_TEXT_MAX).toBe(2000)
     expect(isSurveyText(null)).toBe(true)
     expect(isSurveyText('a\nb')).toBe(true)
     expect(isSurveyText('🥕'.repeat(2000))).toBe(true)
@@ -62,33 +67,99 @@ describe('the answer checks', () => {
       expect(isSurveyText(v)).toBe(false)
     }
   })
+
+  it('the form field names', () => {
+    expect(SURVEY_FIELD_NAMES).toEqual([
+      'plan_fit',
+      'plan_fit_note',
+      'easy_to_use',
+      'easy_note',
+      'missing',
+      'other_feedback',
+      'panel',
+    ])
+  })
 })
 
 describe('parseSurvey', () => {
-  it('a full answer', () => {
+  it('a full answer: text trimmed with line breaks kept, panel ja is true', () => {
     expect(
-      parseSurvey(form({ days_used: '2-3', progress: 'shopped', recommend: '10', worked_best: ' a\r\nb ', fix_first: 'c' })),
+      parseSurvey(
+        form({
+          plan_fit: 'delvist',
+          plan_fit_note: ' a\r\nb ',
+          easy_to_use: 'ja',
+          easy_note: 'c',
+          missing: '\nd\n',
+          other_feedback: 'e\rf',
+          panel: 'ja',
+        }),
+      ),
     ).toEqual({
       ok: true,
-      answers: { daysUsed: '2-3', progress: 'shopped', recommend: 10, workedBest: 'a\nb', fixFirst: 'c' },
+      answers: {
+        planFit: 'delvist',
+        planFitNote: 'a\nb',
+        easyToUse: 'ja',
+        easyNote: 'c',
+        missing: 'd',
+        otherFeedback: 'e\nf',
+        panel: true,
+      },
+    })
+  })
+
+  it('only the required answers: every text is null, panel nej is false', () => {
+    expect(parseSurvey(form({ plan_fit: 'nej', easy_to_use: 'nej', panel: 'nej', missing: '   ' }))).toEqual({
+      ok: true,
+      answers: {
+        planFit: 'nej',
+        planFitNote: null,
+        easyToUse: 'nej',
+        easyNote: null,
+        missing: null,
+        otherFeedback: null,
+        panel: false,
+      },
     })
   })
 
   it('an empty form: the three required questions are missing, no text error', () => {
-    const r = parseSurvey(new FormData())
-    expect(r).toEqual({
+    expect(parseSurvey(new FormData())).toEqual({
       ok: false,
-      values: { daysUsed: '', progress: '', recommend: '', workedBest: '', fixFirst: '' },
-      errors: { daysUsed: 'missing', progress: 'missing', recommend: 'missing' },
+      values: EMPTY_VALUES,
+      errors: { planFit: 'missing', easyToUse: 'missing', panel: 'missing' },
     })
   })
 
+  it('panel delvist is not an answer (only questions 1 and 2 have it)', () => {
+    const r = parseSurvey(form({ plan_fit: 'ja', easy_to_use: 'ja', panel: 'delvist' }))
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.errors).toEqual({ panel: 'missing' })
+  })
+
+  it('each text field over 2000 characters is its own too-long error, counted in code points', () => {
+    const r = parseSurvey(
+      form({
+        plan_fit: 'ja',
+        easy_to_use: 'ja',
+        panel: 'ja',
+        plan_fit_note: 'x'.repeat(2001),
+        easy_note: '🥕'.repeat(2000),
+        missing: 'ø'.repeat(2001),
+        other_feedback: 'y'.repeat(2001),
+      }),
+    )
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.errors).toEqual({ planFitNote: 'too-long', missing: 'too-long', otherFeedback: 'too-long' })
+  })
+
   it('a file where a value belongs counts as not answered', () => {
-    const f = form({ progress: 'plan', recommend: '4' })
-    f.set('days_used', new Blob(['1']), 'x.txt')
+    const f = form({ easy_to_use: 'ja', panel: 'nej' })
+    f.set('plan_fit', new Blob(['ja']), 'x.txt')
     const r = parseSurvey(f)
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.errors).toEqual({ daysUsed: 'missing' })
+    if (!r.ok) expect(r.errors).toEqual({ planFit: 'missing' })
   })
 })
 
@@ -113,122 +184,219 @@ describe('renderSurveyScreen', () => {
     expect(renderSurveyScreen({ kind: 'error' })).toBe(renderMadTestScreen({ kind: 'error' }))
   })
 
-  it('the form: intro, three fieldsets with legends, two labelled textareas, one button, the privacy link', () => {
+  it('the form: greeting without a comma, heading, lead, five questions in order, one button, the privacy link', () => {
     const html = renderSurveyScreen(SCREENS[0])
 
-    expect(html).toContain('<p class="hello">Hej Anna,</p>')
+    expect(html).toContain('<p class="hello">Hej Anna</p>')
     expect(html).toContain('<h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
     expect(html).toContain(
-      '<p class="lead">Fem korte spørgsmål. Det tager to minutter, og dine svar går direkte til holdet bag appen.</p>',
+      '<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>',
     )
-    const legends = [...html.matchAll(/<legend><span class="qn" aria-hidden="true">(\d)<\/span>([^<]+)<\/legend>/g)]
-    expect(legends.map((m) => [m[1], m[2]])).toEqual([
-      ['1', 'Hvor mange dage har du brugt Altid&nbsp;Mad indtil nu?'],
-      ['2', 'Hvor langt nåede du?'],
-      ['3', 'Hvor sandsynligt er det, at du vil anbefale Altid&nbsp;Mad til en ven eller kollega?'],
+    // The greeting sits above the heading, the heading above the lead.
+    expect(html.indexOf('class="hello"')).toBeLessThan(html.indexOf('<h1>'))
+    expect(html.indexOf('<h1>')).toBeLessThan(html.indexOf('class="lead"'))
+
+    const questions = [
+      ...html.matchAll(/<(?:legend|label for="[a-z_]+" class="qlabel")><span class="qn" aria-hidden="true">(\d)<\/span>([^<]+?)(?: <span class="optional">Valgfrit<\/span>)?<\/(?:legend|label)>/g),
+    ].map((m) => [m[1], m[2]])
+    expect(questions).toEqual([
+      ['1', 'Passede madplanen til jeres behov?'],
+      ['2', 'Var Altid&nbsp;Mad nem at bruge?'],
+      ['3', 'Var der noget, du manglede i Altid&nbsp;Mad?'],
+      ['4', 'Er der andet fra din oplevelse, som du synes, vi bør vide?'],
+      ['5', 'Vil du være en del af vores brugerpanel?'],
     ])
-    expect(html.match(/<fieldset id="q-[a-z_]+" class="q">/g)).toHaveLength(3)
-    expect(html).toContain(
-      '<label for="worked_best" class="qlabel"><span class="qn" aria-hidden="true">4</span>Hvad virkede bedst? <span class="optional">(valgfrit)</span></label>',
-    )
-    expect(html).toContain(
-      '<label for="fix_first" class="qlabel"><span class="qn" aria-hidden="true">5</span>Hvad skal vi rette først? <span class="optional">(valgfrit)</span></label>',
-    )
-    expect(html).toContain('<textarea id="worked_best" name="worked_best" rows="4" maxlength="2000"></textarea>')
-    expect(html).toContain('<textarea id="fix_first" name="fix_first" rows="4" maxlength="2000"></textarea>')
-    expect(html.match(/<button/g)).toHaveLength(1)
-    expect(html).toContain('<button type="submit" class="primary">Send svar</button>')
+    // All five on one page, in one form.
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html).toContain('<form method="POST" action="/api/mad-testen/survey?t=tok" class="survey"')
-    expect(html).toContain('href="/privatlivspolitik"')
+    expect(html.match(/<fieldset id="q-[a-z_]+" class="q"/g)).toHaveLength(3)
+    expect(html.match(/<textarea/g)).toHaveLength(4)
+    expect(html.match(/<button/g)).toHaveLength(1)
+    expect(html).toContain('<button type="submit" class="primary">Send mine svar</button>')
+    // The button comes after question 5, the privacy link after the form.
+    expect(html.indexOf('id="q-panel"')).toBeLessThan(html.indexOf('<button'))
+    expect(html).toMatch(/<\/form>\n<p class="small"><a href="\/privatlivspolitik">Sådan behandler vi dine data<\/a><\/p>/)
     expect(html).not.toContain('class="err-top"')
     expect(html).not.toContain('class="err"')
-    expect(html).not.toContain('disabled')
+    // No element starts disabled (the base stylesheet has a button:disabled rule).
+    expect(html).not.toMatch(/<[a-z]+ [^>]*\bdisabled\b/)
+    expect(html).not.toContain(' checked')
   })
 
-  it('question 1 and 2: the answers in order, values as stored, every radio required', () => {
+  it('questions 1, 2 and 5 use the same option card, values as stored, every radio required', () => {
     const html = renderSurveyScreen(SCREENS[0])
     const opts = (name: string) =>
       [...html.matchAll(new RegExp(`<label class="opt"><input type="radio" name="${name}" value="([^"]+)" required/><span>([^<]+)</span></label>`, 'g'))]
         .map((m) => [m[1], m[2]])
-    expect(opts('days_used')).toEqual([
-      ['0', 'Ingen dage'],
-      ['1', '1 dag'],
-      ['2-3', '2-3 dage'],
-      ['4+', '4 dage eller flere'],
+    const rating = [
+      ['ja', 'Ja'],
+      ['delvist', 'Delvist'],
+      ['nej', 'Nej'],
+    ]
+    expect(opts('plan_fit')).toEqual(rating)
+    expect(opts('easy_to_use')).toEqual(rating)
+    expect(opts('panel')).toEqual([
+      ['ja', 'Ja'],
+      ['nej', 'Nej'],
     ])
-    expect(opts('progress')).toEqual([
-      ['plan', 'Jeg lavede en madplan'],
-      ['shopped', 'Jeg handlede ind efter den'],
-      ['none', 'Ingen af delene'],
-    ])
+    // No other kind of radio on the page.
+    expect(html.match(/type="radio"/g)).toHaveLength(8)
+    expect(html.match(/<label class="opt">/g)).toHaveLength(8)
   })
 
-  it('question 3: eleven radios 0 to 10, the end labels visible once and in the 0 and 10 names', () => {
+  it('the elaborations under questions 1 and 2: optional, labelled, inside their question, after the options', () => {
     const html = renderSurveyScreen(SCREENS[0])
-    const points = [...html.matchAll(/<label class="pt"><input type="radio" name="recommend" value="(\d+)" required\/><span>(\d+)(<span class="vh">, ([^<]+)<\/span>)?<\/span><\/label>/g)]
-    expect(points.map((m) => m[1])).toEqual(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
-    expect(points.map((m) => m[1] === m[2])).toEqual(Array(11).fill(true))
-    expect(points[0][4]).toBe('Slet ikke sandsynligt')
-    expect(points[10][4]).toBe('Meget sandsynligt')
-    expect(points.slice(1, 10).every((m) => m[3] === undefined)).toBe(true)
+    for (const [q, id, label] of [
+      ['plan_fit', 'plan_fit_note', 'Uddyb gerne hvorfor'],
+      ['easy_to_use', 'easy_note', 'Var der noget, der var svært eller uklart?'],
+    ]) {
+      const fieldset = html.slice(html.indexOf(`<fieldset id="q-${q}"`), html.indexOf('</fieldset>', html.indexOf(`<fieldset id="q-${q}"`)))
+      expect(fieldset).toContain(
+        `<div class="sub">\n    <label for="${id}" class="sublabel">${label} <span class="optional">Valgfrit</span></label>\n    <textarea id="${id}" name="${id}" rows="3" maxlength="2000"></textarea>\n  </div>`,
+      )
+      expect(fieldset.indexOf('class="opts"')).toBeLessThan(fieldset.indexOf('class="sub"'))
+    }
+    // Quieter than the options: a smaller, muted label and a lighter, lower field.
+    expect(html).toContain('.sublabel{display:block;margin:0 0 8px;font-size:15px;line-height:1.45;color:#6f6a61}')
+    expect(html).toContain('.sub textarea{min-height:88px;border-color:rgba(22,50,35,.2);border-radius:14px}')
+  })
+
+  it('questions 3 and 4: the question labels a multiline field with "Skriv dit svar", marked Valgfrit', () => {
+    const html = renderSurveyScreen(SCREENS[0])
+    for (const [id, n, q] of [
+      ['missing', '3', 'Var der noget, du manglede i Altid&nbsp;Mad?'],
+      ['other_feedback', '4', 'Er der andet fra din oplevelse, som du synes, vi bør vide?'],
+    ]) {
+      expect(html).toContain(
+        `<div id="q-${id}" class="q">\n  <label for="${id}" class="qlabel"><span class="qn" aria-hidden="true">${n}</span>${q} <span class="optional">Valgfrit</span></label>\n  <textarea id="${id}" name="${id}" rows="4" maxlength="2000" placeholder="Skriv dit svar"></textarea>\n</div>`,
+      )
+    }
+    // Every optional field says so, the required questions do not.
+    expect(html.match(/<span class="optional">Valgfrit<\/span>/g)).toHaveLength(4)
+    expect(html).toContain('.optional{display:inline-block;')
+  })
+
+  it('question 5: the explanation directly under the question, and the fieldset described by it', () => {
+    const html = renderSurveyScreen(SCREENS[0])
     expect(html).toContain(
-      '<p class="ends" aria-hidden="true"><span>0 = Slet ikke sandsynligt</span><span>10 = Meget sandsynligt</span></p>',
+      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn" aria-hidden="true">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.</p>\n  <div class="opts">',
     )
   })
 
-  it('the scale fits 375 px: six columns on a phone (two rows), eleven from 600 px', () => {
+  it('the options stack at every width (no row layout that could overflow 375 px)', () => {
     const html = renderSurveyScreen(SCREENS[0])
-    expect(html).toContain('.scale{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}')
-    expect(html).toContain('@media (min-width:600px){.scale{grid-template-columns:repeat(11,minmax(0,1fr))}')
-    // 375 px minus 2 x 24 px padding, minus 5 gaps of 6 px, over 6 columns.
-    expect((375 - 48 - 5 * 6) / 6).toBeGreaterThanOrEqual(44)
+    expect(html).toContain('.opts{display:flex;flex-direction:column;gap:8px}')
+    expect(html).not.toMatch(/\.opts\{[^}]*flex-direction:row/)
   })
 
-  it('the form with errors: an alert on top, each bad question points at its error, given answers kept', () => {
+  it('the form with errors: the summary sentence, a link per question in page order, errors in place, answers kept', () => {
     const html = renderSurveyScreen(ERRORS)
 
-    expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen:</p><ul>')
-    // Each failed question is named and linked, in page order; the link targets exist.
+    expect(html).toContain('<div class="err-top" role="alert"><p>Tjek de markerede spørgsmål, og send igen.</p><ul>')
     const links = [...html.matchAll(/<li><a href="#(q-[a-z_]+)">Spørgsmål (\d)<\/a><\/li>/g)].map((m) => [m[1], m[2]])
-    expect(links).toEqual([['q-days_used', '1'], ['q-recommend', '3'], ['q-fix_first', '5']])
+    expect(links).toEqual([['q-plan_fit', '1'], ['q-other_feedback', '4'], ['q-panel', '5']])
     for (const [id] of links) expect(html).toContain(`id="${id}"`)
-    expect(html).toContain('<p id="days_used-err" class="err">Vælg et svar.</p>')
-    expect(html).toContain('<p id="recommend-err" class="err">Vælg et svar.</p>')
-    expect(html).toContain('<p id="fix_first-err" class="err">Svaret er for langt. Skriv højst 2000 tegn.</p>')
-    expect(html).not.toContain('id="progress-err"')
-    expect(html).not.toContain('id="worked_best-err"')
-    expect(html.match(/name="days_used"[^>]*aria-invalid="true" aria-describedby="days_used-err"/g)).toHaveLength(4)
-    expect(html.match(/name="recommend"[^>]*aria-invalid="true" aria-describedby="recommend-err"/g)).toHaveLength(11)
-    expect(html).toContain('<textarea id="fix_first" name="fix_first" rows="4" maxlength="2000" aria-invalid="true" aria-describedby="fix_first-err">x</textarea>')
-    expect(html).toContain('<textarea id="worked_best" name="worked_best" rows="4" maxlength="2000">Godt</textarea>')
-    expect(html).toContain('<input type="radio" name="progress" value="plan" required checked/>')
-    expect(html.match(/<fieldset id="q-[a-z_]+" class="q has-err">/g)).toHaveLength(2)
+    expect(html).toContain('<p id="plan_fit-err" class="err">Vælg et svar.</p>')
+    expect(html).toContain('<p id="panel-err" class="err">Vælg et svar.</p>')
+    expect(html).toContain('<p id="other_feedback-err" class="err">Svaret er for langt. Skriv højst 2.000 tegn.</p>')
+    expect(html.match(/class="err"/g)).toHaveLength(3)
+    expect(html).not.toContain('id="easy_to_use-err"')
+    expect(html.match(/name="plan_fit"[^>]*aria-invalid="true" aria-describedby="plan_fit-err"/g)).toHaveLength(3)
+    expect(html.match(/name="panel"[^>]*aria-invalid="true" aria-describedby="panel-err"/g)).toHaveLength(2)
+    expect(html).toContain(
+      '<textarea id="other_feedback" name="other_feedback" rows="4" maxlength="2000" placeholder="Skriv dit svar" aria-invalid="true" aria-describedby="other_feedback-err">x</textarea>',
+    )
+    // Q2's answer and its elaboration are kept.
+    expect(html).toContain('<input type="radio" name="easy_to_use" value="delvist" required checked/>')
+    expect(html.match(/ checked/g)).toHaveLength(1)
+    expect(html).toContain('<textarea id="easy_note" name="easy_note" rows="3" maxlength="2000">Indkøbslisten</textarea>')
+    expect(html.match(/<fieldset id="q-[a-z_]+" class="q has-err"/g)).toHaveLength(2)
+    expect(html).toContain('<fieldset id="q-easy_to_use" class="q">')
+    // Question 5's error sits under its explanation, above the options.
+    const q5 = html.slice(html.indexOf('id="q-panel"'))
+    expect(q5.indexOf('panel-help')).toBeLessThan(q5.indexOf('panel-err'))
+    expect(q5.indexOf('panel-err')).toBeLessThan(q5.indexOf('class="opts"'))
   })
 
-  it('escapes the token in the form action', () => {
+  it('an elaboration that is too long: its error under its own label, the summary names its question', () => {
+    const html = renderSurveyScreen({
+      kind: 'form',
+      firstName: null,
+      token: 'tok',
+      values: { ...EMPTY_VALUES, planFit: 'ja', planFitNote: 'y', easyToUse: 'nej', panel: 'ja' },
+      errors: { planFitNote: 'too-long' },
+    })
+    expect([...html.matchAll(/<li><a href="#(q-[a-z_]+)">/g)].map((m) => m[1])).toEqual(['q-plan_fit'])
+    expect(html).toContain(
+      '<label for="plan_fit_note" class="sublabel">Uddyb gerne hvorfor <span class="optional">Valgfrit</span></label>\n    <p id="plan_fit_note-err" class="err">Svaret er for langt. Skriv højst 2.000 tegn.</p>\n    <textarea id="plan_fit_note" name="plan_fit_note" rows="3" maxlength="2000" aria-invalid="true" aria-describedby="plan_fit_note-err">y</textarea>',
+    )
+    // The options were answered: question 1 is not marked as unanswered.
+    expect(html).toContain('<fieldset id="q-plan_fit" class="q">')
+    expect(html).not.toMatch(/name="plan_fit"[^>]*aria-invalid/)
+  })
+
+  it('both elaborations too long and Q1 unanswered: question 1 is named once', () => {
+    const html = renderSurveyScreen({
+      kind: 'form',
+      firstName: null,
+      token: 'tok',
+      values: EMPTY_VALUES,
+      errors: { planFit: 'missing', planFitNote: 'too-long', easyNote: 'too-long' },
+    })
+    expect([...html.matchAll(/<li><a href="#(q-[a-z_]+)">Spørgsmål (\d)/g)].map((m) => m[2])).toEqual(['1', '2'])
+  })
+
+  it('escapes the token in the form action, and greets without a name', () => {
     const odd = `a"b'c<d>&e`
     const html = renderSurveyScreen({ kind: 'form', firstName: null, token: odd })
     expect(html).toContain(`action="/api/mad-testen/survey?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
-    expect(html).toContain('<p class="hello">Hej,</p>')
+    expect(html).toContain('<p class="hello">Hej</p>')
   })
 
-  it.each([
-    ['thanks', 'Tak for dine svar'],
-    ['already', 'Tak, vi har allerede dine svar'],
-  ] as const)('%s: the check mark, the heading, Feedback in the app and the mail address as a link', (kind, heading) => {
-    const html = renderSurveyScreen({ kind })
-    expect(html).toContain(`<title>${heading} | Altid Mad</title>`)
-    expect(html).toContain(`<h1>${heading}</h1>`)
+  it('escapes every kept text answer', () => {
+    const html = renderSurveyScreen({
+      kind: 'form',
+      firstName: '<b>Bo</b>',
+      token: 'tok',
+      values: {
+        ...EMPTY_VALUES,
+        planFitNote: '</textarea><script>1</script>',
+        easyNote: '"&\'',
+        missing: '<i>',
+        otherFeedback: '&amp;',
+      },
+      errors: { planFit: 'missing' },
+    })
+    expect(html).not.toContain('<script>1')
+    expect(html).toContain('>&lt;/textarea&gt;&lt;script&gt;1&lt;/script&gt;</textarea>')
+    expect(html).toContain('>&quot;&amp;&#39;</textarea>')
+    expect(html).toContain('>&lt;i&gt;</textarea>')
+    expect(html).toContain('>&amp;amp;</textarea>')
+    expect(html).toContain('<p class="hello">Hej &lt;b&gt;Bo&lt;/b&gt;</p>')
+  })
+
+  it('thanks: the check mark, the heading, "Vi læser dem alle." and Feedback in Altid Mad with the mail address as a link', () => {
+    const html = renderSurveyScreen({ kind: 'thanks' })
+    expect(html).toContain('<title>Tak for dine svar | Altid Mad</title>')
     expect(html).toContain('<div class="mark" aria-hidden="true">')
     expect(html).toContain(
-      '<p class="lead">Vi læser dem alle. Har du mere på hjerte, så tryk på Feedback i appen eller skriv til <a href="mailto:hej@altidmad.dk">hej@altidmad.dk</a>.</p>',
+      '<h1>Tak for dine svar</h1>\n<p class="lead">Vi læser dem alle.</p>\n<p class="note">Har du mere på hjerte, kan du altid trykke på Feedback i Altid&nbsp;Mad eller skrive til <a href="mailto:hej@altidmad.dk">hej@altidmad.dk</a>.</p>',
     )
     expect(html).not.toContain('<form')
+    expect(html).not.toContain('<button')
+  })
+
+  it('already answered: the heading and "Du behøver ikke gøre mere.", no form', () => {
+    const html = renderSurveyScreen({ kind: 'already' })
+    expect(html).toContain('<title>Tak, vi har allerede dine svar | Altid Mad</title>')
+    expect(html).toContain('<div class="mark" aria-hidden="true">')
+    expect(html).toContain('<h1>Tak, vi har allerede dine svar</h1>\n<p class="lead">Du behøver ikke gøre mere.</p>\n</main>')
+    expect(html).not.toContain('<form')
+    expect(html).not.toContain('<button')
   })
 
   it('the wording version names the day and the survey', () => {
-    expect(MAD_TEST_SURVEY_COPY_VERSION).toBe('2026-09-29-mad-test-survey-1')
+    expect(MAD_TEST_SURVEY_COPY_VERSION).toBe('2026-09-30-mad-test-survey-2')
   })
 })
