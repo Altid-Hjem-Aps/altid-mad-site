@@ -10,8 +10,14 @@
  * deep green header with the white Altid Mad logo, cream body, Onest, and the
  * khaki button of the mad-referral-welcome template. Onest is self-hosted from /fonts so no request reaches Google.
  *
- * Two answers. iPhone is one tap. Android is two: the button, then the Google
- * account on the phone, because Google Play only lets listed Google accounts
+ * The invitation mail is the gate: it has one button per phone, and each opens
+ * its own route here (?d=iphone or ?d=android), with as few steps as possible
+ * (Thor 30/9). The iPhone route needs no second tap: the page sends its own
+ * form as soon as a real browser shows it, so the tester lands on the
+ * thank-you screen. Opening the link still writes nothing on the server: a mail
+ * scanner that only fetches the page cannot say yes, and an automated browser
+ * (navigator.webdriver) is left at the button. Without JavaScript the button is
+ * there to press. The Android route asks for the Google account on the phone, because Google Play only lets listed Google accounts
  * install an internal test build (up to 100, no review; read on
  * support.google.com/googleplay/android-developer/answer/9845334, 29/9).
  */
@@ -20,7 +26,7 @@
  * Stored on every yes row. Bump it whenever the form screen's wording changes,
  * so each row resolves to the exact text the person said yes to.
  */
-export const MAD_TEST_COPY_VERSION = '2026-09-29-mad-test-3'
+export const MAD_TEST_COPY_VERSION = '2026-09-30-mad-test-4'
 
 /** The two altidmad.dk signup forms. Hjem-form signups are not in the test. */
 export const MAD_TEST_SOURCES: readonly string[] = ['altid-mad', 'altid-mad-exit']
@@ -84,7 +90,10 @@ export function escapeHtml(value: string): string {
 }
 
 export type MadTestScreen =
+  // No phone chosen in the link (an old or hand-typed link): both answers.
   | { kind: 'form'; firstName: string | null; token: string }
+  // The iPhone route from the mail: a form that sends itself (or one button).
+  | { kind: 'confirm'; firstName: string | null; token: string }
   // Step two for Android: which Google account is on the phone. `value` is what
   // the field shows (the signup email first, then whatever was typed); `retry`
   // is true when the last submission was not an address.
@@ -125,18 +134,33 @@ function greeting(firstName: string | null): string {
 }
 
 const ANSWER_LABEL: Record<MadTestDevice, string> = {
-  iphone: 'Ja, jeg har en iPhone',
-  android: 'Ja, jeg har Android',
+  iphone: 'Ja, jeg vil teste på iPhone',
+  android: 'Ja, jeg vil teste på Android',
 }
-const GOOGLE_LABEL = 'Send'
 
 // The pressed button says "Et øjeblik" and a second tap sends nothing. The
 // buttons are NOT disabled: a disabled submitter drops its device=… value from
 // the request. pageshow puts the labels back when the browser restores this page
 // from its back/forward cache, so a person who comes back can answer again.
 const ON_SUBMIT = `if(this.dataset.sent){return false}this.dataset.sent='1';if(event.submitter){event.submitter.textContent='Et øjeblik'}`
-const RESET_BUTTONS = `var f=document.querySelector('form');if(f){delete f.dataset.sent;f.querySelector('[value=iphone]').textContent='${ANSWER_LABEL.iphone}';f.querySelector('[value=android]').textContent='${ANSWER_LABEL.android}'}`
-const RESET_GOOGLE = `var f=document.querySelector('form');if(f){delete f.dataset.sent;f.querySelector('button').textContent='${GOOGLE_LABEL}'}`
+// Every button carries its own label in data-l, so one script serves all forms.
+const RESET_BUTTONS = `var f=document.querySelector('form');if(f){delete f.dataset.sent;f.querySelectorAll('button').forEach(function(b){b.textContent=b.dataset.l})}`
+
+// The iPhone route: send the form once when the page is first shown. A page
+// restored from the back/forward cache (event.persisted) only gets its button
+// back, so going back never answers twice.
+const AUTO_SEND = `var f=document.querySelector('form');if(f){if(event.persisted){delete f.dataset.sent;f.querySelectorAll('button').forEach(function(b){b.textContent=b.dataset.l})}else if(!navigator.webdriver){if(f.requestSubmit){f.requestSubmit(f.querySelector('button'))}}}`
+
+function answerButton(device: MadTestDevice, cls: 'primary' | 'secondary'): string {
+  const label = ANSWER_LABEL[device]
+  return `<button type="submit" name="device" value="${device}" class="${cls}" data-l="${label}">${label}</button>`
+}
+
+// The other route, for a person who pressed the wrong button in the mail.
+// A relative link: opening it writes nothing.
+function otherPhone(token: string, device: MadTestDevice, text: string): string {
+  return `<p class="small"><a href="${actionFor(token)}&amp;d=${device}">${text}</a></p>`
+}
 
 function answered(title: string, device: MadTestDevice): { title: string; body: string } {
   return {
@@ -163,24 +187,39 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
 <p class="lead">Vi åbner for 300 testere. <strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.</p>
 <p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail: først til iPhone, derefter til Android, så langt pladserne rækker.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
-  <button type="submit" name="device" value="iphone" class="primary">${ANSWER_LABEL.iphone}</button>
-  <button type="submit" name="device" value="android" class="secondary">${ANSWER_LABEL.android}</button>
+  ${answerButton('iphone', 'primary')}
+  ${answerButton('android', 'secondary')}
 </form>
+<p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
+      }
+    case 'confirm':
+      return {
+        title: 'Test Altid Mad på iPhone',
+        onPageShow: AUTO_SEND,
+        body: `<p class="hello">${greeting(screen.firstName)},</p>
+<h1>Vil du teste Altid&nbsp;Mad på din iPhone?</h1>
+<p class="lead">Testen foregår gennem Apples gratis app TestFlight.</p>
+<p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart Apple har godkendt testversionen.</p>
+<form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
+  ${answerButton('iphone', 'primary')}
+</form>
+${otherPhone(screen.token, 'android', 'Jeg har Android')}
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'google':
       return {
         title: 'Din Google-konto',
-        onPageShow: RESET_GOOGLE,
-        body: `<h1>Hvilken Google-konto bruger du på din telefon?</h1>
+        onPageShow: RESET_BUTTONS,
+        body: `<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>
 <p class="lead">Google&nbsp;Play giver kun adgang til testversionen for den Google-konto, der er logget ind på telefonen. Ofte er det en Gmail-adresse.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
   <input type="hidden" name="device" value="android"/>
   <label for="ga">Google-konto</label>
   <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="navn@gmail.com" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err" autofocus' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>` : ''}
-  <button type="submit" class="primary">${GOOGLE_LABEL}</button>
+  <button type="submit" class="primary" data-l="${ANSWER_LABEL.android}">${ANSWER_LABEL.android}</button>
 </form>
 <p class="note">Vi bruger den kun til at give dig adgang til testen i Google&nbsp;Play. Dit login til appen bliver din <span class="nw">e-mailadresse</span> fra ventelisten.</p>
+${otherPhone(screen.token, 'iphone', 'Jeg har en iPhone')}
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'thanks':

@@ -11,8 +11,10 @@ import {
 } from '@/lib/mad-test'
 
 // Mad-testen yes-page (ALT-345). The invitation mail links here with
-// ?t=<unsub_token>. GET only SHOWS the two answer buttons and writes nothing, so
-// a mail scanner opening the link cannot answer for anyone. POST (a button,
+// ?t=<unsub_token>&d=iphone or &d=android, one button per phone. GET only SHOWS
+// that phone's route (iPhone: one confirming button; Android: the Google-account
+// step; no d: both answers) and writes nothing, so a mail scanner opening the
+// link cannot answer for anyone. POST (a button,
 // device=iphone|android) writes. Android takes a second POST with the Google
 // account on the phone; the first Android POST writes nothing and shows that
 // step.
@@ -58,6 +60,14 @@ export async function GET(req: NextRequest) {
     if (!found) return invalid()
     const earlier = await getMadTestOptin(found.signup.publicId)
     if (earlier) return respond({ kind: 'already', device: earlier.device }, 200)
+    const phone = req.nextUrl.searchParams.get('d')
+    if (phone === 'iphone') {
+      return respond({ kind: 'confirm', firstName: found.signup.firstName, token: found.token }, 200)
+    }
+    if (phone === 'android') {
+      const value = googleAccountPrefill(found.signup.email)
+      return respond({ kind: 'google', token: found.token, value, retry: false }, 200)
+    }
     return respond({ kind: 'form', firstName: found.signup.firstName, token: found.token }, 200)
   } catch (e) {
     console.error('mad-testen GET failed', e)

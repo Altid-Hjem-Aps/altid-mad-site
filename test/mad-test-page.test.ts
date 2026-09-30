@@ -14,6 +14,7 @@ import {
 
 const SCREENS: MadTestScreen[] = [
   { kind: 'form', firstName: 'Anna', token: 'tok' },
+  { kind: 'confirm', firstName: 'Anna', token: 'tok' },
   { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false },
   { kind: 'google', token: 'tok', value: 'anna', retry: true },
   { kind: 'thanks', device: 'iphone' },
@@ -124,7 +125,7 @@ describe('renderMadTestScreen', () => {
 
   it('the Google-account step: one field prefilled, a hidden android answer, one button, the privacy link', () => {
     const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false })
-    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din telefon?</h1>')
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html.match(/<button/g)).toHaveLength(1)
     expect(html).toContain('<input type="hidden" name="device" value="android"/>')
@@ -143,10 +144,10 @@ describe('renderMadTestScreen', () => {
 
   it('the form offers exactly the two answers in one POST form, iPhone first', () => {
     const html = renderMadTestScreen(SCREENS[0])
-    const buttons = [...html.matchAll(/<button type="submit" name="device" value="(\w+)" class="(\w+)">([^<]+)<\/button>/g)]
+    const buttons = [...html.matchAll(/<button type="submit" name="device" value="(\w+)" class="(\w+)" data-l="[^"]+">([^<]+)<\/button>/g)]
     expect(buttons.map((m) => [m[1], m[2], m[3]])).toEqual([
-      ['iphone', 'primary', 'Ja, jeg har en iPhone'],
-      ['android', 'secondary', 'Ja, jeg har Android'],
+      ['iphone', 'primary', 'Ja, jeg vil teste på iPhone'],
+      ['android', 'secondary', 'Ja, jeg vil teste på Android'],
     ])
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html).toContain('<strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.')
@@ -177,7 +178,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the wording version names today and the test', () => {
-    expect(MAD_TEST_COPY_VERSION).toBe('2026-09-29-mad-test-3')
+    expect(MAD_TEST_COPY_VERSION).toBe('2026-09-30-mad-test-4')
   })
 
   it('the self-hosted font file the pages point at exists', () => {

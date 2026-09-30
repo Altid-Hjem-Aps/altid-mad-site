@@ -118,6 +118,12 @@ function url(token?: string) {
 }
 
 const get = (token?: string) => GET(new NextRequest(url(token)))
+// The links in the invitation mail: one per phone.
+function getPhone(token: string, phone: string) {
+  const u = url(token)
+  u.searchParams.set('d', phone)
+  return GET(new NextRequest(u))
+}
 // What the form sends: the pressed button's name=value, urlencoded, plus the
 // Google-account field on the Android step.
 function post(token?: string, device: string | null = 'iphone', extra: Record<string, string> = {}) {
@@ -207,8 +213,9 @@ describe('GET /api/mad-testen', () => {
 
     expect(res.status).toBe(200)
     expect(html).toContain('Hej Anna,')
-    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary">Ja, jeg har en iPhone</button>')
-    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary">Ja, jeg har Android</button>')
+    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary" data-l="Ja, jeg vil teste på iPhone">Ja, jeg vil teste på iPhone</button>')
+    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary" data-l="Ja, jeg vil teste på Android">Ja, jeg vil teste på Android</button>')
+    expect(html).not.toContain('requestSubmit')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('href="/privatlivspolitik"')
     expect(html.match(/<button/g)).toHaveLength(2)
@@ -226,11 +233,67 @@ describe('GET /api/mad-testen', () => {
     )
   })
 
+  it('the iPhone link from the mail: one button that sends itself, writes nothing on GET', async () => {
+    db.signups.set(TOKEN, eligible())
+    const res = await getPhone(TOKEN, 'iphone')
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(db.upserts).toHaveLength(0)
+    expect(html).toContain('<h1>Vil du teste Altid&nbsp;Mad på din iPhone?</h1>')
+    expect(html.match(/<button/g)).toHaveLength(1)
+    expect(html).toContain('name="device" value="iphone"')
+    // Sends itself in a real browser; never for an automated one, never on a restored page.
+    expect(html).toContain('onpageshow="')
+    expect(html).toContain('if(event.persisted){')
+    expect(html).toContain('else if(!navigator.webdriver){if(f.requestSubmit){f.requestSubmit(')
+    // Inline handler in a double-quoted attribute: no double quote, no bare ampersand.
+    const handler = html.match(/onpageshow="([^"]*)"/)?.[1] ?? ''
+    expect(handler).not.toContain('&')
+    expect(html).toContain(`href="/api/mad-testen?t=${TOKEN}&amp;d=android">Jeg har Android</a>`)
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+  })
+
+  it('the Android link from the mail: straight to the Google-account step, writes nothing on GET', async () => {
+    db.signups.set(TOKEN, eligible({ email: 'anna@gmail.com' }))
+    const res = await getPhone(TOKEN, 'android')
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(db.upserts).toHaveLength(0)
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
+    expect(html).toContain('name="google_account" value="anna@gmail.com"')
+    expect(html).toContain('>Ja, jeg vil teste på Android</button>')
+    expect(html).not.toContain('requestSubmit')
+    expect(html).toContain(`href="/api/mad-testen?t=${TOKEN}&amp;d=iphone">Jeg har en iPhone</a>`)
+  })
+
+  it.each(['iphone', 'android'])('the %s link on an answered invitation: the already screen', async (phone) => {
+    db.signups.set(TOKEN, eligible())
+    db.optins.set(PUBLIC_ID, answered('iphone'))
+    const html = await (await getPhone(TOKEN, phone)).text()
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(html).not.toContain('<form')
+  })
+
+  it.each(['windows', 'IPHONE', ''])('an unknown phone in the link (%s): both answers', async (phone) => {
+    db.signups.set(TOKEN, eligible())
+    const html = await (await getPhone(TOKEN, phone)).text()
+    expect(html.match(/<button/g)).toHaveLength(2)
+  })
+
+  it.each(['iphone', 'android'])('the %s link with a refused token: the identical invalid-link screen', async (phone) => {
+    const ref = await referenceInvalid()
+    const res = await getPhone('00000000-0000-4000-8000-000000000000', phone)
+    expect(res.status).toBe(400)
+    expect(await res.text()).toBe(ref.body)
+  })
+
   it('also admits the exit-intent form on altidmad.dk', async () => {
     db.signups.set(TOKEN, eligible({ signup_source: 'altid-mad-exit' }))
     const res = await get(TOKEN)
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('Ja, jeg har en iPhone</button>')
+    expect(await res.text()).toContain('Ja, jeg vil teste på iPhone</button>')
   })
 
   it('greets without a name when the signup has none', async () => {
@@ -378,7 +441,7 @@ describe('POST /api/mad-testen', () => {
 
     expect(res.status).toBe(200)
     expect(db.upserts).toHaveLength(0)
-    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din telefon?</h1>')
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('<input type="hidden" name="device" value="android"/>')
     expect(html).toContain('name="google_account" value=""')
