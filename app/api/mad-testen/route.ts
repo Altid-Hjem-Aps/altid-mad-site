@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     const stored = await getMadTestOptin(found.signup.publicId)
     if (!stored) throw new Error('mad_test_optin row missing right after insert')
     if (stored.device !== device) return respond({ kind: 'already', device: stored.device }, 200)
-    return respond({ kind: 'thanks', device }, 200)
+    return respond({ kind: 'thanks', device, firstName: found.signup.firstName }, 200)
   } catch (e) {
     console.error('mad-testen POST failed', e)
     return failed()

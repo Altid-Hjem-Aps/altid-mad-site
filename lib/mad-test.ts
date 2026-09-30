@@ -26,7 +26,7 @@
  * Stored on every yes row. Bump it whenever the form screen's wording changes,
  * so each row resolves to the exact text the person said yes to.
  */
-export const MAD_TEST_COPY_VERSION = '2026-09-30-mad-test-4'
+export const MAD_TEST_COPY_VERSION = '2026-09-30-mad-test-5'
 
 /** The two altidmad.dk signup forms. Hjem-form signups are not in the test. */
 export const MAD_TEST_SOURCES: readonly string[] = ['altid-mad', 'altid-mad-exit']
@@ -98,7 +98,7 @@ export type MadTestScreen =
   // the field shows (the signup email first, then whatever was typed); `retry`
   // is true when the last submission was not an address.
   | { kind: 'google'; token: string; value: string; retry: boolean }
-  | { kind: 'thanks'; device: MadTestDevice }
+  | { kind: 'thanks'; device: MadTestDevice; firstName: string | null }
   | { kind: 'already'; device: MadTestDevice }
   | { kind: 'invalid' }
   | { kind: 'error' }
@@ -118,13 +118,11 @@ const SUPPORT_MAIL = 'hej@altidmad.dk'
 // What happens next, per answer. The thank-you and already-answered screens
 // share it: the next step is the same whichever way the person got here.
 const NEXT_STEP: Record<MadTestDevice, string> = {
-  iphone: 'Du får en mail med dit login, så snart Apple har godkendt testversionen.',
-  // Google Play's internal test takes at most 100 testers, so an Android yes is
-  // promised a mail when there is a place, not a place.
-  android: 'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når der er en plads til dig i Android-testen.',
+  iphone: 'Du får en mail med dit login, så snart testversionen er klar i TestFlight.',
+  android: 'Du får en mail med dit login, så snart testversionen er klar i Google&nbsp;Play.',
 }
 
-const QUESTIONS = `Har du spørgsmål, så skriv til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
+const QUESTIONS = `Har du spørgsmål, kan du skrive til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
 
 const CHECK = `<div class="mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="24" fill="${COLOR.khaki}"/><path d="M15 24.5l6 6 12-13" fill="none" stroke="${COLOR.forestDeep}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
 
@@ -134,9 +132,11 @@ function greeting(firstName: string | null): string {
 }
 
 const ANSWER_LABEL: Record<MadTestDevice, string> = {
-  iphone: 'Ja, jeg vil teste på iPhone',
-  android: 'Ja, jeg vil teste på Android',
+  iphone: 'Jeg vil teste på iPhone',
+  android: 'Jeg vil teste på Android',
 }
+// The Google-account step's button: the phone is already chosen in the mail.
+const GOOGLE_LABEL = 'Fortsæt med Android'
 
 // The pressed button says "Et øjeblik" and a second tap sends nothing. The
 // buttons are NOT disabled: a disabled submitter drops its device=… value from
@@ -151,6 +151,11 @@ const RESET_BUTTONS = `var f=document.querySelector('form');if(f){delete f.datas
 // back, so going back never answers twice.
 const AUTO_SEND = `var f=document.querySelector('form');if(f){if(event.persisted){delete f.dataset.sent;f.querySelectorAll('button').forEach(function(b){b.textContent=b.dataset.l})}else if(!navigator.webdriver){if(f.requestSubmit){f.requestSubmit(f.querySelector('button'))}}}`
 
+// The Google-account step: "Fortsæt med Android" is switched off until the field
+// holds an address (same pattern as normalizeGoogleAccount). Set by script only,
+// so without JavaScript the button works and the server does the check.
+const GA_CHECK = `var i=document.getElementById('ga'),b=document.querySelector('form button');if(i){if(b){b.disabled=!/^[a-z0-9._%+-]+@[a-z0-9-]+(\\.[a-z0-9-]+)*\\.[a-z]{2,}$/.test(i.value.trim().toLowerCase())}}`
+
 function answerButton(device: MadTestDevice, cls: 'primary' | 'secondary'): string {
   const label = ANSWER_LABEL[device]
   return `<button type="submit" name="device" value="${device}" class="${cls}" data-l="${label}">${label}</button>`
@@ -160,6 +165,11 @@ function answerButton(device: MadTestDevice, cls: 'primary' | 'secondary'): stri
 // A relative link: opening it writes nothing.
 function otherPhone(token: string, device: MadTestDevice, text: string): string {
   return `<p class="small"><a href="${actionFor(token)}&amp;d=${device}">${text}</a></p>`
+}
+
+function thanksTitle(firstName: string | null): string {
+  const name = (firstName ?? '').trim()
+  return name ? `Tak ${escapeHtml(name)}, du er med` : 'Tak, du er med'
 }
 
 function answered(title: string, device: MadTestDevice): { title: string; body: string } {
@@ -184,8 +194,8 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
         onPageShow: RESET_BUTTONS,
         body: `<p class="hello">${greeting(screen.firstName)},</p>
 <h1>Vil du teste Altid&nbsp;Mad før alle andre?</h1>
-<p class="lead">Vi åbner for 300 testere. <strong>Testen starter på iPhone</strong> gennem Apples gratis app TestFlight. Android følger efter.</p>
-<p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail: først til iPhone, derefter til Android, så langt pladserne rækker.</p>
+<p class="lead">Vælg, om du vil teste på iPhone eller Android.</p>
+<p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit personlige testlogin på mail.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
   ${answerButton('iphone', 'primary')}
   ${answerButton('android', 'secondary')}
@@ -199,7 +209,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
         body: `<p class="hello">${greeting(screen.firstName)},</p>
 <h1>Vil du teste Altid&nbsp;Mad på din iPhone?</h1>
 <p class="lead">Testen foregår gennem Apples gratis app TestFlight.</p>
-<p class="note">Siger du ja, opretter vi en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart Apple har godkendt testversionen.</p>
+<p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart testversionen er klar i TestFlight.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
   ${answerButton('iphone', 'primary')}
 </form>
@@ -209,21 +219,23 @@ ${otherPhone(screen.token, 'android', 'Jeg har Android')}
     case 'google':
       return {
         title: 'Din Google-konto',
-        onPageShow: RESET_BUTTONS,
+        onPageShow: `${RESET_BUTTONS};${GA_CHECK}`,
         body: `<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>
-<p class="lead">Google&nbsp;Play giver kun adgang til testversionen for den Google-konto, der er logget ind på telefonen. Ofte er det en Gmail-adresse.</p>
-<form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
+<p class="lead">For at give dig adgang til testen skal vi bruge den Google-konto, du er logget ind med i Google&nbsp;Play på din Android-telefon.</p>
+<p class="lead">Det er ofte en Gmail-adresse.</p>
+<form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}" oninput="${GA_CHECK}">
   <input type="hidden" name="device" value="android"/>
   <label for="ga">Google-konto</label>
   <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="navn@gmail.com" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err" autofocus' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>` : ''}
-  <button type="submit" class="primary" data-l="${ANSWER_LABEL.android}">${ANSWER_LABEL.android}</button>
+  <button type="submit" class="primary" data-l="${GOOGLE_LABEL}">${GOOGLE_LABEL}</button>
 </form>
-<p class="note">Vi bruger den kun til at give dig adgang til testen i Google&nbsp;Play. Dit login til appen bliver din <span class="nw">e-mailadresse</span> fra ventelisten.</p>
+<p class="note pair">Vi bruger kun din Google-konto til at give dig adgang til testen i Google&nbsp;Play.</p>
+<p class="note">Dit login til Altid&nbsp;Mad er stadig den <span class="nw">e-mailadresse</span>, du skrev dig på ventelisten med.</p>
 ${otherPhone(screen.token, 'iphone', 'Jeg har en iPhone')}
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'thanks':
-      return answered(screen.device === 'iphone' ? 'Tak, du er med' : 'Tak for dit ja', screen.device)
+      return answered(thanksTitle(screen.firstName), screen.device)
     case 'already':
       return answered('Vi har allerede dit ja', screen.device)
     case 'invalid':
@@ -259,6 +271,7 @@ p{margin:0}
 .lead{margin-bottom:16px;text-wrap:pretty}
 .lead strong{font-weight:500}
 .note{font-size:15px;line-height:1.55;color:${COLOR.muted};margin-bottom:28px;text-wrap:pretty}
+.note.pair{margin-bottom:10px}
 .small{font-size:15px}
 .small a{display:inline-block;padding:10px 0}
 .nw{white-space:nowrap}
@@ -276,6 +289,7 @@ button{display:block;width:100%;min-height:56px;padding:14px 24px;border-radius:
 .secondary{border:1.5px solid ${COLOR.forestDeep};background:transparent}
 .secondary:hover{background:rgba(22,50,35,.06)}
 button:active{transform:scale(.98)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 button:focus-visible{border-radius:999px}
 .mark{margin-bottom:24px}
 .mark svg{display:block}

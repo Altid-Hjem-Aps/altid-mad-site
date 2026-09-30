@@ -140,8 +140,8 @@ function post(token?: string, device: string | null = 'iphone', extra: Record<st
 const postAndroid = (token: string, account = 'anna.hansen@gmail.com') =>
   post(token, 'android', { google_account: account })
 
-const ANDROID_NEXT =
-  'Testen starter på iPhone, og Android følger efter. Du får en mail med dit login og et link til Google&nbsp;Play, når der er en plads til dig i Android-testen.'
+const ANDROID_NEXT = 'Du får en mail med dit login, så snart testversionen er klar i Google&nbsp;Play.'
+const IPHONE_NEXT = 'Du får en mail med dit login, så snart testversionen er klar i TestFlight.'
 
 function answered(device: string, googleAccount: string | null = device === 'android' ? 'anna.hansen@gmail.com' : null): OptinRow {
   return {
@@ -213,8 +213,8 @@ describe('GET /api/mad-testen', () => {
 
     expect(res.status).toBe(200)
     expect(html).toContain('Hej Anna,')
-    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary" data-l="Ja, jeg vil teste på iPhone">Ja, jeg vil teste på iPhone</button>')
-    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary" data-l="Ja, jeg vil teste på Android">Ja, jeg vil teste på Android</button>')
+    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary" data-l="Jeg vil teste på iPhone">Jeg vil teste på iPhone</button>')
+    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary" data-l="Jeg vil teste på Android">Jeg vil teste på Android</button>')
     expect(html).not.toContain('requestSubmit')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('href="/privatlivspolitik"')
@@ -263,7 +263,7 @@ describe('GET /api/mad-testen', () => {
     expect(db.upserts).toHaveLength(0)
     expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
     expect(html).toContain('name="google_account" value="anna@gmail.com"')
-    expect(html).toContain('>Ja, jeg vil teste på Android</button>')
+    expect(html).toContain('>Fortsæt med Android</button>')
     expect(html).not.toContain('requestSubmit')
     expect(html).toContain(`href="/api/mad-testen?t=${TOKEN}&amp;d=iphone">Jeg har en iPhone</a>`)
   })
@@ -293,7 +293,7 @@ describe('GET /api/mad-testen', () => {
     db.signups.set(TOKEN, eligible({ signup_source: 'altid-mad-exit' }))
     const res = await get(TOKEN)
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('Ja, jeg vil teste på iPhone</button>')
+    expect(await res.text()).toContain('Jeg vil teste på iPhone</button>')
   })
 
   it('greets without a name when the signup has none', async () => {
@@ -420,8 +420,8 @@ describe('POST /api/mad-testen', () => {
         opts: { onConflict: 'public_id', ignoreDuplicates: true },
       },
     ])
-    expect(html).toContain('<h1>Tak, du er med</h1>')
-    expect(html).toContain('Du får en mail med dit login, så snart Apple har godkendt testversionen.')
+    expect(html).toContain('<h1>Tak Anna, du er med</h1>')
+    expect(html).toContain(IPHONE_NEXT)
     expect(html).toContain('mailto:hej@altidmad.dk')
     expect(res.headers.get('Cache-Control')).toBe('private, no-store')
   })
@@ -470,7 +470,7 @@ describe('POST /api/mad-testen', () => {
         google_account: 'anna.hansen@gmail.com',
       },
     ])
-    expect(html).toContain('<h1>Tak for dit ja</h1>')
+    expect(html).toContain('<h1>Tak Anna, du er med</h1>')
     expect(html).toContain(ANDROID_NEXT)
     expect(html).toContain('mailto:hej@altidmad.dk')
   })
@@ -512,7 +512,7 @@ describe('POST /api/mad-testen', () => {
   })
 
   it.each([
-    ['iphone', 'Du får en mail med dit login, så snart Apple har godkendt testversionen.'],
+    ['iphone', IPHONE_NEXT],
     ['android', ANDROID_NEXT],
   ])('a repeat answer after %s keeps the first row and shows its already screen', async (first, next) => {
     db.signups.set(TOKEN, eligible())
