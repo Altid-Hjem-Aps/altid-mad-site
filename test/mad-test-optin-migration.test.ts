@@ -28,14 +28,14 @@ describe('20260925_mad_test_optin migration', () => {
       /device\s+text\s+not null\s+constraint mad_test_optin_device_check check \(device in \('iphone', 'android'\)\),/,
     )
     expect(statements).toMatch(
-      /google_account\s+text,\s+constraint mad_test_optin_google_account_check\s+check \(\(device = 'iphone' and google_account is null\)\s+or \(device = 'android' and google_account ~ '\^\[a-z0-9\._%\+-\]\+@\[a-z0-9-\]\+\(\\\.\[a-z0-9-\]\+\)\*\\\.\[a-z\]\{2,\}\$'\)\)\s*\);/,
+      /google_account\s+text,(?:\s+--[^\n]*)*\s+constraint mad_test_optin_google_account_check\s+check \(\(device = 'iphone' and google_account is null\)\s+or \(device = 'android' and google_account is not null\s+and google_account ~ '\^\[a-z0-9\._%\+-\]\+@\[a-z0-9-\]\+\(\\\.\[a-z0-9-\]\+\)\*\\\.\[a-z\]\{2,\}\$'\)\)\s*\);/,
     )
   })
 
   it('brings a table from the version without google_account up to shape on re-run', () => {
     const add = statements.indexOf('alter table public.mad_test_optin add column if not exists google_account text;')
     const guard = statements.search(
-      /if not exists \(\s*select 1 from pg_constraint\s+where conname = 'mad_test_optin_google_account_check'\s+and conrelid = 'public\.mad_test_optin'::regclass\s*\) then\s+alter table public\.mad_test_optin\s+add constraint mad_test_optin_google_account_check\s+check \(\(device = 'iphone' and google_account is null\)\s+or \(device = 'android' and google_account ~ '[^']+'\)\);\s+end if;/,
+      /alter table public\.mad_test_optin drop constraint if exists mad_test_optin_google_account_check;\s+alter table public\.mad_test_optin\s+add constraint mad_test_optin_google_account_check\s+check \(\(device = 'iphone' and google_account is null\)\s+or \(device = 'android' and google_account is not null\s+and google_account ~ '[^']+'\)\);/,
     )
     expect(add).toBeGreaterThan(statements.indexOf('create table if not exists public.mad_test_optin'))
     expect(guard).toBeGreaterThan(add)

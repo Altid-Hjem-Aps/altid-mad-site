@@ -30,9 +30,14 @@ create table if not exists public.mad_test_optin (
   device          text        not null
                   constraint mad_test_optin_device_check check (device in ('iphone', 'android')),
   google_account  text,
+  -- `is not null` spelled out: a NULL account makes the regex test NULL, and a
+  -- CHECK that comes out NULL passes, so without it an Android row typed into
+  -- the SQL editor without an account would get in and make the page's
+  -- read-back throw (a 500 for that person).
   constraint mad_test_optin_google_account_check
     check ((device = 'iphone' and google_account is null)
-        or (device = 'android' and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'))
+        or (device = 'android' and google_account is not null
+            and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'))
 );
 
 -- A table created by an earlier version of this file lacks device or
@@ -51,17 +56,17 @@ begin
     alter table public.mad_test_optin
       add constraint mad_test_optin_device_check check (device in ('iphone', 'android'));
   end if;
-  if not exists (
-    select 1 from pg_constraint
-     where conname = 'mad_test_optin_google_account_check'
-       and conrelid = 'public.mad_test_optin'::regclass
-  ) then
-    alter table public.mad_test_optin
-      add constraint mad_test_optin_google_account_check
-      check ((device = 'iphone' and google_account is null)
-          or (device = 'android' and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'));
-  end if;
 end $$;
+-- Dropped and re-added, not guarded by "if not exists": the first version of
+-- this check (run in production 1/10) lacked the `is not null`, and a guard
+-- would keep that version for good. No existing row can fail the new check:
+-- the application never writes an Android row without an account.
+alter table public.mad_test_optin drop constraint if exists mad_test_optin_google_account_check;
+alter table public.mad_test_optin
+  add constraint mad_test_optin_google_account_check
+  check ((device = 'iphone' and google_account is null)
+      or (device = 'android' and google_account is not null
+          and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'));
 
 comment on table public.mad_test_optin is
   'Mad-testen answers (ALT-345). Retention: only needed to pick testers, list Android testers in Google Play and send their login mail. Delete all rows when the Mad-testen ends.';
