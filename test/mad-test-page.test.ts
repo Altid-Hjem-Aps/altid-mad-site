@@ -170,7 +170,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('never splits the brand name in the form heading', () => {
-    expect(renderMadTestScreen(SCREENS[0])).toContain('<h1>Vil du teste Altid&nbsp;Mad før alle andre?</h1>')
+    expect(renderMadTestScreen(SCREENS[0])).toContain('<h1>Hej Anna, vil du teste Altid&nbsp;Mad før alle andre?</h1>')
   })
 
   it('escapes the token in the form action', () => {
@@ -182,7 +182,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the wording version names today and the test', () => {
-    expect(MAD_TEST_COPY_VERSION).toBe('2026-09-30-mad-test-5')
+    expect(MAD_TEST_COPY_VERSION).toBe('2026-10-01-mad-test-6')
   })
 
   it('the self-hosted font file the pages point at exists', () => {

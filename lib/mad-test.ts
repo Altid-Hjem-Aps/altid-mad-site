@@ -26,7 +26,7 @@
  * Stored on every yes row. Bump it whenever the form screen's wording changes,
  * so each row resolves to the exact text the person said yes to.
  */
-export const MAD_TEST_COPY_VERSION = '2026-09-30-mad-test-5'
+export const MAD_TEST_COPY_VERSION = '2026-10-01-mad-test-6'
 
 /** The two altidmad.dk signup forms. Hjem-form signups are not in the test. */
 export const MAD_TEST_SOURCES: readonly string[] = ['altid-mad', 'altid-mad-exit']
@@ -200,8 +200,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
       return {
         title: 'Vil du teste Altid Mad?',
         onPageShow: RESET_BUTTONS,
-        body: `<p class="hello">${greeting(screen.firstName)},</p>
-<h1>Vil du teste Altid&nbsp;Mad før alle andre?</h1>
+        body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad før alle andre?</h1>
 <p class="lead">Vælg, om du vil teste på iPhone eller Android.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit personlige testlogin på mail.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
@@ -214,8 +213,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
       return {
         title: 'Test Altid Mad på iPhone',
         onPageShow: AUTO_SEND,
-        body: `<p class="hello">${greeting(screen.firstName)},</p>
-<h1>Vil du teste Altid&nbsp;Mad på din iPhone?</h1>
+        body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad på din iPhone?</h1>
 <p class="lead">Testen foregår gennem Apples gratis app TestFlight.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart testversionen er klar i TestFlight.</p>
 <form method="POST" action="${actionFor(screen.token)}" onsubmit="${ON_SUBMIT}">
@@ -273,7 +271,7 @@ body{margin:0;min-height:100vh;min-height:100dvh;display:flex;flex-direction:col
 .bar-in{padding-top:20px;padding-bottom:20px}
 .bar img{display:block;width:88px;height:47px}
 main{flex:1;padding-top:40px;padding-bottom:48px}
-h1{font-size:clamp(1.875rem,7.4vw,2.375rem);font-weight:400;line-height:1.18;letter-spacing:-0.02em;margin:0 0 20px;text-wrap:balance}
+h1{font-size:clamp(1.875rem,7.4vw,2.375rem);font-weight:400;line-height:1.18;letter-spacing:-0.02em;margin:0 0 20px;text-wrap:balance;overflow-wrap:break-word}
 p{margin:0}
 .hello{color:${COLOR.muted};margin-bottom:8px;overflow-wrap:anywhere}
 .lead{margin-bottom:16px;text-wrap:pretty}

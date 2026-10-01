@@ -240,7 +240,7 @@ describe('GET /api/mad-testen', () => {
 
     expect(res.status).toBe(200)
     expect(db.upserts).toHaveLength(0)
-    expect(html).toContain('<h1>Vil du teste Altid&nbsp;Mad på din iPhone?</h1>')
+    expect(html).toContain('<h1>Hej Anna, vil du teste Altid&nbsp;Mad på din iPhone?</h1>')
     expect(html.match(/<button/g)).toHaveLength(1)
     expect(html).toContain('name="device" value="iphone"')
     // Sends itself in a real browser; never for an automated one, never on a restored page.
@@ -302,7 +302,7 @@ describe('GET /api/mad-testen', () => {
   it('greets without a name when the signup has none', async () => {
     db.signups.set(TOKEN, eligible({ first_name: null }))
     const html = await (await get(TOKEN)).text()
-    expect(html).toContain('<p class="hello">Hej,</p>')
+    expect(html).toContain('<h1>Hej, vil du teste Altid&nbsp;Mad før alle andre?</h1>')
   })
 
   it('never cached, never indexed, never leaks the link in a Referer', async () => {
