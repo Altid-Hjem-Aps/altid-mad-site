@@ -58,12 +58,17 @@ describe('the answer checks', () => {
     expect(SURVEY_PANEL).toEqual(['ja', 'nej'])
   })
 
-  it('a stored text answer: null, or trimmed, non-empty and at most 2000 characters', () => {
+  it('a text answer the page may store: null, or non-empty, at most 2000 characters, trimmed as the table trims', () => {
     expect(SURVEY_TEXT_MAX).toBe(2000)
     expect(isSurveyText(null)).toBe(true)
     expect(isSurveyText('a\nb')).toBe(true)
     expect(isSurveyText('🥕'.repeat(2000))).toBe(true)
-    for (const v of ['', ' a', 'a ', 'a\r\nb', 'a\u0000b', 'x'.repeat(2001), undefined, 1]) {
+    // The table's btrim(x, E' \t\n\r') set only: other invisible characters at
+    // either end are part of the answer, on the page as in the table.
+    for (const v of ['\u00a0a', 'a\u00a0', '\ufeffa', '\u000ba', 'a\u200b', '\u00a0']) {
+      expect(isSurveyText(v)).toBe(true)
+    }
+    for (const v of ['', ' a', 'a ', '\ta', 'a\n', 'a\r\nb', 'a\rb', 'a\u0000b', 'x'.repeat(2001), undefined, 1]) {
       expect(isSurveyText(v)).toBe(false)
     }
   })
@@ -154,6 +159,49 @@ describe('parseSurvey', () => {
     if (!r.ok) expect(r.errors).toEqual({ planFitNote: 'too-long', missing: 'too-long', otherFeedback: 'too-long' })
   })
 
+  it('trims only spaces, tabs and line breaks: a no-break space or byte order mark at an end is kept', () => {
+    const r = parseSurvey(
+      form({
+        plan_fit: 'ja',
+        easy_to_use: 'ja',
+        panel: 'nej',
+        plan_fit_note: ' \u00a0a\u00a0 ',
+        easy_note: '\ufeffb',
+        missing: '\u000b',
+        other_feedback: '\r\n c \t',
+      }),
+    )
+    expect(r.ok && r.answers).toMatchObject({
+      planFitNote: '\u00a0a\u00a0',
+      easyNote: '\ufeffb',
+      missing: '\u000b',
+      otherFeedback: 'c',
+    })
+  })
+
+  it('a text far over the limit is too long without being split into characters, echoed up to 20000 UTF-16 units', () => {
+    const r = parseSurvey(
+      form({
+        plan_fit: 'ja',
+        easy_to_use: 'ja',
+        panel: 'ja',
+        // 8001 units: over the cheap bound (4 x 2000).
+        plan_fit_note: 'x'.repeat(8001),
+        // 4001 emoji = 8002 units, cut on units, not characters.
+        easy_note: '🥕'.repeat(4001),
+        // 30000 units: the echo stops at 20000.
+        missing: 'm'.repeat(30_000),
+      }),
+    )
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.errors).toEqual({ planFitNote: 'too-long', easyNote: 'too-long', missing: 'too-long' })
+      expect(r.values.planFitNote).toBe('x'.repeat(8001))
+      expect(r.values.easyNote).toBe('🥕'.repeat(4001))
+      expect(r.values.missing).toBe('m'.repeat(20_000))
+    }
+  })
+
   it('a file where a value belongs counts as not answered', () => {
     const f = form({ easy_to_use: 'ja', panel: 'nej' })
     f.set('plan_fit', new Blob(['ja']), 'x.txt')
@@ -197,7 +245,7 @@ describe('renderSurveyScreen', () => {
     expect(html.indexOf('<h1>')).toBeLessThan(html.indexOf('class="lead"'))
 
     const questions = [
-      ...html.matchAll(/<(?:legend|label for="[a-z_]+" class="qlabel")><span class="qn" aria-hidden="true">(\d)<\/span>([^<]+?)(?: <span class="optional">Valgfrit<\/span>)?<\/(?:legend|label)>/g),
+      ...html.matchAll(/<(?:legend|label for="[a-z_]+" class="qlabel")><span class="qn">(\d)<\/span>([^<]+?)(?: <span class="optional">Valgfrit<\/span>)?<\/(?:legend|label)>/g),
     ].map((m) => [m[1], m[2]])
     expect(questions).toEqual([
       ['1', 'Passede madplanen til jeres behov?'],
@@ -268,7 +316,7 @@ describe('renderSurveyScreen', () => {
       ['other_feedback', '4', 'Er der andet fra din oplevelse, som du synes, vi bør vide?'],
     ]) {
       expect(html).toContain(
-        `<div id="q-${id}" class="q">\n  <label for="${id}" class="qlabel"><span class="qn" aria-hidden="true">${n}</span>${q} <span class="optional">Valgfrit</span></label>\n  <textarea id="${id}" name="${id}" rows="4" maxlength="2000" placeholder="Skriv dit svar"></textarea>\n</div>`,
+        `<div id="q-${id}" class="q">\n  <label for="${id}" class="qlabel"><span class="qn">${n}</span>${q} <span class="optional">Valgfrit</span></label>\n  <textarea id="${id}" name="${id}" rows="4" maxlength="2000" placeholder="Skriv dit svar"></textarea>\n</div>`,
       )
     }
     // Every optional field says so, the required questions do not.
@@ -279,8 +327,21 @@ describe('renderSurveyScreen', () => {
   it('question 5: the explanation directly under the question, and the fieldset described by it', () => {
     const html = renderSurveyScreen(SCREENS[0])
     expect(html).toContain(
-      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn" aria-hidden="true">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.</p>\n  <div class="opts">',
+      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.</p>\n  <div class="opts">',
     )
+  })
+
+  it('question numbers are read aloud (the error summary names "Spørgsmål N")', () => {
+    const html = renderSurveyScreen(SCREENS[0])
+    expect(html.match(/<span class="qn">\d<\/span>/g)).toHaveLength(5)
+    expect(html).not.toMatch(/class="qn"[^>]*aria-hidden/)
+  })
+
+  it('a focused option shows one ring, on the card, not a second one on its radio', () => {
+    const html = renderSurveyScreen(SCREENS[0])
+    expect(html).toContain('.opt:has(input:focus-visible){outline:3px solid #163223;outline-offset:2px}\n.opt input:focus-visible{outline:0}')
+    // After the base rule that rings every focused input, so it wins on order as well as specificity.
+    expect(html.indexOf('input:focus-visible{outline:3px')).toBeLessThan(html.indexOf('.opt input:focus-visible{outline:0}'))
   })
 
   it('the options stack at every width (no row layout that could overflow 375 px)', () => {

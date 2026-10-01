@@ -1,3 +1,7 @@
+// @vitest-environment node
+// Node, as in production: under jsdom, File is jsdom's and the request's
+// multipart parser cannot build a file part, so a post with a file would be
+// refused by the parser and never reach the route's own check.
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
@@ -119,7 +123,7 @@ vi.mock('@supabase/supabase-js', () => ({
 }))
 
 import { GET, POST } from '@/app/api/mad-testen/survey/route'
-import { MAD_TEST_SURVEY_COPY_VERSION } from '@/lib/mad-test-survey'
+import { MAD_TEST_SURVEY_COPY_VERSION, SURVEY_BODY_MAX } from '@/lib/mad-test-survey'
 
 const TOKEN = '9b2f7c4e-1d3a-4e5b-8c6d-0a1b2c3d4e5f'
 const PUBLIC_ID = '242eba51-9c3f-49ab-a8f6-373a299169e8'
@@ -199,14 +203,26 @@ const FULL_ROW = {
 }
 const TEXT_FIELDS = ['plan_fit_note', 'easy_note', 'missing', 'other_feedback'] as const
 const ALL_FIELDS = ['plan_fit', 'plan_fit_note', 'easy_to_use', 'easy_note', 'missing', 'other_feedback', 'panel']
+// A POST with the content-length a browser sends (the route reads no body
+// without one). `size` overrides it; null leaves it out.
+function send(
+  token: string | undefined,
+  body: string | ArrayBuffer,
+  type: string | null,
+  size: string | null = String(typeof body === 'string' ? Buffer.byteLength(body) : body.byteLength),
+) {
+  const headers: Record<string, string> = {}
+  if (type) headers['Content-Type'] = type
+  if (size !== null) headers['Content-Length'] = size
+  return POST(new NextRequest(url(token), { method: 'POST', headers, body }))
+}
 function post(token: string | undefined, fields: Record<string, string> = FULL) {
-  return POST(
-    new NextRequest(url(token), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(fields).toString(),
-    }),
-  )
+  return send(token, new URLSearchParams(fields).toString(), 'application/x-www-form-urlencoded')
+}
+// The form as multipart/form-data, encoded the way fetch encodes a FormData body.
+async function postMultipart(token: string, form: FormData) {
+  const encoded = new Response(form)
+  return send(token, await encoded.arrayBuffer(), encoded.headers.get('Content-Type'))
 }
 
 beforeAll(() => {
@@ -362,14 +378,33 @@ describe('GET /api/mad-testen/survey', () => {
     ['an unknown easy_to_use', stored({ easy_to_use: 'Ja' })],
     ['panel as text', stored({ panel: 'ja' })],
     ['a missing panel', stored({ panel: null })],
-    ['an empty plan_fit_note (should be null)', stored({ plan_fit_note: '' })],
-    ['an untrimmed easy_note', stored({ easy_note: ' x' })],
-    ['an over-long missing', stored({ missing: 'x'.repeat(2001) })],
     ['a non-text other_feedback', stored({ other_feedback: 5 })],
+    ['an object as plan_fit_note', stored({ plan_fit_note: { a: 1 } })],
   ])('a stored survey row with %s: 500, never a guessed screen', async (_, row) => {
     tester()
     db.surveys.set(PUBLIC_ID, row)
     expect((await get(TOKEN)).status).toBe(500)
+  })
+
+  // Rows the table accepts but the page would not have written (typed into the
+  // SQL editor, imported): a stored answer is an answer, so the tester sees the
+  // already screen on every visit and every post, never a 500 for good.
+  it.each([
+    ['a leading no-break space', stored({ plan_fit_note: '\u00a0x' })],
+    ['a byte order mark', stored({ easy_note: '\ufeffx' })],
+    ['a vertical tab at the end', stored({ missing: 'x\u000b' })],
+    ['a \\r inside (a row from before the \\r check)', stored({ other_feedback: 'a\rb' })],
+    ['surrounding spaces', stored({ easy_note: ' x ' })],
+    ['an empty string', stored({ plan_fit_note: '' })],
+    ['over 2000 characters', stored({ missing: 'x'.repeat(2001) })],
+  ])('a stored row with %s in a text answer: the already screen, for GET and POST, nothing written', async (_, row) => {
+    tester()
+    db.surveys.set(PUBLIC_ID, row)
+    for (const res of [await get(TOKEN), await post(TOKEN)]) {
+      expect(res.status).toBe(200)
+      expect(await res.text()).toContain('<h1>Tak, vi har allerede dine svar</h1>')
+    }
+    expect(db.upserts).toHaveLength(0)
   })
 
   it.each([
@@ -694,13 +729,7 @@ describe('POST /api/mad-testen/survey', () => {
     tester()
     const rest = new URLSearchParams(FULL)
     rest.delete(name.split(' ')[0])
-    const res = await POST(
-      new NextRequest(url(TOKEN), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `${rest.toString()}&${dup}`,
-      }),
-    )
+    const res = await send(TOKEN, `${rest.toString()}&${dup}`, 'application/x-www-form-urlencoded')
     expect(res.status).toBe(400)
     expect(db.upserts).toHaveLength(0)
     expect(await res.text()).toContain('Linket virker ikke')
@@ -713,9 +742,7 @@ describe('POST /api/mad-testen/survey', () => {
   ])('%s body with a valid token: invalid-link screen, nothing written', async (_, type, body) => {
     tester()
     const ref = await referenceInvalid()
-    const res = await POST(
-      new NextRequest(url(TOKEN), { method: 'POST', body, headers: type ? { 'Content-Type': type } : {} }),
-    )
+    const res = await send(TOKEN, body, type)
 
     expect(res.status).toBe(400)
     expect(await res.text()).toBe(ref.body)
@@ -727,9 +754,80 @@ describe('POST /api/mad-testen/survey', () => {
     tester()
     const form = new FormData()
     for (const [k, v] of Object.entries(FULL)) form.set(k, v)
-    const res = await POST(new NextRequest(url(TOKEN), { method: 'POST', body: form }))
+    const res = await postMultipart(TOKEN, form)
     expect(res.status).toBe(200)
     expect(db.upserts).toHaveLength(1)
+    expect(db.upserts[0].row).toMatchObject(FULL_ROW)
+  })
+
+  it.each(['missing', 'plan_fit_note', 'plan_fit'])(
+    'a file sent as %s, everything else valid: the invalid-link screen, nothing written',
+    async (name) => {
+      tester()
+      const ref = await referenceInvalid()
+      const form = new FormData()
+      for (const [k, v] of Object.entries(FULL)) if (k !== name) form.set(k, v)
+      form.set(name, new File(['Aftensmad til børn.'], 'svar.txt', { type: 'text/plain' }))
+      const res = await postMultipart(TOKEN, form)
+
+      expect(res.status).toBe(400)
+      expect(await res.text()).toBe(ref.body)
+      expect(db.upserts).toEqual([])
+    },
+  )
+
+  it('a body over 64 KB by its content-length: the invalid-link screen, unread, nothing written', async () => {
+    tester()
+    const ref = await referenceInvalid()
+    const body = new URLSearchParams(FULL).toString()
+    for (const size of [String(SURVEY_BODY_MAX + 1), '4194304']) {
+      const res = await send(TOKEN, body, 'application/x-www-form-urlencoded', size)
+      expect(res.status).toBe(400)
+      expect(await res.text()).toBe(ref.body)
+    }
+    // A real body over the cap, honestly declared.
+    const big = new URLSearchParams({ ...FULL, other_feedback: 'x'.repeat(SURVEY_BODY_MAX) }).toString()
+    expect((await send(TOKEN, big, 'application/x-www-form-urlencoded')).status).toBe(400)
+    expect(db.upserts).toEqual([])
+    expect(console.error).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['no content-length', null],
+    ['an empty content-length', ''],
+    ['a content-length that is not a number', 'abc'],
+    ['a negative content-length', '-1'],
+    ['a fractional content-length', '10.5'],
+  ])('%s: the invalid-link screen, nothing written', async (_, size) => {
+    tester()
+    const ref = await referenceInvalid()
+    const res = await send(TOKEN, new URLSearchParams(FULL).toString(), 'application/x-www-form-urlencoded', size)
+    expect(res.status).toBe(400)
+    expect(await res.text()).toBe(ref.body)
+    expect(db.upserts).toEqual([])
+  })
+
+  it('a body exactly at 64 KB is read: a long answer gets the too-long form, not a refusal', async () => {
+    tester()
+    const base = new URLSearchParams({ ...FULL, other_feedback: '' }).toString()
+    const body = new URLSearchParams({ ...FULL, other_feedback: 'x'.repeat(SURVEY_BODY_MAX - base.length) }).toString()
+    expect(Buffer.byteLength(body)).toBe(SURVEY_BODY_MAX)
+    const res = await send(TOKEN, body, 'application/x-www-form-urlencoded')
+    expect(res.status).toBe(200)
+    expect(await res.text()).toContain('<p id="other_feedback-err" class="err">Svaret er for langt. Skriv højst 2.000 tegn.</p>')
+    expect(db.upserts).toEqual([])
+  })
+
+  it('the largest Danish form a browser can send fits under the cap: four answers of 2000 æ, ø, å', async () => {
+    tester()
+    const full = 'æøå'.repeat(667).slice(0, 2000)
+    const fields = { ...FULL, plan_fit_note: full, easy_note: full, missing: full, other_feedback: full }
+    const body = new URLSearchParams(fields).toString()
+    expect(Buffer.byteLength(body)).toBeLessThan(SURVEY_BODY_MAX)
+    const res = await post(TOKEN, fields)
+    expect(res.status).toBe(200)
+    expect(await res.text()).toContain('<h1>Tak for dine svar</h1>')
+    expect(db.upserts[0].row.missing).toBe(full)
   })
 
   it.each(REFUSED)('%s: never inserts, same invalid-link screen', async (_, setup) => {

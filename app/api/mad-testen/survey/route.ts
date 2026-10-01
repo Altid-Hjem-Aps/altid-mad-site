@@ -3,6 +3,7 @@ import { getMadTestOptin, getMadTestSurvey, getSignupByUnsubToken, recordMadTest
 import { isMadTestEligible } from '@/lib/mad-test'
 import {
   MAD_TEST_SURVEY_COPY_VERSION,
+  SURVEY_BODY_MAX,
   SURVEY_FIELD_NAMES,
   parseSurvey,
   renderSurveyScreen,
@@ -83,6 +84,12 @@ export async function POST(req: NextRequest) {
   try {
     const found = await tester(req)
     if (!found) return invalid()
+    // The body is only read when it declares a size we accept: formData()
+    // buffers and parses all of it. A browser always sends content-length with
+    // a form post; a body without one, or bigger than any real answer, is a
+    // hand-made request and refused unread.
+    const size = req.headers.get('content-length')
+    if (size === null || !/^\d+$/.test(size) || Number(size) > SURVEY_BODY_MAX) return invalid()
     // A body that is not form data at all (JSON, text/plain, no content type)
     // makes formData() throw; that is a refusal, not a server error.
     let form: FormData
@@ -94,6 +101,10 @@ export async function POST(req: NextRequest) {
     // Our form sends each field at most once. A repeated field is a hand-made
     // request: refused like any other, never a first-or-last guess.
     if (SURVEY_FIELD_NAMES.some((name) => form.getAll(name).length > 1)) return invalid()
+    // Our form sends text only. A file under a survey field's name would read as
+    // "not answered" and be stored as such, and the first-answer rule would then
+    // block the real answer: refused before anything is parsed.
+    if (SURVEY_FIELD_NAMES.some((name) => form.getAll(name).some((v) => typeof v !== 'string'))) return invalid()
 
     if (await getMadTestSurvey(found.signup.publicId)) return respond({ kind: 'already' }, 200)
 

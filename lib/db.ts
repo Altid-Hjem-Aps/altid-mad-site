@@ -489,11 +489,20 @@ export async function recordMadTestOptin(
   if (error) throw new Error(`mad_test_optin insert failed: ${error.message}`)
 }
 
+// A stored text answer: any string, or null for "not answered". The column is
+// text, so anything else means the select or the table changed.
+function isStoredText(value: unknown): value is string | null {
+  return value === null || typeof value === 'string'
+}
+
 /**
  * The day-5 survey answer a tester already gave (supabase/migrations/20260929…),
  * or null. Errors throw: the survey must show its error screen, never a form or
- * a "we have your answers" screen it cannot back up. A row outside the table's
- * checks was not written by this code and throws too.
+ * a "we have your answers" screen it cannot back up. A rating or panel outside
+ * the table's checks throws too. A text answer is read back as stored, whatever
+ * its whitespace or length: the table's checks are the only gate on it, so a
+ * row the table accepted (typed into the SQL editor, imported) can never turn
+ * this tester's page into a 500 for good.
  */
 export async function getMadTestSurvey(publicId: string): Promise<({
   publicId: string
@@ -523,10 +532,10 @@ export async function getMadTestSurvey(publicId: string): Promise<({
   if (!row) return null
   if (!isSurveyRating(row.plan_fit)) throw new Error(`mad_test_survey row has an unknown plan_fit: ${String(row.plan_fit)}`)
   if (!isSurveyRating(row.easy_to_use)) throw new Error(`mad_test_survey row has an unknown easy_to_use: ${String(row.easy_to_use)}`)
-  if (!isSurveyText(row.plan_fit_note)) throw new Error('mad_test_survey row has an invalid plan_fit_note')
-  if (!isSurveyText(row.easy_note)) throw new Error('mad_test_survey row has an invalid easy_note')
-  if (!isSurveyText(row.missing)) throw new Error('mad_test_survey row has an invalid missing')
-  if (!isSurveyText(row.other_feedback)) throw new Error('mad_test_survey row has an invalid other_feedback')
+  if (!isStoredText(row.plan_fit_note)) throw new Error('mad_test_survey row has a non-text plan_fit_note')
+  if (!isStoredText(row.easy_note)) throw new Error('mad_test_survey row has a non-text easy_note')
+  if (!isStoredText(row.missing)) throw new Error('mad_test_survey row has a non-text missing')
+  if (!isStoredText(row.other_feedback)) throw new Error('mad_test_survey row has a non-text other_feedback')
   if (typeof row.panel !== 'boolean') throw new Error(`mad_test_survey row has a non-boolean panel: ${String(row.panel)}`)
   return {
     publicId: row.public_id,

@@ -43,6 +43,15 @@ type SurveyPanel = (typeof SURVEY_PANEL)[number]
 /** Longest text answer, in characters (code points, as Postgres length() counts). */
 export const SURVEY_TEXT_MAX = 2000
 
+/**
+ * Largest request body the survey reads, in bytes (the content-length header).
+ * The route refuses a bigger one before reading it, so a hand-made request
+ * cannot make the server buffer and parse megabytes. A browser posts the form
+ * urlencoded: a Danish answer at the 2000-character limit is at most 12 KB even
+ * if every letter is æ, ø or å (6 bytes each), so four of them stay under 50 KB.
+ */
+export const SURVEY_BODY_MAX = 64 * 1024
+
 export type SurveyAnswers = {
   /** Q1: did the meal plan fit the household's needs. */
   planFit: SurveyRating
@@ -77,10 +86,17 @@ export function isSurveyText(value: unknown): value is string | null {
 
 /**
  * A text answer as it is stored: line endings as \n, NUL removed (Postgres text
- * cannot hold it; only a hand-made request can send one), trimmed.
+ * cannot hold it; only a hand-made request can send one), and spaces, tabs and
+ * line breaks trimmed from both ends. Exactly the set the table's
+ * btrim(x, E' \t\n\r') check uses, not String.trim()'s wider Unicode set: a
+ * leading no-break space, say, is kept on the way in just as the table keeps
+ * it, so what the page writes and what the table holds follow one rule.
  */
 function normalizeText(value: string): string {
-  return value.replace(/\r\n?/g, '\n').replace(/\u0000/g, '').trim()
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u0000/g, '')
+    .replace(/^[ \t\n\r]+|[ \t\n\r]+$/g, '')
 }
 
 function textLength(value: string): number {
@@ -155,6 +171,14 @@ export function parseSurvey(form: FormData): SurveyParse {
 
   for (const key of TEXT_FIELDS) {
     const text = normalizeText(field(form, FIELD[key]) ?? '')
+    // A code point is at most two UTF-16 units, so a text this many units long
+    // is over the limit for sure: refused without splitting it into code
+    // points first, which costs far more memory than the string itself.
+    if (text.length > 4 * SURVEY_TEXT_MAX) {
+      values[key] = text.slice(0, ECHO_MAX)
+      errors[key] = 'too-long'
+      continue
+    }
     values[key] = [...text].slice(0, ECHO_MAX).join('')
     if (textLength(text) > SURVEY_TEXT_MAX) errors[key] = 'too-long'
   }
@@ -242,8 +266,10 @@ function errorLine(key: Field, errors: SurveyErrors, indent = '  '): string {
   return e ? `\n${indent}<p id="${FIELD[key]}-err" class="err">${ERROR_TEXT[e]}</p>` : ''
 }
 
+// Read aloud with the question: the error summary sends the reader to
+// "Spørgsmål N", so the number must be findable by ear too.
 function number(q: Question): string {
-  return `<span class="qn" aria-hidden="true">${QUESTION_ORDER.indexOf(q) + 1}</span>`
+  return `<span class="qn">${QUESTION_ORDER.indexOf(q) + 1}</span>`
 }
 
 // The native radio stays in the page (keyboard, screen readers, no JavaScript);
@@ -343,8 +369,10 @@ const ALREADY = done('Tak, vi har allerede dine svar', '<p class="lead">Du behø
 
 // Rules on top of the yes-page's STYLE, whose bare `label` rule (for the
 // Google-account field) is reset here for the survey's labels. Fieldsets for
-// the radio groups, option cards stacked as large tap targets at every width,
-// and the elaborations under Q1 and Q2 quieter than the options above them.
+// the radio groups, option cards stacked as large tap targets at every width
+// (the card carries the focus ring, so the base rule's ring on the radio inside
+// it is switched off: one ring, not two), and the elaborations under Q1 and Q2
+// quieter than the options above them.
 const SURVEY_STYLE = `
 form.survey{display:block;margin:28px 0 20px}
 .q{border:0;margin:0 0 36px;padding:0;min-width:0}
@@ -361,6 +389,7 @@ legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weigh
 .opt input{flex:none;width:20px;height:20px;margin:0;accent-color:${COLOR.forestDeep}}
 .opt:has(input:checked){border-color:${COLOR.forestDeep};background:rgba(220,215,153,.35)}
 .opt:has(input:focus-visible){outline:3px solid ${COLOR.forestDeep};outline-offset:2px}
+.opt input:focus-visible{outline:0}
 .has-err .opt{border-color:${COLOR.error}}
 .sub{margin-top:16px}
 .sublabel{display:block;margin:0 0 8px;font-size:15px;line-height:1.45;color:${COLOR.muted}}

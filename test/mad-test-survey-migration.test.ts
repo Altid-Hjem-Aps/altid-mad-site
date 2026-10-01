@@ -29,14 +29,43 @@ describe('20260929_mad_test_survey migration', () => {
         new RegExp(`${col}\\s+text\\s+not null\\s+constraint mad_test_survey_${col}_check check \\(${col} in \\('ja', 'delvist', 'nej'\\)\\),`),
       )
     }
+    // The four text columns are bare in the create table: their checks live in
+    // the alter table below, so a re-run replaces them on the live table.
     for (const col of ['plan_fit_note', 'easy_note', 'missing', 'other_feedback']) {
-      expect(statements).toMatch(
+      expect(statements).toMatch(new RegExp(`\\n {2}${col}\\s+text,\\n`))
+    }
+    expect(statements).toMatch(/,\s+panel\s+boolean\s+not null\s*\);/)
+  })
+
+  it('the four text checks: dropped and added again in one statement, so a re-run fixes the live table', () => {
+    const alter = statements.slice(statements.indexOf('alter table public.mad_test_survey\n'))
+    const stmt = alter.slice(0, alter.indexOf(';') + 1)
+    const cols = ['plan_fit_note', 'easy_note', 'missing', 'other_feedback']
+    expect(stmt).toMatch(
+      new RegExp(
+        `^alter table public\\.mad_test_survey\\n${cols.map((c) => `\\s+drop constraint if exists mad_test_survey_${c}_check,\\n`).join('')}`,
+      ),
+    )
+    for (const col of cols) {
+      // Never empty, at most 2000 characters, nothing the page trims at either
+      // end, and no \r anywhere (the page stores line breaks as \n).
+      expect(stmt).toMatch(
         new RegExp(
-          `\\n\\s+${col}\\s+text\\s+constraint mad_test_survey_${col}_check check \\(length\\(${col}\\) between 1 and 2000\\s+and ${col} = btrim\\(${col}, e' \\\\t\\\\n\\\\r'\\)\\),`,
+          `\\n\\s+add constraint mad_test_survey_${col}_check check \\(length\\(${col}\\) between 1 and 2000\\n\\s+and ${col} = btrim\\(${col}, e' \\\\t\\\\n\\\\r'\\) and position\\(e'\\\\r' in ${col}\\) = 0\\)[,;]`,
         ),
       )
     }
-    expect(statements).toMatch(/,\s+panel\s+boolean\s+not null\s*\);/)
+    expect(stmt.match(/drop constraint if exists/g)).toHaveLength(4)
+    expect(stmt.match(/add constraint/g)).toHaveLength(4)
+    // The checks come after the table exists, in the only alter of its columns.
+    expect(statements.indexOf('create table')).toBeLessThan(statements.indexOf(stmt))
+    expect(statements.match(/alter table public\.mad_test_survey\n/g)).toHaveLength(1)
+  })
+
+  it('the header says what the checks guarantee and what they do not', () => {
+    expect(sql).not.toContain('cannot make the page fail for that tester later')
+    expect(sql).toMatch(/-- What the checks guarantee: a row the table accepts never makes the page\n-- fail for that tester\./)
+    expect(sql).toMatch(/-- What they do not guarantee: that a row typed into the SQL editor or\n-- imported looks exactly like one the page wrote\./)
   })
 
   it('the columns in order, and nothing else in the table', () => {
