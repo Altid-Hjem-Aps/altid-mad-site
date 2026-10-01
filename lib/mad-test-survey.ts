@@ -396,7 +396,7 @@ legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weigh
 .pills{display:flex;flex-wrap:wrap;gap:10px}
 .pill{position:relative;display:inline-flex;margin:0}
 .sr{position:absolute;width:1px;height:1px;margin:0;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid ${COLOR.forestDeep};background:transparent;color:${COLOR.forestDeep};font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}
+.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid rgba(22,50,35,.25);background:transparent;color:${COLOR.forestDeep};font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}
 @media (hover:hover){.pill:hover span{background:rgba(220,215,153,.35)}}
 .has-err .pill span{border-color:${COLOR.error}}
 .pill input:checked+span{background:${COLOR.khaki};border-color:${COLOR.khaki};color:${COLOR.forestDeep}}

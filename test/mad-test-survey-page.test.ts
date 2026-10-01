@@ -358,7 +358,7 @@ describe('renderSurveyScreen', () => {
   it('a pill: outlined in forest green, filled khaki when chosen, a button-style ring on keyboard focus', () => {
     const html = renderSurveyScreen(SCREENS[0])
     expect(html).toContain(
-      '.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid #163223;background:transparent;color:#163223;font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}',
+      '.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid rgba(22,50,35,.25);background:transparent;color:#163223;font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}',
     )
     expect(html).toContain('.pill input:checked+span{background:#DCD799;border-color:#DCD799;color:#163223}')
     expect(html).toContain('.pill input:focus-visible+span{outline:3px solid #163223;outline-offset:2px}')
