@@ -49,9 +49,11 @@ export const SURVEY_TEXT_MAX = 2000
  * The route refuses a bigger one before reading it, so a hand-made request
  * cannot make the server buffer and parse megabytes. A browser posts the form
  * urlencoded: a Danish answer at the 2000-character limit is at most 12 KB even
- * if every letter is æ, ø or å (6 bytes each), so four of them stay under 50 KB.
+ * if every letter is æ, ø or å (6 bytes each), so four of them stay under 50 KB;
+ * four answers of letters that take 3 bytes in UTF-8 (9 bytes encoded) come to
+ * 72 KB, which the cap still lets through.
  */
-export const SURVEY_BODY_MAX = 64 * 1024
+export const SURVEY_BODY_MAX = 96 * 1024
 
 export type SurveyAnswers = {
   /** Q1: did the meal plan fit the household's needs. */

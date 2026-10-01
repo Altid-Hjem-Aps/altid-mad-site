@@ -774,7 +774,7 @@ describe('POST /api/mad-testen/survey', () => {
     },
   )
 
-  it('a body over 64 KB by its content-length: the invalid-link screen, unread, nothing written', async () => {
+  it('a body over the cap by its content-length: the invalid-link screen, unread, nothing written', async () => {
     tester()
     const ref = await referenceInvalid()
     const body = new URLSearchParams(FULL).toString()
@@ -805,7 +805,7 @@ describe('POST /api/mad-testen/survey', () => {
     expect(db.upserts).toEqual([])
   })
 
-  it('a body exactly at 64 KB is read: a long answer gets the too-long form, not a refusal', async () => {
+  it('a body exactly at the cap is read: a long answer gets the too-long form, not a refusal', async () => {
     tester()
     const base = new URLSearchParams({ ...FULL, other_feedback: '' }).toString()
     const body = new URLSearchParams({ ...FULL, other_feedback: 'x'.repeat(SURVEY_BODY_MAX - base.length) }).toString()
