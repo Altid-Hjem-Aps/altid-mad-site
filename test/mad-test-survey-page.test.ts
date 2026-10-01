@@ -273,10 +273,10 @@ describe('renderSurveyScreen', () => {
     expect(html).not.toContain(' checked')
   })
 
-  it('questions 1, 2 and 5 use the same option card, values as stored, every radio required', () => {
+  it('questions 1, 2 and 5 use the same pill, values as stored, every radio required', () => {
     const html = renderSurveyScreen(SCREENS[0])
     const opts = (name: string) =>
-      [...html.matchAll(new RegExp(`<label class="opt"><input type="radio" name="${name}" value="([^"]+)" required/><span>([^<]+)</span></label>`, 'g'))]
+      [...html.matchAll(new RegExp(`<label class="pill"><input class="sr" type="radio" name="${name}" value="([^"]+)" required/><span>([^<]+)</span></label>`, 'g'))]
         .map((m) => [m[1], m[2]])
     const rating = [
       ['ja', 'Ja'],
@@ -291,7 +291,12 @@ describe('renderSurveyScreen', () => {
     ])
     // No other kind of radio on the page.
     expect(html.match(/type="radio"/g)).toHaveLength(8)
-    expect(html.match(/<label class="opt">/g)).toHaveLength(8)
+    expect(html.match(/<label class="pill">/g)).toHaveLength(8)
+    // Each group's pills sit in one row inside its fieldset.
+    expect(html.match(/<div class="pills">/g)).toHaveLength(3)
+    // The old option cards are gone, markup and rules.
+    expect(html).not.toContain('class="opt"')
+    expect(html).not.toMatch(/\.opts?[{: ]/)
   })
 
   it('the elaborations under questions 1 and 2: optional, labelled, inside their question, after the options', () => {
@@ -304,7 +309,7 @@ describe('renderSurveyScreen', () => {
       expect(fieldset).toContain(
         `<div class="sub">\n    <label for="${id}" class="sublabel">${label} <span class="optional">Valgfrit</span></label>\n    <textarea id="${id}" name="${id}" rows="3" maxlength="2000"></textarea>\n  </div>`,
       )
-      expect(fieldset.indexOf('class="opts"')).toBeLessThan(fieldset.indexOf('class="sub"'))
+      expect(fieldset.indexOf('class="pills"')).toBeLessThan(fieldset.indexOf('class="sub"'))
     }
     // Quieter than the options: a smaller, muted label and a lighter, lower field.
     expect(html).toContain('.sublabel{display:block;margin:0 0 8px;font-size:15px;line-height:1.45;color:#6f6a61}')
@@ -329,7 +334,7 @@ describe('renderSurveyScreen', () => {
   it('question 5: the explanation directly under the question, and the fieldset described by it', () => {
     const html = renderSurveyScreen(SCREENS[0])
     expect(html).toContain(
-      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Som en del af brugerpanelet er du med til at forme Altid&nbsp;Mad sammen med os. Du får mulighed for at teste nye funktioner, dele dine idéer og fortælle os, hvad der fungerer, og hvad vi kan gøre bedre.</p>\n  <div class="opts">',
+      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Som en del af brugerpanelet er du med til at forme Altid&nbsp;Mad sammen med os. Du får mulighed for at teste nye funktioner, dele dine idéer og fortælle os, hvad der fungerer, og hvad vi kan gøre bedre.</p>\n  <div class="pills">',
     )
   })
 
@@ -339,17 +344,36 @@ describe('renderSurveyScreen', () => {
     expect(html).not.toMatch(/class="qn"[^>]*aria-hidden/)
   })
 
-  it('a focused option shows one ring, on the card, not a second one on its radio', () => {
+  it('the radio is hidden for the eye only: still focusable and read aloud, never display:none', () => {
     const html = renderSurveyScreen(SCREENS[0])
-    expect(html).toContain('.opt:has(input:focus-visible){outline:3px solid #163223;outline-offset:2px}\n.opt input:focus-visible{outline:0}')
-    // After the base rule that rings every focused input, so it wins on order as well as specificity.
-    expect(html.indexOf('input:focus-visible{outline:3px')).toBeLessThan(html.indexOf('.opt input:focus-visible{outline:0}'))
+    expect(html).toContain(
+      '.sr{position:absolute;width:1px;height:1px;margin:0;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}',
+    )
+    // The pill is the containing block, so the hidden radio stays where its pill is.
+    expect(html).toContain('.pill{position:relative;display:inline-flex;margin:0}')
+    expect(html).not.toMatch(/\.sr\{[^}]*(display:none|visibility:hidden)/)
+    expect(html).not.toMatch(/\.pill[^{]*\{[^}]*(display:none|visibility:hidden)/)
   })
 
-  it('the options stack at every width (no row layout that could overflow 375 px)', () => {
+  it('a pill: outlined in forest green, filled khaki when chosen, a button-style ring on keyboard focus', () => {
     const html = renderSurveyScreen(SCREENS[0])
-    expect(html).toContain('.opts{display:flex;flex-direction:column;gap:8px}')
-    expect(html).not.toMatch(/\.opts\{[^}]*flex-direction:row/)
+    expect(html).toContain(
+      '.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid #163223;background:transparent;color:#163223;font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}',
+    )
+    expect(html).toContain('.pill input:checked+span{background:#DCD799;border-color:#DCD799;color:#163223}')
+    expect(html).toContain('.pill input:focus-visible+span{outline:3px solid #163223;outline-offset:2px}')
+    // Hover only where there is a pointer, so a tap on a phone leaves no tint behind.
+    expect(html).toContain('@media (hover:hover){.pill:hover span{background:rgba(220,215,153,.35)}}')
+    // The chosen fill comes after the hover tint and the error border: same or
+    // higher specificity, so a chosen pill stays khaki under the pointer.
+    expect(html.indexOf('.pill:hover span')).toBeLessThan(html.indexOf('.pill input:checked+span'))
+    expect(html.indexOf('.has-err .pill span')).toBeLessThan(html.indexOf('.pill input:checked+span'))
+  })
+
+  it('the pills sit in a row that wraps (no fixed row that could overflow 375 px)', () => {
+    const html = renderSurveyScreen(SCREENS[0])
+    expect(html).toContain('.pills{display:flex;flex-wrap:wrap;gap:10px}')
+    expect(html).not.toMatch(/\.pills\{[^}]*flex-direction:column/)
   })
 
   it('the form with errors: the summary sentence, a link per question in page order, errors in place, answers kept', () => {
@@ -370,7 +394,7 @@ describe('renderSurveyScreen', () => {
       '<textarea id="other_feedback" name="other_feedback" rows="4" maxlength="2000" placeholder="Skriv dit svar" aria-invalid="true" aria-describedby="other_feedback-err">x</textarea>',
     )
     // Q2's answer and its elaboration are kept.
-    expect(html).toContain('<input type="radio" name="easy_to_use" value="delvist" required checked/>')
+    expect(html).toContain('<input class="sr" type="radio" name="easy_to_use" value="delvist" required checked/>')
     expect(html.match(/ checked/g)).toHaveLength(1)
     expect(html).toContain('<textarea id="easy_note" name="easy_note" rows="3" maxlength="2000">Indkøbslisten</textarea>')
     expect(html.match(/<fieldset id="q-[a-z_]+" class="q has-err"/g)).toHaveLength(2)
@@ -378,7 +402,9 @@ describe('renderSurveyScreen', () => {
     // Question 5's error sits under its explanation, above the options.
     const q5 = html.slice(html.indexOf('id="q-panel"'))
     expect(q5.indexOf('panel-help')).toBeLessThan(q5.indexOf('panel-err'))
-    expect(q5.indexOf('panel-err')).toBeLessThan(q5.indexOf('class="opts"'))
+    expect(q5.indexOf('panel-err')).toBeLessThan(q5.indexOf('class="pills"'))
+    // An unanswered question's pills are bordered in the error colour.
+    expect(html).toContain('.has-err .pill span{border-color:#a33a1f}')
   })
 
   it('an elaboration that is too long: its error under its own label, the summary names its question', () => {

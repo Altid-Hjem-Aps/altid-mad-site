@@ -276,11 +276,13 @@ function number(q: Question): string {
   return `<span class="qn">${QUESTION_ORDER.indexOf(q) + 1}</span>`
 }
 
-// The native radio stays in the page (keyboard, screen readers, no JavaScript);
-// `required` on a group's radios makes the browser ask before sending.
+// One pill per choice. The native radio stays in the page, only visually hidden
+// (class "sr", never display:none), so Tab, the arrow keys, screen readers and
+// the no-JavaScript form all work as with a plain radio; the span after it is
+// what shows. `required` on a group's radios makes the browser ask before sending.
 function radio(key: Field, value: string, label: string, values: SurveyValues, errors: SurveyErrors): string {
   const checked = values[key] === value ? ' checked' : ''
-  return `<label class="opt"><input type="radio" name="${FIELD[key]}" value="${value}" required${checked}${errorAttrs(key, errors)}/><span>${label}</span></label>`
+  return `<label class="pill"><input class="sr" type="radio" name="${FIELD[key]}" value="${value}" required${checked}${errorAttrs(key, errors)}/><span>${label}</span></label>`
 }
 
 function textarea(key: TextField, rows: number, values: SurveyValues, errors: SurveyErrors, placeholder?: string): string {
@@ -299,7 +301,7 @@ function note(key: NoteField, values: SurveyValues, errors: SurveyErrors): strin
   </div>`
 }
 
-// Q1, Q2 and Q5: a fieldset of option cards, one component for all three.
+// Q1, Q2 and Q5: a fieldset with a row of pills, one component for all three.
 // `help` sits directly under the question; `extra` after the options.
 function choiceQuestion<V extends string>(
   key: 'planFit' | 'easyToUse' | 'panel',
@@ -314,7 +316,7 @@ function choiceQuestion<V extends string>(
   const help = more.help ? `\n  <p id="${id}-help" class="qhelp">${more.help}</p>` : ''
   return `<fieldset id="q-${id}" class="q${errors[key] ? ' has-err' : ''}"${described}>
   <legend>${number(key)}${QUESTION[key]}</legend>${help}${errorLine(key, errors)}
-  <div class="opts">
+  <div class="pills">
     ${options.map((v) => radio(key, v, labels[v], values, errors)).join('\n    ')}
   </div>${more.extra ?? ''}
 </fieldset>`
@@ -373,11 +375,12 @@ const ALREADY = done('Tak, vi har allerede dine svar', '<p class="lead">Du behø
 
 // Rules on top of the yes-page's STYLE, whose bare `label` rule (for the
 // Google-account field) is reset here for the survey's labels. Fieldsets for
-// the radio groups, option cards stacked as large tap targets at every width
-// (the card carries the focus ring, so the base rule's ring on the radio inside
-// it is switched off: one ring, not two), and the elaborations under Q1 and Q2
-// quieter than the options above them. The heading carries the first name,
-// so a long one breaks inside the word rather than widening the page.
+// the radio groups, each a wrapping row of pills (Ja, Delvist and Nej fit on one
+// line at 375 px): the radio is visually hidden and the pill after it shows the
+// choice, filled khaki when chosen and ringed like a button when focused from
+// the keyboard; and the elaborations under Q1 and Q2 quieter than the pills
+// above them. The heading carries the first name, so a long one breaks inside
+// the word rather than widening the page.
 const SURVEY_STYLE = `
 h1{overflow-wrap:break-word}
 form.survey{display:block;margin:28px 0 20px}
@@ -390,13 +393,14 @@ legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weigh
 .err-top{font-size:15px;line-height:1.5;color:${COLOR.error};margin:0 0 8px}
 .err-top ul{margin:4px 0 0;padding-left:20px}
 .err-top a{color:${COLOR.error}}
-.opts{display:flex;flex-direction:column;gap:8px}
-.opt{display:flex;align-items:center;gap:12px;margin:0;min-height:52px;padding:12px 16px;border:1.5px solid rgba(22,50,35,.25);border-radius:16px;background:#fff;color:${COLOR.forestDeep};font-size:16px;line-height:1.35;cursor:pointer}
-.opt input{flex:none;width:20px;height:20px;margin:0;accent-color:${COLOR.forestDeep}}
-.opt:has(input:checked){border-color:${COLOR.forestDeep};background:rgba(220,215,153,.35)}
-.opt:has(input:focus-visible){outline:3px solid ${COLOR.forestDeep};outline-offset:2px}
-.opt input:focus-visible{outline:0}
-.has-err .opt{border-color:${COLOR.error}}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pill{position:relative;display:inline-flex;margin:0}
+.sr{position:absolute;width:1px;height:1px;margin:0;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.pill span{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;border:1.5px solid ${COLOR.forestDeep};background:transparent;color:${COLOR.forestDeep};font:inherit;font-size:16px;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 120ms,border-color 120ms;-webkit-tap-highlight-color:transparent}
+@media (hover:hover){.pill:hover span{background:rgba(220,215,153,.35)}}
+.has-err .pill span{border-color:${COLOR.error}}
+.pill input:checked+span{background:${COLOR.khaki};border-color:${COLOR.khaki};color:${COLOR.forestDeep}}
+.pill input:focus-visible+span{outline:3px solid ${COLOR.forestDeep};outline-offset:2px}
 .sub{margin-top:16px}
 .sublabel{display:block;margin:0 0 8px;font-size:15px;line-height:1.45;color:${COLOR.muted}}
 .sub .err{margin:-2px 0 8px}
