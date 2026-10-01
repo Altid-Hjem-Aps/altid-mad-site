@@ -105,7 +105,10 @@ describe('renderMadTestScreen', () => {
     const thanks = renderMadTestScreen({ kind: 'thanks', device, firstName: ' Anna ' })
     expect(thanks).toContain('<h1>Tak Anna, du er med</h1>')
     expect(renderMadTestScreen({ kind: 'thanks', device, firstName: null })).toContain('<h1>Tak, du er med</h1>')
-    expect(renderMadTestScreen({ kind: 'thanks', device, firstName: '<b>' })).toContain('<h1>Tak &lt;b&gt;, du er med</h1>')
+    const marked = renderMadTestScreen({ kind: 'thanks', device, firstName: "<b> & O'Neill" })
+    expect(marked).toContain('<h1>Tak &lt;b&gt; &amp; O&#39;Neill, du er med</h1>')
+    // Escaped once in the <title> too, not twice.
+    expect(marked).toContain('<title>Tak &lt;b&gt; &amp; O&#39;Neill, du er med | Altid Mad</title>')
     const already = renderMadTestScreen({ kind: 'already', device })
     expect(already).toContain('<h1>Vi har allerede dit ja</h1>')
     for (const html of [thanks, already]) {
@@ -128,7 +131,7 @@ describe('renderMadTestScreen', () => {
     expect(html).toContain('<p class="lead">Det er ofte en Gmail-adresse.</p>')
     expect(html).toContain('Vi bruger kun din Google-konto til at give dig adgang til testen i Google&nbsp;Play.')
     expect(html).toContain('Dit login til Altid&nbsp;Mad er stadig den <span class="nw">e-mailadresse</span>, du skrev dig på ventelisten med.')
-    expect(html).toContain('<button type="submit" class="primary" data-l="Fortsæt med Android">Fortsæt med Android</button>')
+    expect(html).toContain('<button type="submit" class="primary" aria-live="polite" data-l="Fortsæt med Android">Fortsæt med Android</button>')
     // The button is switched off by script only (never in the markup), on load and on every keystroke.
     expect(html).not.toMatch(/<button[^>]* disabled/)
     expect(html).toContain('oninput="var i=document.getElementById(')
@@ -144,7 +147,7 @@ describe('renderMadTestScreen', () => {
 
   it('the form offers exactly the two answers in one POST form, iPhone first', () => {
     const html = renderMadTestScreen(SCREENS[0])
-    const buttons = [...html.matchAll(/<button type="submit" name="device" value="(\w+)" class="(\w+)" data-l="[^"]+">([^<]+)<\/button>/g)]
+    const buttons = [...html.matchAll(/<button type="submit" name="device" value="(\w+)" class="(\w+)" aria-live="polite" data-l="[^"]+">([^<]+)<\/button>/g)]
     expect(buttons.map((m) => [m[1], m[2], m[3]])).toEqual([
       ['iphone', 'primary', 'Jeg vil teste på iPhone'],
       ['android', 'secondary', 'Jeg vil teste på Android'],

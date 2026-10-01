@@ -158,25 +158,33 @@ const GA_CHECK = `var i=document.getElementById('ga'),b=document.querySelector('
 
 function answerButton(device: MadTestDevice, cls: 'primary' | 'secondary'): string {
   const label = ANSWER_LABEL[device]
-  return `<button type="submit" name="device" value="${device}" class="${cls}" data-l="${label}">${label}</button>`
+  // aria-live: the label turns into "Et øjeblik" on submit, and a screen reader
+  // should hear that.
+  return `<button type="submit" name="device" value="${device}" class="${cls}" aria-live="polite" data-l="${label}">${label}</button>`
 }
 
 // The other route, for a person who pressed the wrong button in the mail.
-// A relative link: opening it writes nothing.
+// A relative link: opening it writes nothing. The iPhone route sends itself
+// on arrival, so no in-page link may point at it: a mis-tap on a 15px link
+// would be an irrevocable answer. The link to iPhone goes to the two-button
+// form instead, where the answer is a deliberate tap on a 56px button.
 function otherPhone(token: string, device: MadTestDevice, text: string): string {
-  return `<p class="small"><a href="${actionFor(token)}&amp;d=${device}">${text}</a></p>`
+  const target = device === 'iphone' ? actionFor(token) : `${actionFor(token)}&amp;d=${device}`
+  return `<p class="small"><a href="${target}">${text}</a></p>`
 }
 
+// Raw text: the title is escaped where it is written (the <title> and the <h1>),
+// never before, so a name with & or ' is escaped exactly once in both.
 function thanksTitle(firstName: string | null): string {
   const name = (firstName ?? '').trim()
-  return name ? `Tak ${escapeHtml(name)}, du er med` : 'Tak, du er med'
+  return name ? `Tak ${name}, du er med` : 'Tak, du er med'
 }
 
 function answered(title: string, device: MadTestDevice): { title: string; body: string } {
   return {
     title,
     body: `${CHECK}
-<h1>${title}</h1>
+<h1>${escapeHtml(title)}</h1>
 <p class="lead">${NEXT_STEP[device]}</p>
 <p class="note">${QUESTIONS}</p>`,
   }
@@ -227,7 +235,7 @@ ${otherPhone(screen.token, 'android', 'Jeg har Android')}
   <input type="hidden" name="device" value="android"/>
   <label for="ga">Google-konto</label>
   <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="navn@gmail.com" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err" autofocus' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>` : ''}
-  <button type="submit" class="primary" data-l="${GOOGLE_LABEL}">${GOOGLE_LABEL}</button>
+  <button type="submit" class="primary" aria-live="polite" data-l="${GOOGLE_LABEL}">${GOOGLE_LABEL}</button>
 </form>
 <p class="note pair">Vi bruger kun din Google-konto til at give dig adgang til testen i Google&nbsp;Play.</p>
 <p class="note">Dit login til Altid&nbsp;Mad er stadig den <span class="nw">e-mailadresse</span>, du skrev dig på ventelisten med.</p>

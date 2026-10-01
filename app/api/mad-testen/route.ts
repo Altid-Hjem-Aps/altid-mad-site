@@ -113,10 +113,14 @@ export async function POST(req: NextRequest) {
 
     await recordMadTestOptin(found.signup.publicId, MAD_TEST_COPY_VERSION, device, googleAccount)
     // Read back what is stored: if two answers raced, the first row won and the
-    // screen must describe that row, not the losing request.
+    // screen must describe that row, not the losing request. Two Android
+    // answers with different Google accounts are two answers too: the second
+    // must not be thanked for an account that was never stored.
     const stored = await getMadTestOptin(found.signup.publicId)
     if (!stored) throw new Error('mad_test_optin row missing right after insert')
-    if (stored.device !== device) return respond({ kind: 'already', device: stored.device }, 200)
+    if (stored.device !== device || stored.googleAccount !== googleAccount) {
+      return respond({ kind: 'already', device: stored.device }, 200)
+    }
     return respond({ kind: 'thanks', device, firstName: found.signup.firstName }, 200)
   } catch (e) {
     console.error('mad-testen POST failed', e)

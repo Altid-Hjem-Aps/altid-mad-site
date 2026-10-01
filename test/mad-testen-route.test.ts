@@ -213,8 +213,8 @@ describe('GET /api/mad-testen', () => {
 
     expect(res.status).toBe(200)
     expect(html).toContain('Hej Anna,')
-    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary" data-l="Jeg vil teste på iPhone">Jeg vil teste på iPhone</button>')
-    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary" data-l="Jeg vil teste på Android">Jeg vil teste på Android</button>')
+    expect(html).toContain('<button type="submit" name="device" value="iphone" class="primary" aria-live="polite" data-l="Jeg vil teste på iPhone">Jeg vil teste på iPhone</button>')
+    expect(html).toContain('<button type="submit" name="device" value="android" class="secondary" aria-live="polite" data-l="Jeg vil teste på Android">Jeg vil teste på Android</button>')
     expect(html).not.toContain('requestSubmit')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen?t=${TOKEN}"`)
     expect(html).toContain('href="/privatlivspolitik"')
@@ -265,7 +265,10 @@ describe('GET /api/mad-testen', () => {
     expect(html).toContain('name="google_account" value="anna@gmail.com"')
     expect(html).toContain('>Fortsæt med Android</button>')
     expect(html).not.toContain('requestSubmit')
-    expect(html).toContain(`href="/api/mad-testen?t=${TOKEN}&amp;d=iphone">Jeg har en iPhone</a>`)
+    // To the two-button form, never to the iPhone route: that one sends itself
+    // on arrival, and a mis-tap on this link must not be an answer.
+    expect(html).toContain(`href="/api/mad-testen?t=${TOKEN}">Jeg har en iPhone</a>`)
+    expect(html).not.toContain('&amp;d=iphone')
   })
 
   it.each(['iphone', 'android'])('the %s link on an answered invitation: the already screen', async (phone) => {
@@ -528,6 +531,20 @@ describe('POST /api/mad-testen', () => {
     expect(db.upserts).toHaveLength(1)
     expect(db.optins.size).toBe(1)
     expect(db.optins.get(PUBLIC_ID)).toBe(row)
+  })
+
+  it('a competing Android answer with another Google account wins: the already screen, not thanks', async () => {
+    db.signups.set(TOKEN, eligible())
+    db.beforeUpsert = () => {
+      db.optins.set(PUBLIC_ID, answered('android', 'first@gmail.com'))
+    }
+    const res = await postAndroid(TOKEN, 'second@gmail.com')
+
+    expect(res.status).toBe(200)
+    const html = await res.text()
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(html).not.toContain('du er med')
+    expect(db.optins.get(PUBLIC_ID)?.google_account).toBe('first@gmail.com')
   })
 
   it('a competing answer that lands first wins, and the screen describes it', async () => {

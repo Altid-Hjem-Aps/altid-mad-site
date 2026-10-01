@@ -33,10 +33,12 @@ create table if not exists public.mad_test_optin (
   -- `is not null` spelled out: a NULL account makes the regex test NULL, and a
   -- CHECK that comes out NULL passes, so without it an Android row typed into
   -- the SQL editor without an account would get in and make the page's
-  -- read-back throw (a 500 for that person).
+  -- read-back throw (a 500 for that person). The 254 cap is the page's own
+  -- (normalizeGoogleAccount), for the same reason.
   constraint mad_test_optin_google_account_check
     check ((device = 'iphone' and google_account is null)
         or (device = 'android' and google_account is not null
+            and length(google_account) <= 254
             and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'))
 );
 
@@ -66,6 +68,7 @@ alter table public.mad_test_optin
   add constraint mad_test_optin_google_account_check
   check ((device = 'iphone' and google_account is null)
       or (device = 'android' and google_account is not null
+          and length(google_account) <= 254
           and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'));
 
 comment on table public.mad_test_optin is
