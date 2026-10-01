@@ -287,11 +287,9 @@ describe('GET /api/mad-testen/survey', () => {
     const html = await res.text()
 
     expect(res.status).toBe(200)
-    expect(html).toContain('<p class="hello">Hej Anna</p>')
-    expect(html).toContain('<h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
-    expect(html).toContain(
-      '<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>',
-    )
+    expect(html).toContain('<h1>Hej Anna, hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
+    expect(html).not.toContain('class="hello"')
+    expect(html).not.toContain('class="lead"')
     expect(html).toContain(`<form method="POST" action="/api/mad-testen/survey?t=${TOKEN}" class="survey"`)
     expect(html.match(/<fieldset/g)).toHaveLength(3)
     expect(html.match(/<textarea/g)).toHaveLength(4)
@@ -321,14 +319,14 @@ describe('GET /api/mad-testen/survey', () => {
 
   it('greets without a name when the signup has none', async () => {
     tester({ first_name: null })
-    expect(await (await get(TOKEN)).text()).toContain('<p class="hello">Hej</p>')
+    expect(await (await get(TOKEN)).text()).toContain('<h1>Hej, hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
   })
 
   it('escapes the first name', async () => {
     tester({ first_name: '<script>alert("x")</script>' })
     const html = await (await get(TOKEN)).text()
     expect(html).not.toContain('<script>alert')
-    expect(html).toContain('<p class="hello">Hej &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</p>')
+    expect(html).toContain('<h1>Hej &lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;, hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
   })
 
   it('never cached, never indexed, never leaks the link in a Referer, no cookie', async () => {

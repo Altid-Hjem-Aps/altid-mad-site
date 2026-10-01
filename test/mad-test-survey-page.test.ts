@@ -232,17 +232,19 @@ describe('renderSurveyScreen', () => {
     expect(renderSurveyScreen({ kind: 'error' })).toBe(renderMadTestScreen({ kind: 'error' }))
   })
 
-  it('the form: greeting without a comma, heading, lead, five questions in order, one button, the privacy link', () => {
+  it('the form: one heading with the greeting in it, no intro paragraph, five questions in order, one button, the privacy link', () => {
     const html = renderSurveyScreen(SCREENS[0])
 
-    expect(html).toContain('<p class="hello">Hej Anna</p>')
-    expect(html).toContain('<h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
-    expect(html).toContain(
-      '<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>',
-    )
-    // The greeting sits above the heading, the heading above the lead.
-    expect(html.indexOf('class="hello"')).toBeLessThan(html.indexOf('<h1>'))
-    expect(html.indexOf('<h1>')).toBeLessThan(html.indexOf('class="lead"'))
+    expect(html).toContain('<main>\n<h1>Hej Anna, hvordan gik de første dage med Altid&nbsp;Mad?</h1>\n<form ')
+    expect(html.match(/<h1>/g)).toHaveLength(1)
+    // No greeting line of its own and no intro paragraph (Thor, 1/10).
+    expect(html).not.toContain('class="hello"')
+    expect(html).not.toContain('class="lead"')
+    expect(html).not.toContain('Det tager cirka to minutter')
+    // The page title is not the heading: it stays as it was.
+    expect(html).toContain('<title>Fem korte spørgsmål | Altid Mad</title>')
+    // The heading carries the name: a long one wraps instead of widening the page.
+    expect(html).toContain('h1{overflow-wrap:break-word}')
 
     const questions = [
       ...html.matchAll(/<(?:legend|label for="[a-z_]+" class="qlabel")><span class="qn">(\d)<\/span>([^<]+?)(?: <span class="optional">Valgfrit<\/span>)?<\/(?:legend|label)>/g),
@@ -327,7 +329,7 @@ describe('renderSurveyScreen', () => {
   it('question 5: the explanation directly under the question, and the fieldset described by it', () => {
     const html = renderSurveyScreen(SCREENS[0])
     expect(html).toContain(
-      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.</p>\n  <div class="opts">',
+      '<fieldset id="q-panel" class="q" aria-describedby="panel-help">\n  <legend><span class="qn">5</span>Vil du være en del af vores brugerpanel?</legend>\n  <p id="panel-help" class="qhelp">Som en del af brugerpanelet er du med til at forme Altid&nbsp;Mad sammen med os. Du får mulighed for at teste nye funktioner, dele dine idéer og fortælle os, hvad der fungerer, og hvad vi kan gøre bedre.</p>\n  <div class="opts">',
     )
   })
 
@@ -412,7 +414,7 @@ describe('renderSurveyScreen', () => {
     const html = renderSurveyScreen({ kind: 'form', firstName: null, token: odd })
     expect(html).toContain(`action="/api/mad-testen/survey?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
-    expect(html).toContain('<p class="hello">Hej</p>')
+    expect(html).toContain('<h1>Hej, hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
   })
 
   it('escapes every kept text answer', () => {
@@ -434,7 +436,7 @@ describe('renderSurveyScreen', () => {
     expect(html).toContain('>&quot;&amp;&#39;</textarea>')
     expect(html).toContain('>&lt;i&gt;</textarea>')
     expect(html).toContain('>&amp;amp;</textarea>')
-    expect(html).toContain('<p class="hello">Hej &lt;b&gt;Bo&lt;/b&gt;</p>')
+    expect(html).toContain('<h1>Hej &lt;b&gt;Bo&lt;/b&gt;, hvordan gik de første dage med Altid&nbsp;Mad?</h1>')
   })
 
   it('thanks: the check mark, the heading, "Vi læser dem alle." and Feedback in Altid Mad with the mail address as a link', () => {
@@ -458,6 +460,6 @@ describe('renderSurveyScreen', () => {
   })
 
   it('the wording version names the day and the survey', () => {
-    expect(MAD_TEST_SURVEY_COPY_VERSION).toBe('2026-09-30-mad-test-survey-2')
+    expect(MAD_TEST_SURVEY_COPY_VERSION).toBe('2026-10-01-mad-test-survey-3')
   })
 })

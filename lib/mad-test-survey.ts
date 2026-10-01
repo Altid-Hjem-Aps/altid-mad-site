@@ -11,9 +11,10 @@
  * submission with a missing or out-of-range answer shows the form again with
  * what was given kept (escaped) and an error under each question it concerns.
  *
- * Questions and copy: Thor, 30/9. Q1, Q2 and Q5 are required choices (one
- * option component for all three); Q1 and Q2 carry an optional elaboration;
- * Q3 and Q4 are optional free text.
+ * Questions and copy: Thor, 30/9; the heading with the greeting in it, no
+ * intro paragraph and Q5's explanation: Thor, 1/10. Q1, Q2 and Q5 are required
+ * choices (one option component for all three); Q1 and Q2 carry an optional
+ * elaboration; Q3 and Q4 are optional free text.
  */
 import {
   CHECK,
@@ -30,7 +31,7 @@ import {
  * Stored on every survey row. Bump it whenever a question or an answer's
  * wording changes, so each row resolves to the exact text the person answered.
  */
-export const MAD_TEST_SURVEY_COPY_VERSION = '2026-09-30-mad-test-survey-2'
+export const MAD_TEST_SURVEY_COPY_VERSION = '2026-10-01-mad-test-survey-3'
 
 /** Questions 1 and 2: yes, partly, no. */
 export const SURVEY_RATINGS = ['ja', 'delvist', 'nej'] as const
@@ -236,7 +237,8 @@ const NOTE_LABEL = {
 } as const
 type NoteField = keyof typeof NOTE_LABEL
 
-const PANEL_HELP = 'Så kan vi invitere dig til at teste nye funktioner og dele feedback med os igen.'
+const PANEL_HELP =
+  'Som en del af brugerpanelet er du med til at forme Altid&nbsp;Mad sammen med os. Du får mulighed for at teste nye funktioner, dele dine idéer og fortælle os, hvad der fungerer, og hvad vi kan gøre bedre.'
 const TEXT_PLACEHOLDER = 'Skriv dit svar'
 const OPTIONAL = '<span class="optional">Valgfrit</span>'
 const SEND_LABEL = 'Send mine svar'
@@ -337,9 +339,9 @@ function formBody(screen: Extract<SurveyScreen, { kind: 'form' }>): string {
         .map((q) => `<li><a href="#q-${FIELD[q]}">Spørgsmål ${QUESTION_ORDER.indexOf(q) + 1}</a></li>`)
         .join('')}</ul></div>`
     : ''
-  return `<p class="hello">${greeting(screen.firstName)}</p>
-<h1>Hvordan gik de første dage med Altid&nbsp;Mad?</h1>
-<p class="lead">Vi har fem korte spørgsmål til dig. Det tager cirka to minutter, og dine svar går direkte til holdet bag Altid&nbsp;Mad.</p>${summary}
+  // One heading with the greeting in it: "Hej Mette, hvordan …", or "Hej,
+  // hvordan …" without a name. greeting() escapes the name.
+  return `<h1>${greeting(screen.firstName)}, hvordan gik de første dage med Altid&nbsp;Mad?</h1>${summary}
 <form method="POST" action="${actionFor(screen.token)}" class="survey" onsubmit="${ON_SUBMIT}">
 ${choiceQuestion('planFit', SURVEY_RATINGS, RATING_LABEL, values, errors, { extra: note('planFitNote', values, errors) })}
 ${choiceQuestion('easyToUse', SURVEY_RATINGS, RATING_LABEL, values, errors, { extra: note('easyNote', values, errors) })}
@@ -372,8 +374,10 @@ const ALREADY = done('Tak, vi har allerede dine svar', '<p class="lead">Du behø
 // the radio groups, option cards stacked as large tap targets at every width
 // (the card carries the focus ring, so the base rule's ring on the radio inside
 // it is switched off: one ring, not two), and the elaborations under Q1 and Q2
-// quieter than the options above them.
+// quieter than the options above them. The heading carries the first name,
+// so a long one breaks inside the word rather than widening the page.
 const SURVEY_STYLE = `
+h1{overflow-wrap:break-word}
 form.survey{display:block;margin:28px 0 20px}
 .q{border:0;margin:0 0 36px;padding:0;min-width:0}
 legend,.qlabel{display:block;padding:0;margin:0 0 12px;font-size:17px;font-weight:500;line-height:1.4;color:${COLOR.forestDeep};text-wrap:pretty}
