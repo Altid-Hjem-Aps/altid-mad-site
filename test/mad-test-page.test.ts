@@ -70,6 +70,9 @@ describe('googleAccountPrefill', () => {
   it('prefills Gmail addresses only, normalised', () => {
     expect(googleAccountPrefill(' Anna@Gmail.com ')).toBe('anna@gmail.com')
     expect(googleAccountPrefill('bo@googlemail.com')).toBe('bo@googlemail.com')
+    // A plus tag is mail routing, not part of the Google account's name.
+    expect(googleAccountPrefill('thor+madtest@gmail.com')).toBe('thor@gmail.com')
+    expect(googleAccountPrefill('a.b+x+y@googlemail.com')).toBe('a.b@googlemail.com')
     for (const v of ['anna@hotmail.com', 'anna@live.dk', 'anna@firma.dk', 'anna@gmail.com.evil.dk', 'ikke en mail', '']) {
       expect(googleAccountPrefill(v)).toBe('')
     }
