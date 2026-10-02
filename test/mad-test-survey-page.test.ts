@@ -12,6 +12,7 @@ import {
   renderSurveyScreen,
   type SurveyScreen,
 } from '@/lib/mad-test-survey'
+import { bodyHandler, showPage } from './fake-browser'
 
 const EMPTY_VALUES = {
   planFit: '',
@@ -485,23 +486,51 @@ describe('renderSurveyScreen', () => {
     expect(html).not.toContain('<button')
   })
 
-  it.each([SCREENS[0], ERRORS])(
-    'the form (errors: $errors): a real browser reports the open of page survey, a scanner or automated browser does not',
-    (screen) => {
-      const handler = renderSurveyScreen(screen).match(/onpageshow="([^"]*)"/)?.[1] ?? ''
-      expect(handler).toContain(
-        "if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=tok',new URLSearchParams('page=survey'))}}",
-      )
-      expect(handler.match(/sendBeacon\(/g)).toHaveLength(1)
-      // Inline handler in a double-quoted attribute: no bare ampersand.
-      expect(handler).not.toContain('&')
-      // The back/forward reset of the button still runs after it.
-      expect(handler).toContain("f.querySelector('button').textContent='Send mine svar'")
+  it.each([SCREENS[0], ERRORS])('the form (errors: $errors): the beacon is its own onload handler, apart from onpageshow', (screen) => {
+    const html = renderSurveyScreen(screen)
+    expect(bodyHandler(html, 'onload')).toBe(
+      "if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=tok',new URLSearchParams('page=survey'))}}",
+    )
+    expect(bodyHandler(html, 'onpageshow')).not.toContain('sendBeacon')
+    // Inline handlers in double-quoted attributes: no bare ampersand.
+    expect(html.match(/<body[^>]*>/)?.[0]).not.toContain('&')
+  })
+
+  it.each([SCREENS[0], ERRORS])('the form (errors: $errors): a real browser sends one beacon for page survey', (screen) => {
+    const run = showPage(renderSurveyScreen(screen))
+    expect(run.beacons).toEqual([{ url: '/api/mad-testen/open?t=tok', body: 'page=survey' }])
+    expect(run.errors).toEqual([])
+    expect(run.buttons.map((b) => b.textContent)).toEqual(['Send mine svar'])
+  })
+
+  it('the form in an automated browser (navigator.webdriver): no beacon', () => {
+    const run = showPage(renderSurveyScreen(SCREENS[0]), { webdriver: true })
+    expect(run.beacons).toEqual([])
+    expect(run.errors).toEqual([])
+  })
+
+  it.each(['missing', 'throws'] as const)('the form when sendBeacon is %s: no beacon, the page works as before', (mode) => {
+    const run = showPage(renderSurveyScreen(SCREENS[0]), { sendBeacon: mode })
+    expect(run.beacons).toEqual([])
+    expect(run.errors).toHaveLength(mode === 'throws' ? 1 : 0)
+    expect(run.buttons.map((b) => b.textContent)).toEqual(['Send mine svar'])
+  })
+
+  it.each(['ok', 'missing', 'throws'] as const)(
+    'the form, sendBeacon %s, back/forward restore: no beacon, the button says "Send mine svar" and may send again',
+    (mode) => {
+      const run = showPage(renderSurveyScreen(SCREENS[0]), { sendBeacon: mode, restore: true })
+      expect(run.events).toEqual([])
+      expect(run.errors).toEqual([])
+      expect(run.form?.dataset.sent).toBeUndefined()
+      expect(run.buttons.map((b) => b.textContent)).toEqual(['Send mine svar'])
     },
   )
 
   it.each(SCREENS.filter((s) => s.kind !== 'form'))('$kind: no open reported', (screen) => {
-    expect(renderSurveyScreen(screen)).not.toContain('sendBeacon')
+    const html = renderSurveyScreen(screen)
+    expect(html).not.toContain('sendBeacon')
+    expect(showPage(html).beacons).toEqual([])
   })
 
   it('the wording version names the day and the survey', () => {

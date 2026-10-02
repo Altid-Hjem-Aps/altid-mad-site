@@ -100,6 +100,7 @@ import { POST } from '@/app/api/mad-testen/open/route'
 import * as openRoute from '@/app/api/mad-testen/open/route'
 import { GET as yesGet, POST as yesPost } from '@/app/api/mad-testen/route'
 import { GET as surveyGet } from '@/app/api/mad-testen/survey/route'
+import { showPage } from './fake-browser'
 
 const TOKEN = '9b2f7c4e-1d3a-4e5b-8c6d-0a1b2c3d4e5f'
 const PUBLIC_ID = '242eba51-9c3f-49ab-a8f6-373a299169e8'
@@ -200,12 +201,15 @@ const REFUSED_SURVEY: Array<[string, () => string | undefined]> = [
   ['said yes, then unsubscribed', () => (tester({ unsubscribed: true }), TOKEN)],
 ]
 
-// The beacon a rendered page would send: its URL and body, read out of the
-// page's onpageshow handler exactly as the browser would run it.
+// The beacon a rendered page sends when a real browser shows it: the page's
+// own handlers run in the fake browser (test/fake-browser.ts), and the one
+// beacon they send is resolved against the page's origin. null when the page
+// sends none; more than one fails the test.
 function beaconIn(html: string): { target: string; body: string } | null {
-  const handler = html.match(/onpageshow="([^"]*)"/)?.[1] ?? ''
-  const m = handler.match(/navigator\.sendBeacon\('([^']*)',new URLSearchParams\('([^']*)'\)\)/)
-  return m ? { target: `https://altidmad.dk${m[1]}`, body: m[2] } : null
+  const { beacons, errors } = showPage(html)
+  expect(errors).toEqual([])
+  expect(beacons.length).toBeLessThanOrEqual(1)
+  return beacons[0] ? { target: `https://altidmad.dk${beacons[0].url}`, body: beacons[0].body } : null
 }
 
 describe('POST /api/mad-testen/open', () => {

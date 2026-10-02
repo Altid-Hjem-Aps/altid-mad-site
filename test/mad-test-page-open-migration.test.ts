@@ -35,17 +35,46 @@ describe('20261002_mad_test_page_open migration', () => {
     expect(statements.match(/primary key/g)).toHaveLength(1)
   })
 
-  it('the columns in order, and nothing else in the table', () => {
-    const body = statements.slice(statements.indexOf('create table'), statements.indexOf(');'))
-    const cols = [...body.matchAll(/\n\s+(\w+)\s+(text|timestamptz|boolean)\b/g)].map((m) => m[1])
+  it('the columns in order, and nothing else in the table, whatever its type', () => {
+    // Every top-level entry between the create table's parentheses: a column
+    // (its first word is its name) or a table constraint. Commas inside
+    // parentheses, such as the page check's list, belong to their entry.
+    const open = statements.indexOf('(', statements.indexOf('create table'))
+    const entries: string[] = []
+    let depth = 0
+    let current = ''
+    for (const ch of statements.slice(open + 1)) {
+      if (ch === '(') depth += 1
+      if (ch === ')') {
+        if (depth === 0) break
+        depth -= 1
+      }
+      if (ch === ',' && depth === 0) {
+        entries.push(current.trim())
+        current = ''
+      } else {
+        current += ch
+      }
+    }
+    entries.push(current.trim())
+    const constraints = entries.filter((e) => e.startsWith('constraint '))
+    const cols = entries.filter((e) => !e.startsWith('constraint ')).map((e) => e.split(/\s+/)[0])
     expect(cols).toEqual(['public_id', 'page', 'created_at'])
+    expect(constraints).toEqual(['constraint mad_test_page_open_pkey primary key (public_id, page)'])
   })
 
   it('enables row level security, grants no policy, revokes the public roles', () => {
     expect(statements).toContain('alter table public.mad_test_page_open enable row level security')
     expect(statements).not.toContain('create policy')
-    expect(statements).not.toMatch(/\bgrant\b/)
     expect(statements).toContain('revoke all on public.mad_test_page_open from anon, authenticated;')
+  })
+
+  it('grants the server role exactly select and insert, after the revokes, and nobody else anything', () => {
+    const grants = statements.match(/\bgrant\b[^;]*;/g)
+    expect(grants).toEqual(['grant select, insert on public.mad_test_page_open to service_role;'])
+    expect(statements.indexOf(grants![0])).toBeGreaterThan(
+      statements.indexOf('revoke all on public.mad_test_page_open from anon, authenticated;'),
+    )
   })
 
   it('defines no function or trigger, and exactly one foreign key (to signup, cascading)', () => {
@@ -55,9 +84,13 @@ describe('20261002_mad_test_page_open migration', () => {
     expect(statements.match(/on delete cascade/g)).toHaveLength(1)
   })
 
-  it('every statement is safe to re-run: one create if not exists, no add or drop', () => {
+  it('every statement is safe to re-run: one create if not exists, no add, drop or data change', () => {
     expect(statements.match(/create table/g)).toHaveLength(1)
-    expect(statements).not.toMatch(/\b(add|drop|insert|update|delete from)\b/)
+    // The one grant (pinned exactly above) names the insert privilege; granting
+    // again changes nothing. Every other statement must touch no data or column.
+    const rest = statements.replace('grant select, insert on public.mad_test_page_open to service_role;', '')
+    expect(rest).not.toMatch(/\bgrant\b/)
+    expect(rest).not.toMatch(/\b(add|drop|insert|update|delete from)\b/)
   })
 
   it('touches no other table', () => {

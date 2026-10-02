@@ -424,7 +424,7 @@ export function renderSurveyScreen(screen: SurveyScreen): string {
       return renderMadTestShell(
         'Fem korte spørgsmål',
         formBody(screen),
-        `${reportOpen(screen.token, 'survey')};${RESET_SEND}`,
+        { onLoad: reportOpen(screen.token, 'survey'), onPageShow: RESET_SEND },
         SURVEY_STYLE,
       )
     case 'thanks':

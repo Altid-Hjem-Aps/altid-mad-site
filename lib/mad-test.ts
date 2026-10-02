@@ -24,7 +24,9 @@
  * Opening a page is recorded by the browser, not the GET (Thor 2/10, so we see
  * who opened a page and left): the form, the iPhone route and the Google-account
  * step each send one beacon to /api/mad-testen/open when a real browser shows
- * them (reportOpen below). The answer never waits for it.
+ * them (reportOpen below), from the page's load handler, never from the
+ * onpageshow handler that sends or resets the form. The answer never waits for
+ * it, and a beacon that fails cannot stop the form.
  */
 
 /**
@@ -173,8 +175,13 @@ export function isMadTestPage(value: unknown): value is MadTestPage {
  * iPhone route sending its form straight after, and nothing waits for it: the
  * page and the answer work the same whether it lands or not. Same guard as
  * AUTO_SEND: a mail scanner that only fetches the page runs no script, and an
- * automated browser (navigator.webdriver) sends nothing. Every open sends; the
- * server keeps the first.
+ * automated browser (navigator.webdriver) sends nothing.
+ * It is the page's onload handler, on its own: an exception in it (a browser
+ * whose sendBeacon throws) cannot stop the onpageshow handler, so the iPhone
+ * route still sends its form and a restored page still gets its buttons back.
+ * load fires before pageshow, so the beacon is queued before the iPhone route
+ * sends its form. A page restored from the back/forward cache fires no load
+ * and sends nothing; the server keeps the first open anyway.
  * The token goes into a single-quoted string inside a double-quoted attribute,
  * so it is URL-encoded with ' encoded too (encodeURIComponent leaves it): what
  * is left holds no quote, & or <, and needs no further escaping.
@@ -227,12 +234,12 @@ function actionFor(token: string): string {
   return escapeHtml(`/api/mad-testen?t=${encodeURIComponent(token)}`)
 }
 
-function content(screen: MadTestScreen): { title: string; body: string; onPageShow?: string } {
+function content(screen: MadTestScreen): { title: string; body: string; handlers?: PageHandlers } {
   switch (screen.kind) {
     case 'form':
       return {
         title: 'Vil du teste Altid Mad?',
-        onPageShow: `${reportOpen(screen.token, 'optin')};${RESET_BUTTONS}`,
+        handlers: { onLoad: reportOpen(screen.token, 'optin'), onPageShow: RESET_BUTTONS },
         body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad før alle andre?</h1>
 <p class="lead">Vælg, om du vil teste på iPhone eller Android.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit personlige testlogin på mail.</p>
@@ -245,8 +252,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
     case 'confirm':
       return {
         title: 'Test Altid Mad på iPhone',
-        // The beacon first: it is queued before the form sends and leaves.
-        onPageShow: `${reportOpen(screen.token, 'optin')};${AUTO_SEND}`,
+        handlers: { onLoad: reportOpen(screen.token, 'optin'), onPageShow: AUTO_SEND },
         body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad på din iPhone?</h1>
 <p class="lead">Testen foregår gennem Apples gratis app TestFlight.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart testversionen er klar i TestFlight.</p>
@@ -259,7 +265,7 @@ ${otherPhone(screen.token, 'android', 'Jeg har Android')}
     case 'google':
       return {
         title: 'Din Google-konto',
-        onPageShow: `${reportOpen(screen.token, 'optin')};${RESET_BUTTONS};${GA_CHECK}`,
+        handlers: { onLoad: reportOpen(screen.token, 'optin'), onPageShow: `${RESET_BUTTONS};${GA_CHECK}` },
         body: `<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>
 <p class="lead">For at give dig adgang til testen skal vi bruge den Google-konto, du er logget ind med i Google&nbsp;Play på din Android-telefon.</p>
 <p class="lead">Det er ofte en Gmail-adresse.</p>
@@ -343,17 +349,25 @@ button:focus-visible{border-radius:999px}
 
 /** A complete HTML document for one screen. Every interpolated value is escaped. */
 export function renderMadTestScreen(screen: MadTestScreen): string {
-  const { title, body, onPageShow } = content(screen)
-  return renderMadTestShell(title, body, onPageShow)
+  const { title, body, handlers } = content(screen)
+  return renderMadTestShell(title, body, handlers)
 }
+
+/**
+ * The page's two inline handlers on <body>. Two attributes, so two separate
+ * handlers: an exception in one never stops the other. onLoad reports the open
+ * (reportOpen); onPageShow sends or resets the form.
+ */
+export type PageHandlers = { onLoad?: string; onPageShow?: string }
 
 /**
  * The page around a screen: head, the green header with the logo, main, footer.
  * Shared with the day-5 survey (lib/mad-test-survey.ts), which adds its own
  * rules after STYLE through `extraStyle`. `title` is escaped here; `body` and
- * `onPageShow` are trusted markup the caller built with escaped values.
+ * the handlers are trusted markup the caller built with escaped values.
  */
-export function renderMadTestShell(title: string, body: string, onPageShow?: string, extraStyle = ''): string {
+export function renderMadTestShell(title: string, body: string, handlers: PageHandlers = {}, extraStyle = ''): string {
+  const { onLoad, onPageShow } = handlers
   return `<!doctype html>
 <html lang="da"><head>
 <meta charset="utf-8"/>
@@ -365,7 +379,7 @@ export function renderMadTestShell(title: string, body: string, onPageShow?: str
 <link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin/>
 <style>${STYLE}${extraStyle}</style>
 </head>
-<body${onPageShow ? ` onpageshow="${onPageShow}"` : ''}>
+<body${onLoad ? ` onload="${onLoad}"` : ''}${onPageShow ? ` onpageshow="${onPageShow}"` : ''}>
 <header class="bar"><div class="bar-in"><img src="/email/mad/altid-mad-logo-white.png" alt="Altid Mad" width="88" height="47"/></div></header>
 <main>
 ${body}

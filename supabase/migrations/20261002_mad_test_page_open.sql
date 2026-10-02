@@ -12,8 +12,8 @@
 -- The browser writes it, not the page's GET: the page sends a beacon to
 -- altidmad.dk/api/mad-testen/open when it is shown (lib/mad-test.ts,
 -- reportOpen), so a mail scanner that only fetches the link is never counted.
--- The beacon goes out on every open; the page inserts with ON CONFLICT DO
--- NOTHING, so the first time stays.
+-- The beacon goes out each time the page loads; the endpoint inserts with ON
+-- CONFLICT DO NOTHING, so the first time stays.
 --
 -- public_id references signup with ON DELETE CASCADE: erasing a signup row
 -- (GDPR erasure) removes its opens in the same statement, and an open can only
@@ -41,3 +41,6 @@ alter table public.mad_test_page_open enable row level security;
 -- write. The anon key must never reach this table, so its table privileges go
 -- too (Supabase grants them to anon and authenticated by default).
 revoke all on public.mad_test_page_open from anon, authenticated;
+-- The server's own role, granted explicitly so the page works on a project
+-- where new tables get no automatic grants. Granting again changes nothing.
+grant select, insert on public.mad_test_page_open to service_role;
