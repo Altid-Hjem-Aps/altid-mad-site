@@ -460,6 +460,67 @@ export async function getMadTestOptin(publicId: string): Promise<{
   }
 }
 
+// The Android answers in mad_test_optin, as an exact count request: PostgREST
+// answers with the number only (head), no row is downloaded.
+function androidAnswers() {
+  return getClient()
+    .from('mad_test_optin')
+    .select('public_id', { count: 'exact', head: true })
+    .eq('device', 'android')
+}
+
+// A count from PostgREST as a number of rows: a finite, non-negative integer.
+// supabase-js gives null without a Content-Range count and NaN for one it
+// cannot parse; either throws, naming the count.
+function rowCount(count: number | null, which: string): number {
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
+    throw new Error(`mad_test_optin ${which}: not a count: ${String(count)}`)
+  }
+  return count
+}
+
+/**
+ * How many people said yes on Android. Errors throw, and so does an answer
+ * without a count: the yes-page shows its error screen, never a number of
+ * places it cannot back up.
+ */
+export async function countMadTestAndroid(): Promise<number> {
+  const { count, error } = await androidAnswers()
+  if (error) throw new Error(`mad_test_optin count failed: ${error.message}`)
+  return rowCount(count, 'Android count')
+}
+
+/**
+ * One Android answer's place in the order the seat export hands out places
+ * (export-mad-test-seats.py in altid-dashboard): 1 + the Android answers given
+ * strictly before it. A tie in time goes to the lower public_id, as in the
+ * export (a stable sort on time over rows read in public_id order).
+ * The export also puts people who brought in a signup before the invitation
+ * first, which this does not count: the page uses the place only to choose
+ * between the thank-you and the waiting-list screen, never prints it, and
+ * holds 6 places back for those referrers (MAD_TEST_ANDROID_REFERRER_PLACES).
+ *
+ * A known race, left as it is: created_at is the start of the inserting
+ * transaction, not its commit. Two answers landing within milliseconds at the
+ * last promised place can each count before the other is visible, so both get
+ * place 90 and both are thanked; afterwards the later one is place 91 and sees
+ * the waiting-list screen if it opens the link again. The export still has a
+ * seat for both (it seats 96), which is one more reason for the holdback.
+ * test/mad-testen-route.test.ts pins this case.
+ */
+export async function getMadTestAndroidPlace(publicId: string, createdAt: string): Promise<number> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestAndroidPlace: empty publicId')
+  if (!createdAt) throw new Error('getMadTestAndroidPlace: empty createdAt')
+  const [before, tied] = await Promise.all([
+    androidAnswers().lt('created_at', createdAt),
+    androidAnswers().eq('created_at', createdAt).lt('public_id', id),
+  ])
+  if (before.error) throw new Error(`mad_test_optin count failed: ${before.error.message}`)
+  if (tied.error) throw new Error(`mad_test_optin count failed: ${tied.error.message}`)
+  return 1 + rowCount(before.count, 'count before this answer') + rowCount(tied.count, 'count at the same time')
+}
+
 /**
  * Record a Mad-testen answer. Insert with ON CONFLICT DO NOTHING: a repeat
  * answer (double tap, back button, second visit) keeps the first row's device,

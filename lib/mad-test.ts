@@ -27,13 +27,18 @@
  * them (reportOpen below), from the page's load handler, never from the
  * onpageshow handler that sends or resets the form. The answer never waits for
  * it, and a beacon that fails cannot stop the form.
+ *
+ * Android places are limited (MAD_TEST_ANDROID_PAGE_PLACES). The screens that ask
+ * about Android say how many are left, counted when the page is rendered, and
+ * an Android answer beyond the places gets the waiting-list screens (Thor
+ * 2/10). The answer is stored the same way either way.
  */
 
 /**
  * Stored on every yes row. Bump it whenever the form screen's wording changes,
  * so each row resolves to the exact text the person said yes to.
  */
-export const MAD_TEST_COPY_VERSION = '2026-10-01-mad-test-6'
+export const MAD_TEST_COPY_VERSION = '2026-10-02-mad-test-8'
 
 /** The two altidmad.dk signup forms. Hjem-form signups are not in the test. */
 export const MAD_TEST_SOURCES: readonly string[] = ['altid-mad', 'altid-mad-exit']
@@ -49,6 +54,54 @@ export function isMadTestEligible(s: {
   source: string | null
 }): boolean {
   return !s.unsubscribed && s.consentMad && s.source !== null && MAD_TEST_SOURCES.includes(s.source)
+}
+
+/**
+ * Android places in the Mad-testen. Google Play's internal test takes at most
+ * 100 testers (MAD_TEST_ANDROID_PLACES), and the team holds 4 of them
+ * (MAD_TEST_ANDROID_TEAM_PLACES, Thor 2/10). The counter on the page speaks of
+ * all 100, the number people understand (Thor 2/10).
+ */
+export const MAD_TEST_ANDROID_PLACES = 100
+export const MAD_TEST_ANDROID_TEAM_PLACES = 4
+/**
+ * Places the page holds back for referrers (Thor 2/10). The seat export
+ * (export-mad-test-seats.py in altid-dashboard) seats people who brought in a
+ * signup before the invitation first, which the page cannot know, so it can
+ * push a person the page has already thanked back by as many places as there
+ * are such referrers among the Android answers.
+ */
+export const MAD_TEST_ANDROID_REFERRER_PLACES = 6
+
+/**
+ * The places testers can get: 96, what the seat export really hands out, in
+ * the order people said yes with referrers first; everyone after the last
+ * place waits on its waiting list.
+ */
+export const MAD_TEST_ANDROID_TESTER_PLACES = MAD_TEST_ANDROID_PLACES - MAD_TEST_ANDROID_TEAM_PLACES
+
+/**
+ * The places the page promises: 90, the tester places less the 6 held back
+ * for referrers. Up to 6 referrers can go ahead of a person the page thanked
+ * and that person still gets one of the 96. The counter counts these, with the
+ * team's 4 and the 6 held back as taken from the start: that is why it starts
+ * at 90 of 100, not 100 of 100. Place 90 or lower gets the thank-you, 91 or
+ * higher the waiting list.
+ */
+export const MAD_TEST_ANDROID_PAGE_PLACES = MAD_TEST_ANDROID_TESTER_PLACES - MAD_TEST_ANDROID_REFERRER_PLACES
+
+/** Places the page still promises after `androidYes` Android answers: 90 at most, never below 0. */
+export function androidSeatsLeft(androidYes: number): number {
+  if (!Number.isInteger(androidYes) || androidYes < 0) {
+    throw new Error(`androidSeatsLeft: not a count: ${androidYes}`)
+  }
+  return Math.max(0, MAD_TEST_ANDROID_PAGE_PLACES - androidYes)
+}
+
+/** Whether a place in the Android order (1 = the first Android yes) is one the page promises. */
+export function withinAndroidSeats(place: number): boolean {
+  if (!Number.isInteger(place) || place < 1) throw new Error(`withinAndroidSeats: not a place: ${place}`)
+  return place <= MAD_TEST_ANDROID_PAGE_PLACES
 }
 
 /** The two answers on the form. */
@@ -102,15 +155,19 @@ export function escapeHtml(value: string): string {
 
 export type MadTestScreen =
   // No phone chosen in the link (an old or hand-typed link): both answers.
-  | { kind: 'form'; firstName: string | null; token: string }
+  // `androidLeft` is the number of Android places left (androidSeatsLeft).
+  | { kind: 'form'; firstName: string | null; token: string; androidLeft: number }
   // The iPhone route from the mail: a form that sends itself (or one button).
   | { kind: 'confirm'; firstName: string | null; token: string }
   // Step two for Android: which Google account is on the phone. `value` is what
   // the field shows (the signup email first, then whatever was typed); `retry`
   // is true when the last submission was not an address.
-  | { kind: 'google'; token: string; value: string; retry: boolean }
+  | { kind: 'google'; token: string; value: string; retry: boolean; androidLeft: number }
   | { kind: 'thanks'; device: MadTestDevice; firstName: string | null }
   | { kind: 'already'; device: MadTestDevice }
+  // An Android answer whose place in the Android order is beyond the places.
+  | { kind: 'thanks-waitlist'; firstName: string | null }
+  | { kind: 'already-waitlist' }
   | { kind: 'invalid' }
   | { kind: 'error' }
 
@@ -132,6 +189,11 @@ const NEXT_STEP: Record<MadTestDevice, string> = {
   iphone: 'Du får en mail med dit login, så snart testversionen er klar i TestFlight.',
   android: 'Du får en mail med dit login, så snart testversionen er klar i Google&nbsp;Play.',
 }
+
+// The Android answer beyond the places, on the thank-you and already-answered
+// screens. It names no place: the export puts people who brought in a signup
+// first, so a place can still move.
+const WAITLIST_NEXT = 'Alle Android-pladser er taget lige nu. Vi skriver til dig, hvis der bliver en plads.'
 
 const QUESTIONS = `Har du spørgsmål, kan du skrive til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.`
 
@@ -224,14 +286,38 @@ function thanksTitle(firstName: string | null): string {
   return name ? `Tak ${name}, du er med` : 'Tak, du er med'
 }
 
-function answered(title: string, device: MadTestDevice): { title: string; body: string } {
+function waitlistTitle(firstName: string | null): string {
+  const name = (firstName ?? '').trim()
+  return name ? `Tak ${name}, du står på ventelisten til Android` : 'Tak, du står på ventelisten til Android'
+}
+
+// `next` is trusted markup: NEXT_STEP or WAITLIST_NEXT.
+function answered(title: string, next: string): { title: string; body: string } {
   return {
     title,
     body: `${CHECK}
 <h1>${escapeHtml(title)}</h1>
-<p class="lead">${NEXT_STEP[device]}</p>
+<p class="lead">${next}</p>
 <p class="note">${QUESTIONS}</p>`,
   }
+}
+
+// The Android counter, under the Android button on the form and the
+// Google-account step. "Ventelisten til Android", never just "ventelisten":
+// the Google-account step also names the altidmad.dk waiting list the person
+// signed up on. It counts out of all 100 places, the team's 4 and the 6 held
+// back already taken, so `left` is the places the page still promises and
+// reads "90 af 100" at the start. A number outside
+// 0..MAD_TEST_ANDROID_PAGE_PLACES was not counted by androidSeatsLeft and is
+// never printed.
+function androidSeats(left: number): string {
+  if (!Number.isInteger(left) || left < 0 || left > MAD_TEST_ANDROID_PAGE_PLACES) {
+    throw new Error(`androidSeats: not a number of places left: ${left}`)
+  }
+  if (left === 0) {
+    return `<p class="note">Alle ${MAD_TEST_ANDROID_PLACES} Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>`
+  }
+  return `<p class="note">Der er ${left} af ${MAD_TEST_ANDROID_PLACES} pladser tilbage til Android.</p>`
 }
 
 function actionFor(token: string): string {
@@ -251,6 +337,7 @@ function content(screen: MadTestScreen): { title: string; body: string; handlers
   ${answerButton('iphone', 'primary')}
   ${answerButton('android', 'secondary')}
 </form>
+${androidSeats(screen.androidLeft)}
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'confirm':
@@ -279,15 +366,20 @@ ${otherPhone(screen.token, 'android', 'Jeg har Android')}
   <input id="ga" type="email" name="google_account" value="${escapeHtml(screen.value)}" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="navn@gmail.com" required${screen.retry ? ' aria-invalid="true" aria-describedby="ga-err" autofocus' : ''}/>${screen.retry ? `\n  <p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>` : ''}
   <button type="submit" class="primary" aria-live="polite" data-l="${GOOGLE_LABEL}">${GOOGLE_LABEL}</button>
 </form>
+${androidSeats(screen.androidLeft)}
 <p class="note pair">Vi bruger kun din Google-konto til at give dig adgang til testen i Google&nbsp;Play.</p>
 <p class="note">Dit login til Altid&nbsp;Mad er stadig den <span class="nw">e-mailadresse</span>, du skrev dig på ventelisten med.</p>
 ${otherPhone(screen.token, 'iphone', 'Jeg har en iPhone')}
 <p class="small"><a href="/privatlivspolitik">Sådan behandler vi dine data</a></p>`,
       }
     case 'thanks':
-      return answered(thanksTitle(screen.firstName), screen.device)
+      return answered(thanksTitle(screen.firstName), NEXT_STEP[screen.device])
     case 'already':
-      return answered('Vi har allerede dit ja', screen.device)
+      return answered('Vi har allerede dit ja', NEXT_STEP[screen.device])
+    case 'thanks-waitlist':
+      return answered(waitlistTitle(screen.firstName), WAITLIST_NEXT)
+    case 'already-waitlist':
+      return answered('Vi har allerede dit ja', WAITLIST_NEXT)
     case 'invalid':
       return {
         title: 'Linket virker ikke',
