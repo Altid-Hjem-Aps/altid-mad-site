@@ -69,14 +69,18 @@ export function normalizeGoogleAccount(value: unknown): string | null {
 
 /**
  * What the Google-account field starts with: the signup email when it is a
- * Gmail address (then it is a Google account), else empty. A Hotmail or work
+ * Gmail address (then it is a Google account, without any "+tag"), else empty. A Hotmail or work
  * address is usually not the account on the phone, and a person who taps Send
  * without reading would land on the tester list with an address that can
  * never install the build.
  */
 export function googleAccountPrefill(signupEmail: string): string {
   const v = normalizeGoogleAccount(signupEmail)
-  return v !== null && /@(gmail|googlemail)\.com$/.test(v) ? v : ''
+  if (v === null || !/@(gmail|googlemail)\.com$/.test(v)) return ''
+  // "anna+tilbud@gmail.com" is mail for the account anna@gmail.com: Gmail
+  // ignores everything from the plus sign, and Google Play knows the account
+  // only by its own address, so the tag would put a non-account on the list.
+  return v.replace(/\+[^@]*@/, '@')
 }
 
 /** HTML-escape a value for text content and double-quoted attributes. */
