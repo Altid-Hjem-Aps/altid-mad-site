@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -9,6 +10,9 @@ import {
   isMadTestEligible,
   isMadTestPage,
   renderMadTestScreen,
+  androidSeatsLeft,
+  withinAndroidSeats,
+  MAD_TEST_ANDROID_SEATS,
   MAD_TEST_PAGES,
   MAD_TEST_COPY_VERSION,
   type MadTestScreen,
@@ -16,16 +20,18 @@ import {
 import { bodyHandler, showPage } from './fake-browser'
 
 const SCREENS: MadTestScreen[] = [
-  { kind: 'form', firstName: 'Anna', token: 'tok' },
+  { kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: 96 },
   { kind: 'confirm', firstName: 'Anna', token: 'tok' },
-  { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false },
-  { kind: 'google', token: 'tok', value: 'anna', retry: true },
+  { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 96 },
+  { kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 96 },
   { kind: 'thanks', device: 'iphone', firstName: 'Anna' },
   { kind: 'thanks', device: 'android', firstName: null },
   { kind: 'already', device: 'iphone' },
   { kind: 'already', device: 'android' },
   { kind: 'invalid' },
   { kind: 'error' },
+  { kind: 'thanks-waitlist', firstName: 'Anna' },
+  { kind: 'already-waitlist' },
 ]
 // The screens that ask (and so report the open): the form, the iPhone route, the Google-account step.
 const ASKING = SCREENS.slice(0, 4)
@@ -61,6 +67,34 @@ describe('isMadTestPage', () => {
     expect(isMadTestPage('optin')).toBe(true)
     expect(isMadTestPage('survey')).toBe(true)
     for (const v of ['OPTIN', 'thanks', '', null, undefined, 1]) expect(isMadTestPage(v)).toBe(false)
+  })
+})
+
+describe('Android places', () => {
+  it('96: Google Play\'s 100 internal testers less the team\'s 4', () => {
+    expect(MAD_TEST_ANDROID_SEATS).toBe(96)
+  })
+
+  it.each([
+    [0, 96],
+    [94, 2],
+    [95, 1],
+    [96, 0],
+    [97, 0],
+    [500, 0],
+  ])('%i Android answers leave %i places, never fewer than 0', (yesSoFar, left) => {
+    expect(androidSeatsLeft(yesSoFar)).toBe(left)
+  })
+
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])('a count of %s is not a count: throws', (n) => {
+    expect(() => androidSeatsLeft(n)).toThrow('androidSeatsLeft: not a count')
+  })
+
+  it('places 1 to 96 are places, 97 is the waiting list', () => {
+    expect(withinAndroidSeats(1)).toBe(true)
+    expect(withinAndroidSeats(96)).toBe(true)
+    expect(withinAndroidSeats(97)).toBe(false)
+    for (const n of [0, -3, 2.5, Number.NaN]) expect(() => withinAndroidSeats(n)).toThrow('withinAndroidSeats: not a place')
   })
 })
 
@@ -136,7 +170,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the Google-account step: one field prefilled, a hidden android answer, one button, the privacy link', () => {
-    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false })
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 96 })
     expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html.match(/<button/g)).toHaveLength(1)
@@ -157,7 +191,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the Google-account retry points the field at its error text', () => {
-    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true })
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 96 })
     expect(html).toContain('aria-invalid="true" aria-describedby="ga-err" autofocus')
     expect(html).toContain('<p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>')
   })
@@ -192,7 +226,7 @@ describe('renderMadTestScreen', () => {
 
   it('escapes the token in the form action', () => {
     const odd = `a"b'c<d>&e`
-    const html = renderMadTestScreen({ kind: 'form', firstName: null, token: odd })
+    const html = renderMadTestScreen({ kind: 'form', firstName: null, token: odd, androidLeft: 96 })
 
     expect(html).toContain(`action="/api/mad-testen?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
@@ -259,7 +293,7 @@ describe('renderMadTestScreen', () => {
   )
 
   it.each(['missing', 'throws'] as const)('the Google-account step when sendBeacon is %s: its own handler still checks the field', (mode) => {
-    const empty = showPage(renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false }), { sendBeacon: mode })
+    const empty = showPage(renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: 96 }), { sendBeacon: mode })
     expect(empty.buttons.map((b) => b.disabled)).toEqual([true])
     const filled = showPage(renderMadTestScreen(SCREENS[2]), { sendBeacon: mode })
     expect(filled.buttons.map((b) => b.disabled)).toEqual([false])
@@ -277,16 +311,96 @@ describe('renderMadTestScreen', () => {
 
   it('the token in the beacon cannot leave its string or the attribute', () => {
     const odd = `a"b'c<d>&e`
-    for (const kind of ['form', 'confirm'] as const) {
-      const html = renderMadTestScreen({ kind, firstName: null, token: odd })
+    const screens: MadTestScreen[] = [
+      { kind: 'form', firstName: null, token: odd, androidLeft: 96 },
+      { kind: 'confirm', firstName: null, token: odd },
+    ]
+    for (const screen of screens) {
+      const html = renderMadTestScreen(screen)
       expect(html).toContain(`onload="if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=a%22b%27c%3Cd%3E%26e',`)
       expect(html.match(/<body[^>]*>/)?.[0]).not.toContain('&')
       expect(showPage(html).beacons).toEqual([{ url: '/api/mad-testen/open?t=a%22b%27c%3Cd%3E%26e', body: 'page=optin' }])
     }
   })
 
+  const LEFT = (n: number) => `<p class="note">Der er ${n} af 96 pladser tilbage til Android.</p>`
+  const FULL =
+    '<p class="note">Alle 96 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
+
+  it.each([96, 2, 1])('the form with %i places left: the counter right under the buttons', (left) => {
+    const html = renderMadTestScreen({ kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: left })
+    expect(html).toContain(`</form>\n${LEFT(left)}\n<p class="small"><a href="/privatlivspolitik">`)
+    expect(html).not.toContain('Alle 96 Android-pladser')
+  })
+
+  it('the form with no place left: says all places are taken and how the waiting list works', () => {
+    const html = renderMadTestScreen({ kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: 0 })
+    expect(html).toContain(`</form>\n${FULL}\n<p class="small">`)
+    expect(html).not.toContain('Der er')
+    expect(html.match(/<button/g)).toHaveLength(2)
+  })
+
+  it.each([
+    [96, false],
+    [1, true],
+    [0, false],
+    [0, true],
+  ])('the Google-account step with %i places left (retry %s): the counter under the button', (left, retry) => {
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry, androidLeft: left })
+    expect(html).toContain(`</button>\n</form>\n${left === 0 ? FULL : LEFT(left)}\n<p class="note pair">`)
+    expect(html.match(/<button/g)).toHaveLength(1)
+  })
+
+  it.each([-1, 97, 1.5])('a number of places left that was not counted (%s) is never printed: throws', (left) => {
+    expect(() => renderMadTestScreen({ kind: 'form', firstName: null, token: 'tok', androidLeft: left })).toThrow(
+      'androidSeats: not a number of places left',
+    )
+    expect(() => renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: left })).toThrow(
+      'androidSeats: not a number of places left',
+    )
+  })
+
+  it('the waiting-list thanks: the name in the heading like the thanks, the waiting-list line, no place number', () => {
+    const html = renderMadTestScreen({ kind: 'thanks-waitlist', firstName: ' Anna ' })
+    expect(html).toContain('<h1>Tak Anna, du står på ventelisten til Android</h1>')
+    expect(html).toContain('<p class="lead">Alle Android-pladser er taget lige nu. Vi skriver til dig, hvis der bliver en plads.</p>')
+    expect(html).toContain('Har du spørgsmål, kan du skrive til <a href="mailto:hej@altidmad.dk">hej@altidmad.dk</a>.')
+    expect(html).not.toContain('Du får en mail med dit login')
+    expect(renderMadTestScreen({ kind: 'thanks-waitlist', firstName: null })).toContain(
+      '<h1>Tak, du står på ventelisten til Android</h1>',
+    )
+    const marked = renderMadTestScreen({ kind: 'thanks-waitlist', firstName: "<b> & O'Neill" })
+    expect(marked).toContain('<h1>Tak &lt;b&gt; &amp; O&#39;Neill, du står på ventelisten til Android</h1>')
+    expect(marked).toContain('<title>Tak &lt;b&gt; &amp; O&#39;Neill, du står på ventelisten til Android | Altid Mad</title>')
+  })
+
+  it('the waiting-list already screen: "Vi har allerede dit ja" and the waiting-list line', () => {
+    const html = renderMadTestScreen({ kind: 'already-waitlist' })
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>\n<p class="lead">Alle Android-pladser er taget lige nu. Vi skriver til dig, hvis der bliver en plads.</p>')
+    expect(html).not.toContain('<form')
+  })
+
+  // sha256 of each screen as origin/main rendered it before the Android places
+  // (5c79c02, 2/10): the iPhone screens and an Android answer within the
+  // places must not change by one byte.
+  it.each([
+    [{ kind: 'confirm', firstName: 'Anna', token: 'tok' }, 'df3209f1535c662f8927e2033810f1dbae1fbaa2a057632f507f5f6a16b8575e'],
+    [
+      { kind: 'confirm', firstName: null, token: '9b2f7c4e-1d3a-4e5b-8c6d-0a1b2c3d4e5f' },
+      'b8563602a9b89aea46859e0e41f4e13b967118e1793977201545f590fba22b9c',
+    ],
+    [{ kind: 'thanks', device: 'iphone', firstName: 'Anna' }, '4769ebbef19298d5bbdcbd189580215570380dfa91b5942159088cfeaf85423a'],
+    [{ kind: 'thanks', device: 'iphone', firstName: null }, 'd3e66786f6e2e30754ac1134fe8170ead2f22fed9cda606b787e80583c0c8582'],
+    [{ kind: 'already', device: 'iphone' }, '53c200a82271e8cb17847a0668ccf95112dbbda96b447e5a7941fb7502d926a6'],
+    [{ kind: 'thanks', device: 'android', firstName: 'Anna' }, '3a7cbe1178d28eda145d33e800d50c97a7e989b11cb46574cc12b8c79f73d320'],
+    [{ kind: 'thanks', device: 'android', firstName: null }, '3dda9bb210d1538e25f1a20dccc79843ecb38b3e640328d3f77fa8b7e4d41349'],
+    [{ kind: 'already', device: 'android' }, 'e1ac321227e0032118fe4b4f6c9152f0f6e34a689ab56d53f0823720f87483a6'],
+  ] as Array<[MadTestScreen, string]>)('unchanged byte for byte: %o', (screen, sha256) => {
+    expect(createHash('sha256').update(renderMadTestScreen(screen)).digest('hex')).toBe(sha256)
+  })
+
   it('the wording version names today and the test', () => {
-    expect(MAD_TEST_COPY_VERSION).toBe('2026-10-01-mad-test-6')
+    expect(MAD_TEST_COPY_VERSION).toBe('2026-10-02-mad-test-7')
   })
 
   it('the self-hosted font file the pages point at exists', () => {

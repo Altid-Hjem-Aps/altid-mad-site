@@ -48,10 +48,32 @@ const db = {
   clock: 0,
 }
 
+// A PostgREST count request ({ count: 'exact', head: true }) with eq and lt
+// filters: the yes-page counts the Android answers when it shows the form or the
+// Google-account step.
+function countRequest(table: string) {
+  const filters: Array<[string, string, string]> = []
+  const query = {
+    eq: (col: string, value: string) => (filters.push(['eq', col, value]), query),
+    lt: (col: string, value: string) => (filters.push(['lt', col, value]), query),
+    then: (resolve: (r: { count: number; error: null }) => unknown) => {
+      if (table !== 'mad_test_optin') throw new Error(`unexpected count on ${table}`)
+      const rows = [...db.optins.values()].filter((row) =>
+        filters.every(([op, col, value]) => {
+          const v = String((row as Record<string, unknown>)[col])
+          return op === 'eq' ? v === value : v < value
+        }),
+      )
+      return Promise.resolve(resolve({ count: rows.length, error: null }))
+    },
+  }
+  return query
+}
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
     from: (table: string) => ({
-      select: (cols: string) => ({
+      select: (cols: string, opts?: { count?: string; head?: boolean }) => opts?.count === 'exact' && opts.head ? countRequest(table) : ({
         eq: (col: string, value: string) => ({
           maybeSingle: () => {
             db.filters.push({ table, col, value })

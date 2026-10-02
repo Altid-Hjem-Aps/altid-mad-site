@@ -460,6 +460,52 @@ export async function getMadTestOptin(publicId: string): Promise<{
   }
 }
 
+// The Android answers in mad_test_optin, as an exact count request: PostgREST
+// answers with the number only (head), no row is downloaded.
+function androidAnswers() {
+  return getClient()
+    .from('mad_test_optin')
+    .select('public_id', { count: 'exact', head: true })
+    .eq('device', 'android')
+}
+
+/**
+ * How many people said yes on Android. Errors throw, and so does an answer
+ * without a count: the yes-page shows its error screen, never a number of
+ * places it cannot back up.
+ */
+export async function countMadTestAndroid(): Promise<number> {
+  const { count, error } = await androidAnswers()
+  if (error) throw new Error(`mad_test_optin count failed: ${error.message}`)
+  if (typeof count !== 'number') throw new Error('mad_test_optin count missing from the answer')
+  return count
+}
+
+/**
+ * One Android answer's place in the order the seat export hands out places
+ * (export-mad-test-seats.py in altid-dashboard): 1 + the Android answers given
+ * strictly before it. A tie in time goes to the lower public_id, as in the
+ * export (a stable sort on time over rows read in public_id order).
+ * The export also puts people who brought in a signup before the invitation
+ * first, which this does not count: the page uses the place only to choose
+ * between the thank-you and the waiting-list screen, and never prints it.
+ */
+export async function getMadTestAndroidPlace(publicId: string, createdAt: string): Promise<number> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestAndroidPlace: empty publicId')
+  if (!createdAt) throw new Error('getMadTestAndroidPlace: empty createdAt')
+  const [before, tied] = await Promise.all([
+    androidAnswers().lt('created_at', createdAt),
+    androidAnswers().eq('created_at', createdAt).lt('public_id', id),
+  ])
+  if (before.error) throw new Error(`mad_test_optin count failed: ${before.error.message}`)
+  if (tied.error) throw new Error(`mad_test_optin count failed: ${tied.error.message}`)
+  if (typeof before.count !== 'number' || typeof tied.count !== 'number') {
+    throw new Error('mad_test_optin count missing from the answer')
+  }
+  return 1 + before.count + tied.count
+}
+
 /**
  * Record a Mad-testen answer. Insert with ON CONFLICT DO NOTHING: a repeat
  * answer (double tap, back button, second visit) keeps the first row's device,

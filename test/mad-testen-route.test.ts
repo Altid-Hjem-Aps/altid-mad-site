@@ -42,12 +42,39 @@ const db = {
   signupReadError: null as { message: string } | null,
   optinReadError: null as { message: string } | null,
   insertError: null as { message: string } | null,
+  // Exact count requests (select with { count: 'exact', head: true }): their
+  // filters, in order, and an error to answer them with.
+  counts: [] as Array<{ table: string; filters: Array<[string, string, string]> }>,
+  countError: null as { message: string } | null,
+}
+
+// A PostgREST count request: eq and lt filters chained on the select, the
+// count of matching rows as the answer (no rows), like { count: 'exact', head: true }.
+function countRequest(table: string) {
+  const filters: Array<[string, string, string]> = []
+  const query = {
+    eq: (col: string, value: string) => (filters.push(['eq', col, value]), query),
+    lt: (col: string, value: string) => (filters.push(['lt', col, value]), query),
+    then: (resolve: (r: { count: number | null; error: { message: string } | null }) => unknown) => {
+      if (table !== 'mad_test_optin') throw new Error(`unexpected count on ${table}`)
+      db.counts.push({ table, filters: [...filters] })
+      if (db.countError) return Promise.resolve(resolve({ count: null, error: db.countError }))
+      const rows = [...db.optins.values()].filter((row) =>
+        filters.every(([op, col, value]) => {
+          const v = String((row as Record<string, unknown>)[col])
+          return op === 'eq' ? v === value : v < value
+        }),
+      )
+      return Promise.resolve(resolve({ count: rows.length, error: null }))
+    },
+  }
+  return query
 }
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
     from: (table: string) => ({
-      select: (cols: string) => ({
+      select: (cols: string, opts?: { count?: string; head?: boolean }) => opts?.count === 'exact' && opts.head ? countRequest(table) : ({
         eq: (col: string, value: string) => ({
           maybeSingle: () => {
             db.selects.push({ table, cols })
@@ -93,7 +120,7 @@ vi.mock('@supabase/supabase-js', () => ({
 }))
 
 import { GET, POST } from '@/app/api/mad-testen/route'
-import { MAD_TEST_COPY_VERSION } from '@/lib/mad-test'
+import { MAD_TEST_COPY_VERSION, renderMadTestScreen } from '@/lib/mad-test'
 
 const TOKEN = '9b2f7c4e-1d3a-4e5b-8c6d-0a1b2c3d4e5f'
 const PUBLIC_ID = '242eba51-9c3f-49ab-a8f6-373a299169e8'
@@ -171,6 +198,8 @@ beforeEach(() => {
   db.signupReadError = null
   db.optinReadError = null
   db.insertError = null
+  db.counts.length = 0
+  db.countError = null
   // Fresh spy per test, so call counts never leak between tests.
   vi.restoreAllMocks()
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -621,5 +650,274 @@ describe('POST /api/mad-testen', () => {
 
     expect(res.status).toBe(500)
     expect(db.upserts).toHaveLength(0)
+  })
+})
+
+describe('Android places on the yes-page', () => {
+  const LEFT = (n: number) => `<p class="note">Der er ${n} af 96 pladser tilbage til Android.</p>`
+  const FULL =
+    '<p class="note">Alle 96 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
+  const WAITLIST_NEXT = '<p class="lead">Alle Android-pladser er taget lige nu. Vi skriver til dig, hvis der bliver en plads.</p>'
+  const ANDROID_COUNT = { table: 'mad_test_optin', filters: [['eq', 'device', 'android']] }
+
+  // n Android answers by other people, all at `at`. Their ids start with
+  // `prefix`: '00000000' sorts before PUBLIC_ID, 'f0000000' after it.
+  function otherAndroid(n: number, at = '2026-09-01T10:00:00Z', prefix = '00000000') {
+    for (let i = 0; i < n; i++) {
+      const id = `${prefix}-0000-4000-8000-${String(i).padStart(12, '0')}`
+      db.optins.set(id, {
+        public_id: id,
+        created_at: at,
+        copy_version: MAD_TEST_COPY_VERSION,
+        device: 'android',
+        google_account: `tester${i}@gmail.com`,
+      })
+    }
+  }
+
+  function otherIphone(n: number) {
+    for (let i = 0; i < n; i++) {
+      const id = `11111111-0000-4000-8000-${String(i).padStart(12, '0')}`
+      db.optins.set(id, { public_id: id, created_at: '2026-09-01T10:00:00Z', copy_version: MAD_TEST_COPY_VERSION, device: 'iphone', google_account: null })
+    }
+  }
+
+  // The three ways to the Google-account step: the Android link, the Android
+  // button on the form, and the step again after a bad address.
+  const GOOGLE_STEP: Array<[string, () => Promise<Response>]> = [
+    ['the Android link (GET)', () => getPhone(TOKEN, 'android')],
+    ['the Android button (POST)', () => post(TOKEN, 'android')],
+    ['the step again after a bad address', () => postAndroid(TOKEN, 'anna')],
+  ]
+
+  it.each([
+    [0, 96],
+    [94, 2],
+    [95, 1],
+  ])('the two-button form with %i Android answers: "%i af 96" under the buttons', async (yesSoFar, left) => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(yesSoFar)
+    const html = await (await get(TOKEN)).text()
+
+    expect(html).toContain(`</form>\n${LEFT(left)}\n<p class="small"><a href="/privatlivspolitik">`)
+    expect(html).not.toContain('Alle 96 Android-pladser')
+    expect(db.counts).toEqual([ANDROID_COUNT])
+  })
+
+  it.each([96, 97, 250])('the two-button form with %i Android answers: all places taken, never a negative number', async (yesSoFar) => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(yesSoFar)
+    const html = await (await get(TOKEN)).text()
+
+    expect(html).toContain(`</form>\n${FULL}\n`)
+    expect(html).not.toContain('Der er')
+    expect(html).not.toMatch(/-\d+ af 96/)
+    // The Android button still answers.
+    expect(html).toContain('name="device" value="android"')
+  })
+
+  it('iPhone answers do not take Android places', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherIphone(120)
+    otherAndroid(3)
+    expect(await (await get(TOKEN)).text()).toContain(LEFT(93))
+  })
+
+  it.each(GOOGLE_STEP)('%s: the counter under the button, nothing written', async (_, open) => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(94)
+    const html = await (await open()).text()
+
+    expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
+    expect(html).toContain(`</button>\n</form>\n${LEFT(2)}\n<p class="note pair">`)
+    expect(db.upserts).toHaveLength(0)
+  })
+
+  it.each(GOOGLE_STEP)('%s when all places are taken: says so, the step still works', async (_, open) => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(96)
+    const res = await open()
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(html).toContain(`</button>\n</form>\n${FULL}\n`)
+    expect(html).toContain('name="google_account"')
+    expect(html).toContain('>Fortsæt med Android</button>')
+  })
+
+  it('the retry screen keeps the typed text escaped next to the counter', async () => {
+    db.signups.set(TOKEN, eligible())
+    const html = await (await postAndroid(TOKEN, '"><script>x</script>')).text()
+    expect(html).toContain('value="&quot;&gt;&lt;script&gt;x&lt;/script&gt;"')
+    expect(html).toContain(LEFT(96))
+  })
+
+  it('the counter is computed on every render and never cached', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(10)
+    const first = await get(TOKEN)
+    otherAndroid(20)
+    const second = await get(TOKEN)
+
+    expect(await first.text()).toContain(LEFT(86))
+    expect(await second.text()).toContain(LEFT(76))
+    for (const res of [first, second, await getPhone(TOKEN, 'android'), await post(TOKEN, 'android')]) {
+      expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+    }
+    expect(db.counts).toHaveLength(4)
+  })
+
+  it('the iPhone route: no count, no counter, the same bytes as the confirm screen always rendered', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(96)
+    const html = await (await getPhone(TOKEN, 'iphone')).text()
+
+    expect(db.counts).toEqual([])
+    expect(html).not.toContain('pladser')
+    expect(html).toBe(renderMadTestScreen({ kind: 'confirm', firstName: 'Anna', token: TOKEN }))
+  })
+
+  it('an iPhone answer: no count, the iPhone thanks', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(200)
+    const html = await (await post(TOKEN, 'iphone')).text()
+
+    expect(db.counts).toEqual([])
+    expect(html).toContain('<h1>Tak Anna, du er med</h1>')
+    expect(html).toContain(IPHONE_NEXT)
+  })
+
+  it('an Android answer at place 96: the thanks as today, stored as today', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(95)
+    const res = await postAndroid(TOKEN)
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(html).toContain('<h1>Tak Anna, du er med</h1>')
+    expect(html).toContain(ANDROID_NEXT)
+    expect(html).not.toContain('ventelisten til Android')
+    expect(db.upserts.map((u) => u.row)).toEqual([
+      { public_id: PUBLIC_ID, copy_version: MAD_TEST_COPY_VERSION, device: 'android', google_account: 'anna.hansen@gmail.com' },
+    ])
+    // The place: Android answers strictly before this one, and those at the
+    // same time with a lower public_id.
+    const createdAt = db.optins.get(PUBLIC_ID)!.created_at
+    expect(db.counts).toEqual([
+      { table: 'mad_test_optin', filters: [['eq', 'device', 'android'], ['lt', 'created_at', createdAt]] },
+      {
+        table: 'mad_test_optin',
+        filters: [['eq', 'device', 'android'], ['eq', 'created_at', createdAt], ['lt', 'public_id', PUBLIC_ID]],
+      },
+    ])
+  })
+
+  it('an Android answer at place 97: the waiting-list thanks, stored exactly as an answer in range', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(96)
+    const res = await postAndroid(TOKEN)
+    const html = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(html).toContain('<h1>Tak Anna, du står på ventelisten til Android</h1>')
+    expect(html).toContain(WAITLIST_NEXT)
+    expect(html).not.toContain(ANDROID_NEXT)
+    expect(html).not.toContain('du er med')
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store')
+    expect(db.upserts.map((u) => u.row)).toEqual([
+      { public_id: PUBLIC_ID, copy_version: MAD_TEST_COPY_VERSION, device: 'android', google_account: 'anna.hansen@gmail.com' },
+    ])
+  })
+
+  it('the waiting-list thanks escapes the first name and prints no place', async () => {
+    db.signups.set(TOKEN, eligible({ first_name: "<b> & O'Neill" }))
+    otherAndroid(150)
+    const html = await (await postAndroid(TOKEN)).text()
+
+    expect(html).toContain('<h1>Tak &lt;b&gt; &amp; O&#39;Neill, du står på ventelisten til Android</h1>')
+    expect(html).toContain('<title>Tak &lt;b&gt; &amp; O&#39;Neill, du står på ventelisten til Android | Altid Mad</title>')
+    // No digit in the visible text (tags and the name's &#39; are markup, not text).
+    const text = html
+      .slice(html.indexOf('<h1>'), html.indexOf('</main>'))
+      .replace(/<[^>]*>/g, '')
+      .replace(/&#\d+;/g, '')
+    expect(text).toContain('du står på ventelisten til Android')
+    expect(text).not.toMatch(/\d/)
+  })
+
+  it.each([
+    ['95 before, none at the same time: place 96', 95, 0, 'f0000000', false],
+    ['96 before: place 97', 96, 0, 'f0000000', true],
+    ['95 before, one at the same time with a lower public_id: place 97', 95, 1, '00000001', true],
+    ['95 before, one at the same time with a higher public_id: place 96', 95, 1, 'f0000000', false],
+  ] as const)('already answered on Android, %s', async (_, before, tied, tiedPrefix, waitlist) => {
+    db.signups.set(TOKEN, eligible())
+    db.optins.set(PUBLIC_ID, answered('android'))
+    otherAndroid(before)
+    otherAndroid(tied, answered('android').created_at, tiedPrefix)
+
+    for (const res of [await get(TOKEN), await getPhone(TOKEN, 'android'), await post(TOKEN, 'iphone'), await postAndroid(TOKEN)]) {
+      expect(res.status).toBe(200)
+      const html = await res.text()
+      expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+      if (waitlist) {
+        expect(html).toContain(WAITLIST_NEXT)
+        expect(html).not.toContain(ANDROID_NEXT)
+      } else {
+        expect(html).toContain(ANDROID_NEXT)
+        expect(html).not.toContain('ventelisten til Android')
+      }
+      expect(html).not.toContain('<form')
+    }
+    expect(db.upserts).toHaveLength(0)
+  })
+
+  it('already answered on iPhone: no count, the iPhone screen whatever the Android count', async () => {
+    db.signups.set(TOKEN, eligible())
+    db.optins.set(PUBLIC_ID, answered('iphone'))
+    otherAndroid(200)
+    const html = await (await get(TOKEN)).text()
+
+    expect(db.counts).toEqual([])
+    expect(html).toContain(IPHONE_NEXT)
+  })
+
+  it('a competing Android answer that won, beyond the places: the waiting-list already screen', async () => {
+    db.signups.set(TOKEN, eligible())
+    otherAndroid(96, '2026-09-01T10:00:00Z')
+    db.beforeUpsert = () => {
+      db.optins.set(PUBLIC_ID, answered('android', 'first@gmail.com'))
+    }
+    const html = await (await postAndroid(TOKEN, 'second@gmail.com')).text()
+
+    expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(html).toContain(WAITLIST_NEXT)
+  })
+
+  it.each<[string, () => Promise<Response>]>([
+    ['the two-button form', () => get(TOKEN)],
+    ...GOOGLE_STEP,
+    ['the thanks after an Android answer', () => postAndroid(TOKEN)],
+  ])('the count fails on %s: the error screen with 500, no number of places', async (_, open) => {
+    db.signups.set(TOKEN, eligible())
+    db.countError = { message: 'canceling statement due to statement timeout' }
+    const res = await open()
+    const html = await res.text()
+
+    expect(res.status).toBe(500)
+    expect(html).toContain('Noget gik galt')
+    expect(html).not.toContain('pladser')
+    expect(html).not.toContain('96')
+    expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/^mad-testen (GET|POST) failed$/), expect.any(Error))
+  })
+
+  it('the count fails on an Android already-answered screen: 500, not a guessed screen', async () => {
+    db.signups.set(TOKEN, eligible())
+    db.optins.set(PUBLIC_ID, answered('android'))
+    db.countError = { message: 'timeout' }
+    const res = await get(TOKEN)
+
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('Vi har allerede dit ja')
   })
 })

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMadTestOptin, recordMadTestOptin } from '@/lib/db'
+import { countMadTestAndroid, getMadTestAndroidPlace, getMadTestOptin, recordMadTestOptin } from '@/lib/db'
 import { eligibleSignup } from '@/lib/mad-test-access'
 import {
   MAD_TEST_COPY_VERSION,
+  androidSeatsLeft,
   isMadTestDevice,
+  withinAndroidSeats,
   googleAccountPrefill,
   normalizeGoogleAccount,
   renderMadTestScreen,
@@ -23,6 +25,12 @@ import {
 // The form, the iPhone route and the Google-account step tell
 // /api/mad-testen/open that a real browser showed them (see reportOpen in
 // lib/mad-test.ts); this route itself records no visit.
+//
+// Android places (MAD_TEST_ANDROID_SEATS): the form and the Google-account step
+// show how many are left, counted on every render (the responses are never
+// cached). An Android answer is stored the same way when no place is left; its
+// thank-you and already-answered screens follow the person's own place in the
+// Android order. A count that fails is the error screen, never a guessed number.
 
 function respond(screen: MadTestScreen, status: number) {
   return new NextResponse(renderMadTestScreen(screen), {
@@ -44,21 +52,41 @@ function respond(screen: MadTestScreen, status: number) {
 const invalid = () => respond({ kind: 'invalid' }, 400)
 const failed = () => respond({ kind: 'error' }, 500)
 
+const androidLeft = async () => androidSeatsLeft(await countMadTestAndroid())
+
+type Answer = NonNullable<Awaited<ReturnType<typeof getMadTestOptin>>>
+
+// An Android answer beyond the places waits on the export's waiting list.
+async function onWaitlist(answer: Answer): Promise<boolean> {
+  if (answer.device !== 'android') return false
+  return !withinAndroidSeats(await getMadTestAndroidPlace(answer.publicId, answer.createdAt))
+}
+
+// Awaited where it is returned, inside the handlers' try: a failed count must
+// reach their catch (the error screen), not escape it as a rejected promise.
+async function alreadyAnswered(answer: Answer) {
+  if (await onWaitlist(answer)) return respond({ kind: 'already-waitlist' }, 200)
+  return respond({ kind: 'already', device: answer.device }, 200)
+}
+
 export async function GET(req: NextRequest) {
   try {
     const found = await eligibleSignup(req)
     if (!found) return invalid()
     const earlier = await getMadTestOptin(found.signup.publicId)
-    if (earlier) return respond({ kind: 'already', device: earlier.device }, 200)
+    if (earlier) return await alreadyAnswered(earlier)
     const phone = req.nextUrl.searchParams.get('d')
     if (phone === 'iphone') {
       return respond({ kind: 'confirm', firstName: found.signup.firstName, token: found.token }, 200)
     }
     if (phone === 'android') {
       const value = googleAccountPrefill(found.signup.email)
-      return respond({ kind: 'google', token: found.token, value, retry: false }, 200)
+      return respond({ kind: 'google', token: found.token, value, retry: false, androidLeft: await androidLeft() }, 200)
     }
-    return respond({ kind: 'form', firstName: found.signup.firstName, token: found.token }, 200)
+    return respond(
+      { kind: 'form', firstName: found.signup.firstName, token: found.token, androidLeft: await androidLeft() },
+      200,
+    )
   } catch (e) {
     console.error('mad-testen GET failed', e)
     return failed()
@@ -83,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (!isMadTestDevice(device)) return invalid()
 
     const earlier = await getMadTestOptin(found.signup.publicId)
-    if (earlier) return respond({ kind: 'already', device: earlier.device }, 200)
+    if (earlier) return await alreadyAnswered(earlier)
 
     let googleAccount: string | null = null
     if (device === 'android') {
@@ -92,12 +120,12 @@ export async function POST(req: NextRequest) {
         // The Android button: ask for the Google account, write nothing yet.
         // A Gmail signup address starts the field; any other starts it empty.
         const value = googleAccountPrefill(found.signup.email)
-        return respond({ kind: 'google', token: found.token, value, retry: false }, 200)
+        return respond({ kind: 'google', token: found.token, value, retry: false, androidLeft: await androidLeft() }, 200)
       }
       googleAccount = normalizeGoogleAccount(typed)
       if (googleAccount === null) {
         const value = typeof typed === 'string' ? typed.slice(0, 254) : ''
-        return respond({ kind: 'google', token: found.token, value, retry: true }, 200)
+        return respond({ kind: 'google', token: found.token, value, retry: true, androidLeft: await androidLeft() }, 200)
       }
     }
 
@@ -109,8 +137,9 @@ export async function POST(req: NextRequest) {
     const stored = await getMadTestOptin(found.signup.publicId)
     if (!stored) throw new Error('mad_test_optin row missing right after insert')
     if (stored.device !== device || stored.googleAccount !== googleAccount) {
-      return respond({ kind: 'already', device: stored.device }, 200)
+      return await alreadyAnswered(stored)
     }
+    if (await onWaitlist(stored)) return respond({ kind: 'thanks-waitlist', firstName: found.signup.firstName }, 200)
     return respond({ kind: 'thanks', device, firstName: found.signup.firstName }, 200)
   } catch (e) {
     console.error('mad-testen POST failed', e)
