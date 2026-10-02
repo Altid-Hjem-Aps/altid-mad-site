@@ -28,7 +28,7 @@
  * onpageshow handler that sends or resets the form. The answer never waits for
  * it, and a beacon that fails cannot stop the form.
  *
- * Android places are limited (MAD_TEST_ANDROID_SEATS). The screens that ask
+ * Android places are limited (MAD_TEST_ANDROID_TESTER_PLACES). The screens that ask
  * about Android say how many are left, counted when the page is rendered, and
  * an Android answer beyond the places gets the waiting-list screens (Thor
  * 2/10). The answer is stored the same way either way.
@@ -38,7 +38,7 @@
  * Stored on every yes row. Bump it whenever the form screen's wording changes,
  * so each row resolves to the exact text the person said yes to.
  */
-export const MAD_TEST_COPY_VERSION = '2026-10-02-mad-test-7'
+export const MAD_TEST_COPY_VERSION = '2026-10-02-mad-test-8'
 
 /** The two altidmad.dk signup forms. Hjem-form signups are not in the test. */
 export const MAD_TEST_SOURCES: readonly string[] = ['altid-mad', 'altid-mad-exit']
@@ -57,26 +57,35 @@ export function isMadTestEligible(s: {
 }
 
 /**
- * Android places in the Mad-testen: Google Play's internal test takes at most
- * 100 testers and the team holds 4 of them (Thor, 2/10). The seat export
- * (export-mad-test-seats.py in altid-dashboard) hands them out in the order
- * people said yes, except that people who brought in a signup before the
- * invitation go first; everyone after the last place waits on its waiting list.
+ * Android places in the Mad-testen. Google Play's internal test takes at most
+ * 100 testers (MAD_TEST_ANDROID_PLACES), and the team holds 4 of them
+ * (MAD_TEST_ANDROID_TEAM_PLACES, Thor 2/10). The counter on the page speaks of
+ * all 100, the number people understand (Thor 2/10), and the team's 4 count as
+ * taken from the start: that is why it starts at 96 of 100, not 100 of 100.
  */
-export const MAD_TEST_ANDROID_SEATS = 96
+export const MAD_TEST_ANDROID_PLACES = 100
+export const MAD_TEST_ANDROID_TEAM_PLACES = 4
 
-/** Android places left after `androidYes` Android answers. Never below 0. */
+/**
+ * The places testers can get: 96. The seat export (export-mad-test-seats.py in
+ * altid-dashboard) hands them out in the order people said yes, except that
+ * people who brought in a signup before the invitation go first; everyone
+ * after the last place waits on its waiting list.
+ */
+export const MAD_TEST_ANDROID_TESTER_PLACES = MAD_TEST_ANDROID_PLACES - MAD_TEST_ANDROID_TEAM_PLACES
+
+/** Tester places left after `androidYes` Android answers: 96 at most, never below 0. */
 export function androidSeatsLeft(androidYes: number): number {
   if (!Number.isInteger(androidYes) || androidYes < 0) {
     throw new Error(`androidSeatsLeft: not a count: ${androidYes}`)
   }
-  return Math.max(0, MAD_TEST_ANDROID_SEATS - androidYes)
+  return Math.max(0, MAD_TEST_ANDROID_TESTER_PLACES - androidYes)
 }
 
-/** Whether a place in the Android order (1 = the first Android yes) is one of the places. */
+/** Whether a place in the Android order (1 = the first Android yes) is one of the tester places. */
 export function withinAndroidSeats(place: number): boolean {
   if (!Number.isInteger(place) || place < 1) throw new Error(`withinAndroidSeats: not a place: ${place}`)
-  return place <= MAD_TEST_ANDROID_SEATS
+  return place <= MAD_TEST_ANDROID_TESTER_PLACES
 }
 
 /** The two answers on the form. */
@@ -280,16 +289,18 @@ function answered(title: string, next: string): { title: string; body: string } 
 // The Android counter, under the Android button on the form and the
 // Google-account step. "Ventelisten til Android", never just "ventelisten":
 // the Google-account step also names the altidmad.dk waiting list the person
-// signed up on. A number outside 0..MAD_TEST_ANDROID_SEATS was not counted by
+// signed up on. It counts out of all 100 places, the team's 4 already taken,
+// so `left` is the tester places left and reads "96 af 100" at the start. A
+// number outside 0..MAD_TEST_ANDROID_TESTER_PLACES was not counted by
 // androidSeatsLeft and is never printed.
 function androidSeats(left: number): string {
-  if (!Number.isInteger(left) || left < 0 || left > MAD_TEST_ANDROID_SEATS) {
+  if (!Number.isInteger(left) || left < 0 || left > MAD_TEST_ANDROID_TESTER_PLACES) {
     throw new Error(`androidSeats: not a number of places left: ${left}`)
   }
   if (left === 0) {
-    return `<p class="note">Alle ${MAD_TEST_ANDROID_SEATS} Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>`
+    return `<p class="note">Alle ${MAD_TEST_ANDROID_PLACES} Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>`
   }
-  return `<p class="note">Der er ${left} af ${MAD_TEST_ANDROID_SEATS} pladser tilbage til Android.</p>`
+  return `<p class="note">Der er ${left} af ${MAD_TEST_ANDROID_PLACES} pladser tilbage til Android.</p>`
 }
 
 function actionFor(token: string): string {

@@ -654,9 +654,9 @@ describe('POST /api/mad-testen', () => {
 })
 
 describe('Android places on the yes-page', () => {
-  const LEFT = (n: number) => `<p class="note">Der er ${n} af 96 pladser tilbage til Android.</p>`
+  const LEFT = (n: number) => `<p class="note">Der er ${n} af 100 pladser tilbage til Android.</p>`
   const FULL =
-    '<p class="note">Alle 96 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
+    '<p class="note">Alle 100 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
   const WAITLIST_NEXT = '<p class="lead">Alle Android-pladser er taget lige nu. Vi skriver til dig, hvis der bliver en plads.</p>'
   const ANDROID_COUNT = { table: 'mad_test_optin', filters: [['eq', 'device', 'android']] }
 
@@ -692,15 +692,16 @@ describe('Android places on the yes-page', () => {
 
   it.each([
     [0, 96],
+    [1, 95],
     [94, 2],
     [95, 1],
-  ])('the two-button form with %i Android answers: "%i af 96" under the buttons', async (yesSoFar, left) => {
+  ])('the two-button form with %i Android answers: "%i af 100" under the buttons (the team\'s 4 taken)', async (yesSoFar, left) => {
     db.signups.set(TOKEN, eligible())
     otherAndroid(yesSoFar)
     const html = await (await get(TOKEN)).text()
 
     expect(html).toContain(`</form>\n${LEFT(left)}\n<p class="small"><a href="/privatlivspolitik">`)
-    expect(html).not.toContain('Alle 96 Android-pladser')
+    expect(html).not.toContain('Alle 100 Android-pladser')
     expect(db.counts).toEqual([ANDROID_COUNT])
   })
 
@@ -711,7 +712,8 @@ describe('Android places on the yes-page', () => {
 
     expect(html).toContain(`</form>\n${FULL}\n`)
     expect(html).not.toContain('Der er')
-    expect(html).not.toMatch(/-\d+ af 96/)
+    expect(html).not.toMatch(/-\d+ af 100/)
+    expect(html).not.toMatch(/af 96\b/)
     // The Android button still answers.
     expect(html).toContain('name="device" value="android"')
   })

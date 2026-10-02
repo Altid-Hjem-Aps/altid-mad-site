@@ -12,7 +12,9 @@ import {
   renderMadTestScreen,
   androidSeatsLeft,
   withinAndroidSeats,
-  MAD_TEST_ANDROID_SEATS,
+  MAD_TEST_ANDROID_PLACES,
+  MAD_TEST_ANDROID_TEAM_PLACES,
+  MAD_TEST_ANDROID_TESTER_PLACES,
   MAD_TEST_PAGES,
   MAD_TEST_COPY_VERSION,
   type MadTestScreen,
@@ -71,8 +73,10 @@ describe('isMadTestPage', () => {
 })
 
 describe('Android places', () => {
-  it('96: Google Play\'s 100 internal testers less the team\'s 4', () => {
-    expect(MAD_TEST_ANDROID_SEATS).toBe(96)
+  it('100 places in Google Play\'s internal test, 4 held by the team, so 96 for testers', () => {
+    expect(MAD_TEST_ANDROID_PLACES).toBe(100)
+    expect(MAD_TEST_ANDROID_TEAM_PLACES).toBe(4)
+    expect(MAD_TEST_ANDROID_TESTER_PLACES).toBe(96)
   })
 
   it.each([
@@ -323,14 +327,40 @@ describe('renderMadTestScreen', () => {
     }
   })
 
-  const LEFT = (n: number) => `<p class="note">Der er ${n} af 96 pladser tilbage til Android.</p>`
+  const LEFT = (n: number) => `<p class="note">Der er ${n} af 100 pladser tilbage til Android.</p>`
   const FULL =
-    '<p class="note">Alle 96 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
+    '<p class="note">Alle 100 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
 
   it.each([96, 2, 1])('the form with %i places left: the counter right under the buttons', (left) => {
     const html = renderMadTestScreen({ kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: left })
     expect(html).toContain(`</form>\n${LEFT(left)}\n<p class="small"><a href="/privatlivspolitik">`)
-    expect(html).not.toContain('Alle 96 Android-pladser')
+    expect(html).not.toContain('Alle 100 Android-pladser')
+  })
+
+  it('the counter counts out of 100 with the team\'s 4 taken: never more than 96 of 100, never negative', () => {
+    const shown: number[] = []
+    for (let yesSoFar = 0; yesSoFar <= 300; yesSoFar++) {
+      for (const html of [
+        renderMadTestScreen({ kind: 'form', firstName: null, token: 'tok', androidLeft: androidSeatsLeft(yesSoFar) }),
+        renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: androidSeatsLeft(yesSoFar) }),
+      ]) {
+        const n = html.match(/Der er (-?\d+) af (\d+) pladser tilbage til Android\./)
+        if (yesSoFar < 96) {
+          expect(n?.[2]).toBe('100')
+          shown.push(Number(n?.[1]))
+          expect(html).not.toContain('Android-pladser er taget')
+        } else {
+          expect(n).toBeNull()
+          expect(html).toContain(FULL)
+        }
+        expect(html).not.toMatch(/af 96\b/)
+      }
+    }
+    expect(Math.max(...shown)).toBe(96)
+    expect(Math.min(...shown)).toBe(1)
+    // The start, and the start with Thor's own test row.
+    expect(androidSeatsLeft(0)).toBe(96)
+    expect(androidSeatsLeft(1)).toBe(95)
   })
 
   it('the form with no place left: says all places are taken and how the waiting list works', () => {
@@ -400,7 +430,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the wording version names today and the test', () => {
-    expect(MAD_TEST_COPY_VERSION).toBe('2026-10-02-mad-test-7')
+    expect(MAD_TEST_COPY_VERSION).toBe('2026-10-02-mad-test-8')
   })
 
   it('the self-hosted font file the pages point at exists', () => {
