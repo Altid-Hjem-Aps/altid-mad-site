@@ -7,10 +7,13 @@ import {
   googleAccountPrefill,
   normalizeGoogleAccount,
   isMadTestEligible,
+  isMadTestPage,
   renderMadTestScreen,
+  MAD_TEST_PAGES,
   MAD_TEST_COPY_VERSION,
   type MadTestScreen,
 } from '@/lib/mad-test'
+import { bodyHandler, showPage } from './fake-browser'
 
 const SCREENS: MadTestScreen[] = [
   { kind: 'form', firstName: 'Anna', token: 'tok' },
@@ -24,6 +27,8 @@ const SCREENS: MadTestScreen[] = [
   { kind: 'invalid' },
   { kind: 'error' },
 ]
+// The screens that ask (and so report the open): the form, the iPhone route, the Google-account step.
+const ASKING = SCREENS.slice(0, 4)
 
 describe('isMadTestEligible', () => {
   const ok = { unsubscribed: false, consentMad: true, source: 'altid-mad' }
@@ -47,6 +52,15 @@ describe('isMadTestDevice', () => {
     expect(isMadTestDevice('iphone')).toBe(true)
     expect(isMadTestDevice('android')).toBe(true)
     for (const v of ['IPHONE', 'ios', '', null, undefined, 1]) expect(isMadTestDevice(v)).toBe(false)
+  })
+})
+
+describe('isMadTestPage', () => {
+  it('accepts exactly optin and survey', () => {
+    expect(MAD_TEST_PAGES).toEqual(['optin', 'survey'])
+    expect(isMadTestPage('optin')).toBe(true)
+    expect(isMadTestPage('survey')).toBe(true)
+    for (const v of ['OPTIN', 'thanks', '', null, undefined, 1]) expect(isMadTestPage(v)).toBe(false)
   })
 })
 
@@ -182,6 +196,93 @@ describe('renderMadTestScreen', () => {
 
     expect(html).toContain(`action="/api/mad-testen?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
+  })
+
+  it.each(ASKING)('$kind (retry $retry): the beacon is its own onload handler, apart from the form\'s onpageshow', (screen) => {
+    const html = renderMadTestScreen(screen)
+    const onload = bodyHandler(html, 'onload') ?? ''
+    expect(onload).toBe(
+      "if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=tok',new URLSearchParams('page=optin'))}}",
+    )
+    expect(bodyHandler(html, 'onpageshow')).not.toContain('sendBeacon')
+    // Inline handlers in double-quoted attributes: no bare ampersand.
+    expect(html.match(/<body[^>]*>/)?.[0]).not.toContain('&')
+    // A handler, never a <script>, and nothing that waits for the answer.
+    expect(html).not.toContain('<script')
+    expect(onload).not.toContain('fetch(')
+  })
+
+  it.each(ASKING)('$kind (retry $retry): a real browser sends one beacon for page optin', (screen) => {
+    const run = showPage(renderMadTestScreen(screen))
+    expect(run.beacons).toEqual([{ url: '/api/mad-testen/open?t=tok', body: 'page=optin' }])
+    expect(run.errors).toEqual([])
+  })
+
+  it.each(ASKING)('$kind (retry $retry): an automated browser (navigator.webdriver) sends no beacon', (screen) => {
+    const run = showPage(renderMadTestScreen(screen), { webdriver: true })
+    expect(run.beacons).toEqual([])
+    expect(run.events).toEqual([])
+    expect(run.errors).toEqual([])
+  })
+
+  it('the iPhone route in a real browser: the beacon first, then the form sends itself once', () => {
+    expect(showPage(renderMadTestScreen(SCREENS[1])).events).toEqual([
+      'beacon /api/mad-testen/open?t=tok page=optin',
+      'submit Jeg vil teste på iPhone',
+    ])
+  })
+
+  it.each(['missing', 'throws'] as const)('the iPhone route when sendBeacon is %s: no beacon, the form still sends itself', (mode) => {
+    const run = showPage(renderMadTestScreen(SCREENS[1]), { sendBeacon: mode })
+    expect(run.beacons).toEqual([])
+    expect(run.events).toEqual(['submit Jeg vil teste på iPhone'])
+    // The throwing beacon is reported in its own handler, nowhere else.
+    expect(run.errors).toHaveLength(mode === 'throws' ? 1 : 0)
+  })
+
+  it.each(['ok', 'missing', 'throws'] as const)('the iPhone route in an automated browser (sendBeacon %s): no beacon, no answer', (mode) => {
+    const run = showPage(renderMadTestScreen(SCREENS[1]), { webdriver: true, sendBeacon: mode })
+    expect(run.events).toEqual([])
+    expect(run.errors).toEqual([])
+  })
+
+  it.each(ASKING.flatMap((screen) => (['ok', 'missing', 'throws'] as const).map((mode) => ({ ...screen, mode }))))(
+    '$kind (retry $retry), sendBeacon $mode, back/forward restore: no beacon, no answer, the buttons are back',
+    ({ mode, ...screen }) => {
+      const run = showPage(renderMadTestScreen(screen as MadTestScreen), { sendBeacon: mode, restore: true })
+      expect(run.events).toEqual([])
+      expect(run.errors).toEqual([])
+      expect(run.form?.dataset.sent).toBeUndefined()
+      expect(run.buttons.length).toBeGreaterThan(0)
+      for (const b of run.buttons) expect(b.textContent).toBe(b.dataset.l)
+    },
+  )
+
+  it.each(['missing', 'throws'] as const)('the Google-account step when sendBeacon is %s: its own handler still checks the field', (mode) => {
+    const empty = showPage(renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false }), { sendBeacon: mode })
+    expect(empty.buttons.map((b) => b.disabled)).toEqual([true])
+    const filled = showPage(renderMadTestScreen(SCREENS[2]), { sendBeacon: mode })
+    expect(filled.buttons.map((b) => b.disabled)).toEqual([false])
+  })
+
+  it.each(SCREENS.filter((s) => !ASKING.includes(s)))(
+    '$kind $device: no open reported (an answer or a refusal, not an asking screen)',
+    (screen) => {
+      const html = renderMadTestScreen(screen)
+      expect(html).not.toContain('sendBeacon')
+      expect(bodyHandler(html, 'onload')).toBeNull()
+      expect(showPage(html).beacons).toEqual([])
+    },
+  )
+
+  it('the token in the beacon cannot leave its string or the attribute', () => {
+    const odd = `a"b'c<d>&e`
+    for (const kind of ['form', 'confirm'] as const) {
+      const html = renderMadTestScreen({ kind, firstName: null, token: odd })
+      expect(html).toContain(`onload="if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=a%22b%27c%3Cd%3E%26e',`)
+      expect(html.match(/<body[^>]*>/)?.[0]).not.toContain('&')
+      expect(showPage(html).beacons).toEqual([{ url: '/api/mad-testen/open?t=a%22b%27c%3Cd%3E%26e', body: 'page=optin' }])
+    }
   })
 
   it('the wording version names today and the test', () => {

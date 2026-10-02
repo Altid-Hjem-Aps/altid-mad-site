@@ -1,5 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { isMadTestDevice, normalizeGoogleAccount, type MadTestDevice } from '@/lib/mad-test'
+import {
+  isMadTestDevice,
+  isMadTestPage,
+  normalizeGoogleAccount,
+  type MadTestDevice,
+  type MadTestPage,
+} from '@/lib/mad-test'
 import { isSurveyRating, isSurveyText, type SurveyAnswers } from '@/lib/mad-test-survey'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
@@ -590,6 +596,21 @@ export async function recordMadTestSurvey(
       { onConflict: 'public_id', ignoreDuplicates: true },
     )
   if (error) throw new Error(`mad_test_survey insert failed: ${error.message}`)
+}
+
+/**
+ * Record that a real browser showed a Mad-testen page to this person
+ * (supabase/migrations/20261002…). Insert with ON CONFLICT DO NOTHING: one row
+ * per person and page, and a later open keeps the first time.
+ */
+export async function recordMadTestPageOpen(publicId: string, page: MadTestPage): Promise<void> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('recordMadTestPageOpen: empty publicId')
+  if (!isMadTestPage(page)) throw new Error(`recordMadTestPageOpen: unknown page ${String(page)}`)
+  const { error } = await getClient()
+    .from('mad_test_page_open')
+    .upsert({ public_id: id, page }, { onConflict: 'public_id,page', ignoreDuplicates: true })
+  if (error) throw new Error(`mad_test_page_open insert failed: ${error.message}`)
 }
 
 /**

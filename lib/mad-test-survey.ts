@@ -7,6 +7,9 @@
  * third-party request, Onest self-hosted. The link carries the person's
  * unsub_token, so nothing on the page may leak that URL.
  *
+ * The form tells /api/mad-testen/open that a real browser showed it, the
+ * yes-page's way (reportOpen in lib/mad-test.ts), as page 'survey'.
+ *
  * Works without JavaScript: native radios and textareas in one POST form. A
  * submission with a missing or out-of-range answer shows the form again with
  * what was given kept (escaped) and an error under each question it concerns.
@@ -25,6 +28,7 @@ import {
   greeting,
   renderMadTestScreen,
   renderMadTestShell,
+  reportOpen,
 } from '@/lib/mad-test'
 
 /**
@@ -417,7 +421,12 @@ form.survey button{margin-top:4px}
 export function renderSurveyScreen(screen: SurveyScreen): string {
   switch (screen.kind) {
     case 'form':
-      return renderMadTestShell('Fem korte spørgsmål', formBody(screen), RESET_SEND, SURVEY_STYLE)
+      return renderMadTestShell(
+        'Fem korte spørgsmål',
+        formBody(screen),
+        { onLoad: reportOpen(screen.token, 'survey'), onPageShow: RESET_SEND },
+        SURVEY_STYLE,
+      )
     case 'thanks':
       return renderMadTestShell(THANKS.title, THANKS.body)
     case 'already':
