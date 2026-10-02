@@ -1,0 +1,81 @@
+-- Mad-testen yes-list (ALT-345).
+--
+-- One row per person who answered on altidmad.dk/api/mad-testen, with one of
+-- two buttons: "Ja, jeg har en iPhone" (device 'iphone') or "Ja, jeg har
+-- Android" (device 'android', then the Google account on the phone). The row
+-- records only the answer: who (public_id, the signup row's own id), which
+-- device, when (created_at), under which screen wording (copy_version, resolves
+-- to the text in lib/mad-test.ts), and for Android the Google account
+-- (google_account): Google Play lets only listed Google accounts install an
+-- internal test build. The check holds the account to the yes-page's pattern
+-- (lower case; letters, digits and . _ % + -): the Android login mail prints it
+-- raw, so a row typed into the SQL editor must not get past it either.
+--
+-- The export picks the 'iphone' rows for TestFlight and the 'android' rows for
+-- the Google Play tester list (export-mad-test-seats.py in altid-dashboard).
+--
+-- public_id references signup with ON DELETE CASCADE: erasing a signup row
+-- (GDPR erasure) removes its yes-row in the same statement, and a yes can only
+-- exist for a real signup.
+--
+-- Run in the Supabase SQL editor. Safe to re-run, also over the earlier
+-- versions of this file (pushed 25/9, never run anywhere): one without the
+-- device column, one without google_account. The statements after the create
+-- bring such a table up to this shape.
+
+create table if not exists public.mad_test_optin (
+  public_id       text        primary key references public.signup (public_id) on delete cascade,
+  created_at      timestamptz not null default now(),
+  copy_version    text        not null,
+  device          text        not null
+                  constraint mad_test_optin_device_check check (device in ('iphone', 'android')),
+  google_account  text,
+  -- `is not null` spelled out: a NULL account makes the regex test NULL, and a
+  -- CHECK that comes out NULL passes, so without it an Android row typed into
+  -- the SQL editor without an account would get in and make the page's
+  -- read-back throw (a 500 for that person). The 254 cap is the page's own
+  -- (normalizeGoogleAccount), for the same reason.
+  constraint mad_test_optin_google_account_check
+    check ((device = 'iphone' and google_account is null)
+        or (device = 'android' and google_account is not null
+            and length(google_account) <= 254
+            and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'))
+);
+
+-- A table created by an earlier version of this file lacks device or
+-- google_account. It never held rows, so set not null and the checks cannot
+-- fail on existing data.
+alter table public.mad_test_optin add column if not exists device text;
+alter table public.mad_test_optin alter column device set not null;
+alter table public.mad_test_optin add column if not exists google_account text;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+     where conname = 'mad_test_optin_device_check'
+       and conrelid = 'public.mad_test_optin'::regclass
+  ) then
+    alter table public.mad_test_optin
+      add constraint mad_test_optin_device_check check (device in ('iphone', 'android'));
+  end if;
+end $$;
+-- Dropped and re-added, not guarded by "if not exists": the first version of
+-- this check (run in production 1/10) lacked the `is not null`, and a guard
+-- would keep that version for good. No existing row can fail the new check:
+-- the application never writes an Android row without an account.
+alter table public.mad_test_optin drop constraint if exists mad_test_optin_google_account_check;
+alter table public.mad_test_optin
+  add constraint mad_test_optin_google_account_check
+  check ((device = 'iphone' and google_account is null)
+      or (device = 'android' and google_account is not null
+          and length(google_account) <= 254
+          and google_account ~ '^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$'));
+
+comment on table public.mad_test_optin is
+  'Mad-testen answers (ALT-345). Retention: only needed to pick testers, list Android testers in Google Play and send their login mail. Delete all rows when the Mad-testen ends.';
+
+alter table public.mad_test_optin enable row level security;
+-- No policies: only the service-role key (which bypasses RLS) may read or
+-- write. The anon key must never reach this table, so its table privileges go
+-- too (Supabase grants them to anon and authenticated by default).
+revoke all on public.mad_test_optin from anon, authenticated;

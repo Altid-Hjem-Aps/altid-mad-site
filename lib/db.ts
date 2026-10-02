@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { isMadTestDevice, normalizeGoogleAccount, type MadTestDevice } from '@/lib/mad-test'
+import { isSurveyRating, isSurveyText, type SurveyAnswers } from '@/lib/mad-test-survey'
 
 // Supabase client (service role — server-side only). Reachable from Vercel,
 // unlike the self-hosted MySQL which is firewalled.
@@ -369,6 +371,8 @@ export async function getSignupByEmail(email: string): Promise<{
 export async function getSignupByUnsubToken(token: string): Promise<{
   publicId: string
   email: string
+  firstName: string | null
+  source: string | null
   unsubscribed: boolean
   consentMad: boolean
   consentGroup: boolean
@@ -377,13 +381,17 @@ export async function getSignupByUnsubToken(token: string): Promise<{
   if (!t) return null
   const { data, error } = await getClient()
     .from('signup')
-    .select('public_id, email, unsubscribed, marketing_consent_mad, marketing_consent_group')
+    .select(
+      'public_id, email, first_name, signup_source, unsubscribed, marketing_consent_mad, marketing_consent_group',
+    )
     .eq('unsub_token', t)
     .maybeSingle()
   if (error) throw new Error(error.message)
   const row = data as {
     public_id?: string | null
     email?: string | null
+    first_name?: string | null
+    signup_source?: string | null
     unsubscribed?: boolean | null
     marketing_consent_mad?: boolean | null
     marketing_consent_group?: boolean | null
@@ -392,10 +400,196 @@ export async function getSignupByUnsubToken(token: string): Promise<{
   return {
     publicId: row.public_id,
     email: row.email,
+    firstName: row.first_name ?? null,
+    source: row.signup_source ?? null,
     unsubscribed: row.unsubscribed === true,
     consentMad: row.marketing_consent_mad === true,
     consentGroup: row.marketing_consent_group === true,
   }
+}
+
+/**
+ * The Mad-testen answer a person already gave (supabase/migrations/20260925…),
+ * or null. Errors throw: the yes-page must show its error screen, never a form
+ * or an "already answered" screen it cannot back up.
+ */
+export async function getMadTestOptin(publicId: string): Promise<{
+  publicId: string
+  createdAt: string
+  copyVersion: string
+  device: MadTestDevice
+  googleAccount: string | null
+} | null> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestOptin: empty publicId')
+  const { data, error } = await getClient()
+    .from('mad_test_optin')
+    .select('public_id, created_at, copy_version, device, google_account')
+    .eq('public_id', id)
+    .maybeSingle()
+  if (error) throw new Error(`mad_test_optin read failed: ${error.message}`)
+  const row = data as {
+    public_id: string
+    created_at: string
+    copy_version: string
+    device: unknown
+    google_account: unknown
+  } | null
+  if (!row) return null
+  if (!isMadTestDevice(row.device)) {
+    throw new Error(`mad_test_optin row has an unknown device: ${String(row.device)}`)
+  }
+  const googleAccount = row.google_account === null ? null : normalizeGoogleAccount(row.google_account)
+  // The table's check constraint ties the account to the device; a row that
+  // breaks it was not written by this code.
+  if ((row.device === 'android') !== (googleAccount !== null)) {
+    throw new Error(`mad_test_optin row for ${row.device} has ${googleAccount === null ? 'no' : 'a'} google_account`)
+  }
+  return {
+    publicId: row.public_id,
+    createdAt: row.created_at,
+    copyVersion: row.copy_version,
+    device: row.device,
+    googleAccount,
+  }
+}
+
+/**
+ * Record a Mad-testen answer. Insert with ON CONFLICT DO NOTHING: a repeat
+ * answer (double tap, back button, second visit) keeps the first row's device,
+ * time and wording version, which is what the seat order is built on.
+ * An Android answer carries the Google account on the phone (Google Play lists
+ * testers by it); an iPhone answer carries none. The table's check constraint
+ * says the same, so a wrong pair is refused here before it can be a 500 there.
+ */
+export async function recordMadTestOptin(
+  publicId: string,
+  copyVersion: string,
+  device: MadTestDevice,
+  googleAccount: string | null,
+): Promise<void> {
+  const id = String(publicId || '').trim()
+  const version = String(copyVersion || '').trim()
+  if (!id) throw new Error('recordMadTestOptin: empty publicId')
+  if (!version) throw new Error('recordMadTestOptin: empty copyVersion')
+  if (!isMadTestDevice(device)) throw new Error(`recordMadTestOptin: unknown device ${String(device)}`)
+  if (device === 'android') {
+    if (googleAccount === null || normalizeGoogleAccount(googleAccount) !== googleAccount) {
+      throw new Error('recordMadTestOptin: an Android answer needs a normalised Google account')
+    }
+  } else if (googleAccount !== null) {
+    throw new Error('recordMadTestOptin: an iPhone answer carries no Google account')
+  }
+  const { error } = await getClient()
+    .from('mad_test_optin')
+    .upsert(
+      { public_id: id, copy_version: version, device, google_account: googleAccount },
+      { onConflict: 'public_id', ignoreDuplicates: true },
+    )
+  if (error) throw new Error(`mad_test_optin insert failed: ${error.message}`)
+}
+
+// A stored text answer: any string, or null for "not answered". The column is
+// text, so anything else means the select or the table changed.
+function isStoredText(value: unknown): value is string | null {
+  return value === null || typeof value === 'string'
+}
+
+/**
+ * The day-5 survey answer a tester already gave (supabase/migrations/20260929…),
+ * or null. Errors throw: the survey must show its error screen, never a form or
+ * a "we have your answers" screen it cannot back up. A rating or panel outside
+ * the table's checks throws too. A text answer is read back as stored, whatever
+ * its whitespace or length: the table's checks are the only gate on it, so a
+ * row the table accepted (typed into the SQL editor, imported) can never turn
+ * this tester's page into a 500 for good.
+ */
+export async function getMadTestSurvey(publicId: string): Promise<({
+  publicId: string
+  createdAt: string
+  copyVersion: string
+} & SurveyAnswers) | null> {
+  const id = String(publicId || '').trim()
+  if (!id) throw new Error('getMadTestSurvey: empty publicId')
+  const { data, error } = await getClient()
+    .from('mad_test_survey')
+    .select('public_id, created_at, copy_version, plan_fit, plan_fit_note, easy_to_use, easy_note, missing, other_feedback, panel')
+    .eq('public_id', id)
+    .maybeSingle()
+  if (error) throw new Error(`mad_test_survey read failed: ${error.message}`)
+  const row = data as {
+    public_id: string
+    created_at: string
+    copy_version: string
+    plan_fit: unknown
+    plan_fit_note: unknown
+    easy_to_use: unknown
+    easy_note: unknown
+    missing: unknown
+    other_feedback: unknown
+    panel: unknown
+  } | null
+  if (!row) return null
+  if (!isSurveyRating(row.plan_fit)) throw new Error(`mad_test_survey row has an unknown plan_fit: ${String(row.plan_fit)}`)
+  if (!isSurveyRating(row.easy_to_use)) throw new Error(`mad_test_survey row has an unknown easy_to_use: ${String(row.easy_to_use)}`)
+  if (!isStoredText(row.plan_fit_note)) throw new Error('mad_test_survey row has a non-text plan_fit_note')
+  if (!isStoredText(row.easy_note)) throw new Error('mad_test_survey row has a non-text easy_note')
+  if (!isStoredText(row.missing)) throw new Error('mad_test_survey row has a non-text missing')
+  if (!isStoredText(row.other_feedback)) throw new Error('mad_test_survey row has a non-text other_feedback')
+  if (typeof row.panel !== 'boolean') throw new Error(`mad_test_survey row has a non-boolean panel: ${String(row.panel)}`)
+  return {
+    publicId: row.public_id,
+    createdAt: row.created_at,
+    copyVersion: row.copy_version,
+    planFit: row.plan_fit,
+    planFitNote: row.plan_fit_note,
+    easyToUse: row.easy_to_use,
+    easyNote: row.easy_note,
+    missing: row.missing,
+    otherFeedback: row.other_feedback,
+    panel: row.panel,
+  }
+}
+
+/**
+ * Record a tester's day-5 survey answer. Insert with ON CONFLICT DO NOTHING:
+ * one answer per person, and a repeat (double tap, back button, second visit)
+ * keeps the first. Every value is checked here against the table's checks, so a
+ * wrong one is refused before it can be a 500 there.
+ */
+export async function recordMadTestSurvey(
+  publicId: string,
+  copyVersion: string,
+  answers: SurveyAnswers,
+): Promise<void> {
+  const id = String(publicId || '').trim()
+  const version = String(copyVersion || '').trim()
+  if (!id) throw new Error('recordMadTestSurvey: empty publicId')
+  if (!version) throw new Error('recordMadTestSurvey: empty copyVersion')
+  if (!isSurveyRating(answers.planFit)) throw new Error(`recordMadTestSurvey: unknown planFit ${String(answers.planFit)}`)
+  if (!isSurveyRating(answers.easyToUse)) throw new Error(`recordMadTestSurvey: unknown easyToUse ${String(answers.easyToUse)}`)
+  if (!isSurveyText(answers.planFitNote)) throw new Error('recordMadTestSurvey: planFitNote is not a stored text answer')
+  if (!isSurveyText(answers.easyNote)) throw new Error('recordMadTestSurvey: easyNote is not a stored text answer')
+  if (!isSurveyText(answers.missing)) throw new Error('recordMadTestSurvey: missing is not a stored text answer')
+  if (!isSurveyText(answers.otherFeedback)) throw new Error('recordMadTestSurvey: otherFeedback is not a stored text answer')
+  if (typeof answers.panel !== 'boolean') throw new Error(`recordMadTestSurvey: panel is not a boolean ${String(answers.panel)}`)
+  const { error } = await getClient()
+    .from('mad_test_survey')
+    .upsert(
+      {
+        public_id: id,
+        copy_version: version,
+        plan_fit: answers.planFit,
+        plan_fit_note: answers.planFitNote,
+        easy_to_use: answers.easyToUse,
+        easy_note: answers.easyNote,
+        missing: answers.missing,
+        other_feedback: answers.otherFeedback,
+        panel: answers.panel,
+      },
+      { onConflict: 'public_id', ignoreDuplicates: true },
+    )
+  if (error) throw new Error(`mad_test_survey insert failed: ${error.message}`)
 }
 
 /**
