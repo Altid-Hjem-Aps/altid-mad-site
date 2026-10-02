@@ -46,6 +46,10 @@ const db = {
   // filters, in order, and an error to answer them with.
   counts: [] as Array<{ table: string; filters: Array<[string, string, string]> }>,
   countError: null as { message: string } | null,
+  // created_at for the next insert instead of now: Postgres stamps a row with
+  // its transaction's start time, which can be earlier than a row committed
+  // before it.
+  nextCreatedAt: null as string | null,
 }
 
 // A PostgREST count request: eq and lt filters chained on the select, the
@@ -107,7 +111,7 @@ vi.mock('@supabase/supabase-js', () => ({
         if (!db.optins.has(id) || !opts.ignoreDuplicates) {
           db.optins.set(id, {
             public_id: id,
-            created_at: new Date().toISOString(),
+            created_at: db.nextCreatedAt ?? new Date().toISOString(),
             copy_version: row.copy_version as string,
             device: row.device as string,
             google_account: row.google_account as string | null,
@@ -200,6 +204,7 @@ beforeEach(() => {
   db.insertError = null
   db.counts.length = 0
   db.countError = null
+  db.nextCreatedAt = null
   // Fresh spy per test, so call counts never leak between tests.
   vi.restoreAllMocks()
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -691,11 +696,11 @@ describe('Android places on the yes-page', () => {
   ]
 
   it.each([
-    [0, 96],
-    [1, 95],
-    [94, 2],
-    [95, 1],
-  ])('the two-button form with %i Android answers: "%i af 100" under the buttons (the team\'s 4 taken)', async (yesSoFar, left) => {
+    [0, 90],
+    [1, 89],
+    [88, 2],
+    [89, 1],
+  ])('the two-button form with %i Android answers: "%i af 100" under the buttons (the team\'s 4 and the 6 held back taken)', async (yesSoFar, left) => {
     db.signups.set(TOKEN, eligible())
     otherAndroid(yesSoFar)
     const html = await (await get(TOKEN)).text()
@@ -705,7 +710,7 @@ describe('Android places on the yes-page', () => {
     expect(db.counts).toEqual([ANDROID_COUNT])
   })
 
-  it.each([96, 97, 250])('the two-button form with %i Android answers: all places taken, never a negative number', async (yesSoFar) => {
+  it.each([90, 91, 96, 250])('the two-button form with %i Android answers: all places taken, never a negative number', async (yesSoFar) => {
     db.signups.set(TOKEN, eligible())
     otherAndroid(yesSoFar)
     const html = await (await get(TOKEN)).text()
@@ -722,12 +727,12 @@ describe('Android places on the yes-page', () => {
     db.signups.set(TOKEN, eligible())
     otherIphone(120)
     otherAndroid(3)
-    expect(await (await get(TOKEN)).text()).toContain(LEFT(93))
+    expect(await (await get(TOKEN)).text()).toContain(LEFT(87))
   })
 
   it.each(GOOGLE_STEP)('%s: the counter under the button, nothing written', async (_, open) => {
     db.signups.set(TOKEN, eligible())
-    otherAndroid(94)
+    otherAndroid(88)
     const html = await (await open()).text()
 
     expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
@@ -737,7 +742,7 @@ describe('Android places on the yes-page', () => {
 
   it.each(GOOGLE_STEP)('%s when all places are taken: says so, the step still works', async (_, open) => {
     db.signups.set(TOKEN, eligible())
-    otherAndroid(96)
+    otherAndroid(90)
     const res = await open()
     const html = await res.text()
 
@@ -751,25 +756,28 @@ describe('Android places on the yes-page', () => {
     db.signups.set(TOKEN, eligible())
     const html = await (await postAndroid(TOKEN, '"><script>x</script>')).text()
     expect(html).toContain('value="&quot;&gt;&lt;script&gt;x&lt;/script&gt;"')
-    expect(html).toContain(LEFT(96))
+    expect(html).toContain(LEFT(90))
   })
 
-  it('the counter is computed on every render and never cached', async () => {
+  it('the counter is counted again on every request, and the handlers send private, no-store', async () => {
     db.signups.set(TOKEN, eligible())
     otherAndroid(10)
     const first = await get(TOKEN)
     otherAndroid(20)
     const second = await get(TOKEN)
 
-    expect(await first.text()).toContain(LEFT(86))
-    expect(await second.text()).toContain(LEFT(76))
+    expect(await first.text()).toContain(LEFT(80))
+    expect(await second.text()).toContain(LEFT(70))
     for (const res of [first, second, await getPhone(TOKEN, 'android'), await post(TOKEN, 'android')]) {
       expect(res.headers.get('Cache-Control')).toBe('private, no-store')
     }
     expect(db.counts).toHaveLength(4)
   })
 
-  it('the iPhone route: no count, no counter, the same bytes as the confirm screen always rendered', async () => {
+  // Against this branch's own renderer: the route adds nothing to the confirm
+  // screen. That the confirm screen itself is unchanged from origin/main is
+  // proven by the pinned sha256 hashes in test/mad-test-page.test.ts.
+  it('the iPhone route: no count, no counter, exactly the confirm screen this branch renders', async () => {
     db.signups.set(TOKEN, eligible())
     otherAndroid(96)
     const html = await (await getPhone(TOKEN, 'iphone')).text()
@@ -789,9 +797,9 @@ describe('Android places on the yes-page', () => {
     expect(html).toContain(IPHONE_NEXT)
   })
 
-  it('an Android answer at place 96: the thanks as today, stored as today', async () => {
+  it('an Android answer at place 90: the thanks as today, stored as today', async () => {
     db.signups.set(TOKEN, eligible())
-    otherAndroid(95)
+    otherAndroid(89)
     const res = await postAndroid(TOKEN)
     const html = await res.text()
 
@@ -814,9 +822,9 @@ describe('Android places on the yes-page', () => {
     ])
   })
 
-  it('an Android answer at place 97: the waiting-list thanks, stored exactly as an answer in range', async () => {
+  it('an Android answer at place 91: the waiting-list thanks, stored exactly as an answer in range', async () => {
     db.signups.set(TOKEN, eligible())
-    otherAndroid(96)
+    otherAndroid(90)
     const res = await postAndroid(TOKEN)
     const html = await res.text()
 
@@ -848,10 +856,10 @@ describe('Android places on the yes-page', () => {
   })
 
   it.each([
-    ['95 before, none at the same time: place 96', 95, 0, 'f0000000', false],
-    ['96 before: place 97', 96, 0, 'f0000000', true],
-    ['95 before, one at the same time with a lower public_id: place 97', 95, 1, '00000001', true],
-    ['95 before, one at the same time with a higher public_id: place 96', 95, 1, 'f0000000', false],
+    ['89 before, none at the same time: place 90', 89, 0, 'f0000000', false],
+    ['90 before: place 91', 90, 0, 'f0000000', true],
+    ['89 before, one at the same time with a lower public_id: place 91', 89, 1, '00000001', true],
+    ['89 before, one at the same time with a higher public_id: place 90', 89, 1, 'f0000000', false],
   ] as const)('already answered on Android, %s', async (_, before, tied, tiedPrefix, waitlist) => {
     db.signups.set(TOKEN, eligible())
     db.optins.set(PUBLIC_ID, answered('android'))
@@ -884,9 +892,9 @@ describe('Android places on the yes-page', () => {
     expect(html).toContain(IPHONE_NEXT)
   })
 
-  it('a competing Android answer that won, beyond the places: the waiting-list already screen', async () => {
+  it('one person answering Android twice at once, beyond the places: the losing request gets the waiting-list already screen', async () => {
     db.signups.set(TOKEN, eligible())
-    otherAndroid(96, '2026-09-01T10:00:00Z')
+    otherAndroid(90, '2026-09-01T10:00:00Z')
     db.beforeUpsert = () => {
       db.optins.set(PUBLIC_ID, answered('android', 'first@gmail.com'))
     }
@@ -894,6 +902,34 @@ describe('Android places on the yes-page', () => {
 
     expect(html).toContain('<h1>Vi har allerede dit ja</h1>')
     expect(html).toContain(WAITLIST_NEXT)
+  })
+
+  it('two people at the last promised place within milliseconds: both are thanked, then the later one is place 91 (the known race)', async () => {
+    const TOKEN_B = '7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f'
+    const PUBLIC_ID_B = '5e0c8a1b-2d3e-4f5a-8b6c-7d8e9f0a1b2c'
+    db.signups.set(TOKEN, eligible())
+    db.signups.set(TOKEN_B, eligible({ public_id: PUBLIC_ID_B, first_name: 'Bo' }))
+    otherAndroid(89)
+    // Anna's transaction starts first (earlier created_at) but Bo's commits
+    // and counts first: Anna's row is not visible to Bo's count yet.
+    const annaStart = '2026-10-02T10:00:00.000001Z'
+    const boStart = '2026-10-02T10:00:00.000002Z'
+
+    db.nextCreatedAt = boStart
+    const bo = await (await postAndroid(TOKEN_B, 'bo@gmail.com')).text()
+    db.nextCreatedAt = annaStart
+    const anna = await (await postAndroid(TOKEN)).text()
+
+    // Both counted 89 before them: both place 90, both thanked as today.
+    expect(bo).toContain('<h1>Tak Bo, du er med</h1>')
+    expect(anna).toContain('<h1>Tak Anna, du er med</h1>')
+    // In the final order Anna is 90 and Bo 91, still within the 96 the export
+    // seats. Bo's link now shows the waiting-list already screen.
+    const boAgain = await (await getPhone(TOKEN_B, 'android')).text()
+    expect(boAgain).toContain('<h1>Vi har allerede dit ja</h1>')
+    expect(boAgain).toContain(WAITLIST_NEXT)
+    const annaAgain = await (await get(TOKEN)).text()
+    expect(annaAgain).toContain(ANDROID_NEXT)
   })
 
   it.each<[string, () => Promise<Response>]>([

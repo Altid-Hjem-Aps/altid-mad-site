@@ -26,7 +26,7 @@ import {
 // /api/mad-testen/open that a real browser showed them (see reportOpen in
 // lib/mad-test.ts); this route itself records no visit.
 //
-// Android places (MAD_TEST_ANDROID_TESTER_PLACES): the form and the Google-account step
+// Android places (MAD_TEST_ANDROID_PAGE_PLACES): the form and the Google-account step
 // show how many are left, counted on every render (the responses are never
 // cached). An Android answer is stored the same way when no place is left; its
 // thank-you and already-answered screens follow the person's own place in the

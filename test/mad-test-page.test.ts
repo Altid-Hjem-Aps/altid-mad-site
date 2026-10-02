@@ -12,7 +12,9 @@ import {
   renderMadTestScreen,
   androidSeatsLeft,
   withinAndroidSeats,
+  MAD_TEST_ANDROID_PAGE_PLACES,
   MAD_TEST_ANDROID_PLACES,
+  MAD_TEST_ANDROID_REFERRER_PLACES,
   MAD_TEST_ANDROID_TEAM_PLACES,
   MAD_TEST_ANDROID_TESTER_PLACES,
   MAD_TEST_PAGES,
@@ -22,10 +24,10 @@ import {
 import { bodyHandler, showPage } from './fake-browser'
 
 const SCREENS: MadTestScreen[] = [
-  { kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: 96 },
+  { kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: 90 },
   { kind: 'confirm', firstName: 'Anna', token: 'tok' },
-  { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 96 },
-  { kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 96 },
+  { kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 90 },
+  { kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 90 },
   { kind: 'thanks', device: 'iphone', firstName: 'Anna' },
   { kind: 'thanks', device: 'android', firstName: null },
   { kind: 'already', device: 'iphone' },
@@ -73,18 +75,22 @@ describe('isMadTestPage', () => {
 })
 
 describe('Android places', () => {
-  it('100 places in Google Play\'s internal test, 4 held by the team, so 96 for testers', () => {
+  it('100 places in Google Play\'s internal test, 4 held by the team, so 96 for testers; 6 held back, so the page promises 90', () => {
     expect(MAD_TEST_ANDROID_PLACES).toBe(100)
     expect(MAD_TEST_ANDROID_TEAM_PLACES).toBe(4)
     expect(MAD_TEST_ANDROID_TESTER_PLACES).toBe(96)
+    expect(MAD_TEST_ANDROID_REFERRER_PLACES).toBe(6)
+    expect(MAD_TEST_ANDROID_PAGE_PLACES).toBe(90)
   })
 
   it.each([
-    [0, 96],
-    [94, 2],
-    [95, 1],
+    [0, 90],
+    [1, 89],
+    [88, 2],
+    [89, 1],
+    [90, 0],
+    [91, 0],
     [96, 0],
-    [97, 0],
     [500, 0],
   ])('%i Android answers leave %i places, never fewer than 0', (yesSoFar, left) => {
     expect(androidSeatsLeft(yesSoFar)).toBe(left)
@@ -94,9 +100,11 @@ describe('Android places', () => {
     expect(() => androidSeatsLeft(n)).toThrow('androidSeatsLeft: not a count')
   })
 
-  it('places 1 to 96 are places, 97 is the waiting list', () => {
+  it('places 1 to 90 are promised, 91 and on (also the export\'s 91 to 96) are the waiting list on the page', () => {
     expect(withinAndroidSeats(1)).toBe(true)
-    expect(withinAndroidSeats(96)).toBe(true)
+    expect(withinAndroidSeats(90)).toBe(true)
+    expect(withinAndroidSeats(91)).toBe(false)
+    expect(withinAndroidSeats(96)).toBe(false)
     expect(withinAndroidSeats(97)).toBe(false)
     for (const n of [0, -3, 2.5, Number.NaN]) expect(() => withinAndroidSeats(n)).toThrow('withinAndroidSeats: not a place')
   })
@@ -174,7 +182,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the Google-account step: one field prefilled, a hidden android answer, one button, the privacy link', () => {
-    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 96 })
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna@example.dk', retry: false, androidLeft: 90 })
     expect(html).toContain('<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>')
     expect(html.match(/<form /g)).toHaveLength(1)
     expect(html.match(/<button/g)).toHaveLength(1)
@@ -195,7 +203,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it('the Google-account retry points the field at its error text', () => {
-    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 96 })
+    const html = renderMadTestScreen({ kind: 'google', token: 'tok', value: 'anna', retry: true, androidLeft: 90 })
     expect(html).toContain('aria-invalid="true" aria-describedby="ga-err" autofocus')
     expect(html).toContain('<p id="ga-err" class="err">Det ligner ikke en e-mailadresse. Skriv hele adressen, fx navn@gmail.com.</p>')
   })
@@ -230,7 +238,7 @@ describe('renderMadTestScreen', () => {
 
   it('escapes the token in the form action', () => {
     const odd = `a"b'c<d>&e`
-    const html = renderMadTestScreen({ kind: 'form', firstName: null, token: odd, androidLeft: 96 })
+    const html = renderMadTestScreen({ kind: 'form', firstName: null, token: odd, androidLeft: 90 })
 
     expect(html).toContain(`action="/api/mad-testen?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
@@ -297,7 +305,7 @@ describe('renderMadTestScreen', () => {
   )
 
   it.each(['missing', 'throws'] as const)('the Google-account step when sendBeacon is %s: its own handler still checks the field', (mode) => {
-    const empty = showPage(renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: 96 }), { sendBeacon: mode })
+    const empty = showPage(renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: 90 }), { sendBeacon: mode })
     expect(empty.buttons.map((b) => b.disabled)).toEqual([true])
     const filled = showPage(renderMadTestScreen(SCREENS[2]), { sendBeacon: mode })
     expect(filled.buttons.map((b) => b.disabled)).toEqual([false])
@@ -316,7 +324,7 @@ describe('renderMadTestScreen', () => {
   it('the token in the beacon cannot leave its string or the attribute', () => {
     const odd = `a"b'c<d>&e`
     const screens: MadTestScreen[] = [
-      { kind: 'form', firstName: null, token: odd, androidLeft: 96 },
+      { kind: 'form', firstName: null, token: odd, androidLeft: 90 },
       { kind: 'confirm', firstName: null, token: odd },
     ]
     for (const screen of screens) {
@@ -331,13 +339,13 @@ describe('renderMadTestScreen', () => {
   const FULL =
     '<p class="note">Alle 100 Android-pladser er taget lige nu. Du kan stadig skrive dig op, så kommer du på ventelisten til Android og får besked, hvis der bliver en plads.</p>'
 
-  it.each([96, 2, 1])('the form with %i places left: the counter right under the buttons', (left) => {
+  it.each([90, 2, 1])('the form with %i places left: the counter right under the buttons', (left) => {
     const html = renderMadTestScreen({ kind: 'form', firstName: 'Anna', token: 'tok', androidLeft: left })
     expect(html).toContain(`</form>\n${LEFT(left)}\n<p class="small"><a href="/privatlivspolitik">`)
     expect(html).not.toContain('Alle 100 Android-pladser')
   })
 
-  it('the counter counts out of 100 with the team\'s 4 taken: never more than 96 of 100, never negative', () => {
+  it('the counter counts out of 100 with the team\'s 4 and the 6 held back taken: never more than 90 of 100, never negative', () => {
     const shown: number[] = []
     for (let yesSoFar = 0; yesSoFar <= 300; yesSoFar++) {
       for (const html of [
@@ -345,7 +353,7 @@ describe('renderMadTestScreen', () => {
         renderMadTestScreen({ kind: 'google', token: 'tok', value: '', retry: false, androidLeft: androidSeatsLeft(yesSoFar) }),
       ]) {
         const n = html.match(/Der er (-?\d+) af (\d+) pladser tilbage til Android\./)
-        if (yesSoFar < 96) {
+        if (yesSoFar < 90) {
           expect(n?.[2]).toBe('100')
           shown.push(Number(n?.[1]))
           expect(html).not.toContain('Android-pladser er taget')
@@ -353,14 +361,15 @@ describe('renderMadTestScreen', () => {
           expect(n).toBeNull()
           expect(html).toContain(FULL)
         }
-        expect(html).not.toMatch(/af 96\b/)
+        expect(html).not.toMatch(/af (90|96)\b/)
       }
     }
-    expect(Math.max(...shown)).toBe(96)
+    expect(Math.max(...shown)).toBe(90)
     expect(Math.min(...shown)).toBe(1)
+    expect(shown.every((n) => n >= 1 && n <= 90)).toBe(true)
     // The start, and the start with Thor's own test row.
-    expect(androidSeatsLeft(0)).toBe(96)
-    expect(androidSeatsLeft(1)).toBe(95)
+    expect(androidSeatsLeft(0)).toBe(90)
+    expect(androidSeatsLeft(1)).toBe(89)
   })
 
   it('the form with no place left: says all places are taken and how the waiting list works', () => {
@@ -371,7 +380,7 @@ describe('renderMadTestScreen', () => {
   })
 
   it.each([
-    [96, false],
+    [90, false],
     [1, true],
     [0, false],
     [0, true],
@@ -381,7 +390,7 @@ describe('renderMadTestScreen', () => {
     expect(html.match(/<button/g)).toHaveLength(1)
   })
 
-  it.each([-1, 97, 1.5])('a number of places left that was not counted (%s) is never printed: throws', (left) => {
+  it.each([-1, 91, 96, 97, 1.5])('a number of places left that was not counted (%s) is never printed: throws', (left) => {
     expect(() => renderMadTestScreen({ kind: 'form', firstName: null, token: 'tok', androidLeft: left })).toThrow(
       'androidSeats: not a number of places left',
     )

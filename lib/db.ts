@@ -469,6 +469,16 @@ function androidAnswers() {
     .eq('device', 'android')
 }
 
+// A count from PostgREST as a number of rows: a finite, non-negative integer.
+// supabase-js gives null without a Content-Range count and NaN for one it
+// cannot parse; either throws, naming the count.
+function rowCount(count: number | null, which: string): number {
+  if (typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
+    throw new Error(`mad_test_optin ${which}: not a count: ${String(count)}`)
+  }
+  return count
+}
+
 /**
  * How many people said yes on Android. Errors throw, and so does an answer
  * without a count: the yes-page shows its error screen, never a number of
@@ -477,8 +487,7 @@ function androidAnswers() {
 export async function countMadTestAndroid(): Promise<number> {
   const { count, error } = await androidAnswers()
   if (error) throw new Error(`mad_test_optin count failed: ${error.message}`)
-  if (typeof count !== 'number') throw new Error('mad_test_optin count missing from the answer')
-  return count
+  return rowCount(count, 'Android count')
 }
 
 /**
@@ -488,7 +497,16 @@ export async function countMadTestAndroid(): Promise<number> {
  * export (a stable sort on time over rows read in public_id order).
  * The export also puts people who brought in a signup before the invitation
  * first, which this does not count: the page uses the place only to choose
- * between the thank-you and the waiting-list screen, and never prints it.
+ * between the thank-you and the waiting-list screen, never prints it, and
+ * holds 6 places back for those referrers (MAD_TEST_ANDROID_REFERRER_PLACES).
+ *
+ * A known race, left as it is: created_at is the start of the inserting
+ * transaction, not its commit. Two answers landing within milliseconds at the
+ * last promised place can each count before the other is visible, so both get
+ * place 90 and both are thanked; afterwards the later one is place 91 and sees
+ * the waiting-list screen if it opens the link again. The export still has a
+ * seat for both (it seats 96), which is one more reason for the holdback.
+ * test/mad-testen-route.test.ts pins this case.
  */
 export async function getMadTestAndroidPlace(publicId: string, createdAt: string): Promise<number> {
   const id = String(publicId || '').trim()
@@ -500,10 +518,7 @@ export async function getMadTestAndroidPlace(publicId: string, createdAt: string
   ])
   if (before.error) throw new Error(`mad_test_optin count failed: ${before.error.message}`)
   if (tied.error) throw new Error(`mad_test_optin count failed: ${tied.error.message}`)
-  if (typeof before.count !== 'number' || typeof tied.count !== 'number') {
-    throw new Error('mad_test_optin count missing from the answer')
-  }
-  return 1 + before.count + tied.count
+  return 1 + rowCount(before.count, 'count before this answer') + rowCount(tied.count, 'count at the same time')
 }
 
 /**
