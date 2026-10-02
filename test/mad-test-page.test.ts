@@ -7,7 +7,9 @@ import {
   googleAccountPrefill,
   normalizeGoogleAccount,
   isMadTestEligible,
+  isMadTestPage,
   renderMadTestScreen,
+  MAD_TEST_PAGES,
   MAD_TEST_COPY_VERSION,
   type MadTestScreen,
 } from '@/lib/mad-test'
@@ -47,6 +49,15 @@ describe('isMadTestDevice', () => {
     expect(isMadTestDevice('iphone')).toBe(true)
     expect(isMadTestDevice('android')).toBe(true)
     for (const v of ['IPHONE', 'ios', '', null, undefined, 1]) expect(isMadTestDevice(v)).toBe(false)
+  })
+})
+
+describe('isMadTestPage', () => {
+  it('accepts exactly optin and survey', () => {
+    expect(MAD_TEST_PAGES).toEqual(['optin', 'survey'])
+    expect(isMadTestPage('optin')).toBe(true)
+    expect(isMadTestPage('survey')).toBe(true)
+    for (const v of ['OPTIN', 'thanks', '', null, undefined, 1]) expect(isMadTestPage(v)).toBe(false)
   })
 })
 
@@ -179,6 +190,46 @@ describe('renderMadTestScreen', () => {
 
     expect(html).toContain(`action="/api/mad-testen?t=${encodeURIComponent(odd).replace(/'/g, '&#39;')}"`)
     expect(html).not.toContain('a"b')
+  })
+
+  it.each(SCREENS.filter((s) => s.kind === 'form' || s.kind === 'confirm' || s.kind === 'google'))(
+    '$kind (retry $retry): a real browser reports the open of page optin, a scanner or automated browser does not',
+    (screen) => {
+      const html = renderMadTestScreen(screen)
+      const handler = html.match(/onpageshow="([^"]*)"/)?.[1] ?? ''
+      expect(handler).toContain(
+        "if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=tok',new URLSearchParams('page=optin'))}}",
+      )
+      expect(handler.match(/sendBeacon\(/g)).toHaveLength(1)
+      // Inline handler in a double-quoted attribute: no bare ampersand.
+      expect(handler).not.toContain('&')
+      // A handler, never a <script>, and nothing that waits for the answer.
+      expect(html).not.toContain('<script')
+      expect(handler).not.toContain('fetch(')
+    },
+  )
+
+  it('the iPhone route queues the beacon before it sends its form', () => {
+    const handler = renderMadTestScreen(SCREENS[1]).match(/onpageshow="([^"]*)"/)?.[1] ?? ''
+    expect(handler.indexOf('sendBeacon(')).toBeGreaterThan(-1)
+    expect(handler.indexOf('sendBeacon(')).toBeLessThan(handler.indexOf('requestSubmit('))
+  })
+
+  it.each(SCREENS.filter((s) => s.kind !== 'form' && s.kind !== 'confirm' && s.kind !== 'google'))(
+    '$kind $device: no open reported (an answer or a refusal, not an asking screen)',
+    (screen) => {
+      expect(renderMadTestScreen(screen)).not.toContain('sendBeacon')
+    },
+  )
+
+  it('the token in the beacon cannot leave its string or the attribute', () => {
+    const odd = `a"b'c<d>&e`
+    for (const kind of ['form', 'confirm'] as const) {
+      const html = renderMadTestScreen({ kind, firstName: null, token: odd })
+      const handler = html.match(/onpageshow="([^"]*)"/)?.[1] ?? ''
+      expect(handler).toContain(`navigator.sendBeacon('/api/mad-testen/open?t=a%22b%27c%3Cd%3E%26e',`)
+      expect(handler).not.toContain('&')
+    }
   })
 
   it('the wording version names today and the test', () => {

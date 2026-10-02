@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSignupByUnsubToken, getMadTestOptin, recordMadTestOptin } from '@/lib/db'
+import { getMadTestOptin, recordMadTestOptin } from '@/lib/db'
+import { eligibleSignup } from '@/lib/mad-test-access'
 import {
   MAD_TEST_COPY_VERSION,
   isMadTestDevice,
-  isMadTestEligible,
   googleAccountPrefill,
   normalizeGoogleAccount,
   renderMadTestScreen,
@@ -19,12 +19,10 @@ import {
 // account on the phone; the first Android POST writes nothing and shows that
 // step.
 // No cookie: the token rides in the form action's query string, as in
-// /api/unsubscribe.
-
-// signup.unsub_token is a Postgres uuid column. Anything else never reaches the
-// database: PostgREST answers a non-uuid filter with 22P02, which would turn a
-// mangled link into a 500 instead of the invalid-link screen.
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// /api/unsubscribe. Who the token belongs to: lib/mad-test-access.ts.
+// The form, the iPhone route and the Google-account step tell
+// /api/mad-testen/open that a real browser showed them (see reportOpen in
+// lib/mad-test.ts); this route itself records no visit.
 
 function respond(screen: MadTestScreen, status: number) {
   return new NextResponse(renderMadTestScreen(screen), {
@@ -45,14 +43,6 @@ function respond(screen: MadTestScreen, status: number) {
 // never reveals who is on the list.
 const invalid = () => respond({ kind: 'invalid' }, 400)
 const failed = () => respond({ kind: 'error' }, 500)
-
-async function eligibleSignup(req: NextRequest) {
-  const token = (req.nextUrl.searchParams.get('t') ?? '').trim()
-  if (!UUID.test(token)) return null
-  const signup = await getSignupByUnsubToken(token)
-  if (!signup || !isMadTestEligible(signup)) return null
-  return { token, signup }
-}
 
 export async function GET(req: NextRequest) {
   try {

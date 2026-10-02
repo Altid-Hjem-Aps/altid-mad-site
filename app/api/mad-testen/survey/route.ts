@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMadTestOptin, getMadTestSurvey, getSignupByUnsubToken, recordMadTestSurvey } from '@/lib/db'
-import { isMadTestEligible } from '@/lib/mad-test'
+import { getMadTestSurvey, recordMadTestSurvey } from '@/lib/db'
+import { tester } from '@/lib/mad-test-access'
 import {
   MAD_TEST_SURVEY_COPY_VERSION,
   SURVEY_BODY_MAX,
@@ -18,13 +18,10 @@ import {
 // the token rides in the form action's query string.
 //
 // Who may answer: an eligible signup (same test as the yes-page) that said yes
-// to the test (a mad_test_optin row). Everyone else gets the invalid-link
-// screen.
-
-// signup.unsub_token is a Postgres uuid column. Anything else never reaches the
-// database: PostgREST answers a non-uuid filter with 22P02, which would turn a
-// mangled link into a 500 instead of the invalid-link screen.
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// to the test (a mad_test_optin row), checked in lib/mad-test-access.ts.
+// Everyone else gets the invalid-link screen. The form tells
+// /api/mad-testen/open that a real browser showed it (see reportOpen in
+// lib/mad-test.ts); this route itself records no visit.
 
 function respond(screen: SurveyScreen, status: number) {
   return new NextResponse(renderSurveyScreen(screen), {
@@ -46,15 +43,6 @@ function respond(screen: SurveyScreen, status: number) {
 // the test.
 const invalid = () => respond({ kind: 'invalid' }, 400)
 const failed = () => respond({ kind: 'error' }, 500)
-
-async function tester(req: NextRequest) {
-  const token = (req.nextUrl.searchParams.get('t') ?? '').trim()
-  if (!UUID.test(token)) return null
-  const signup = await getSignupByUnsubToken(token)
-  if (!signup || !isMadTestEligible(signup)) return null
-  if (!(await getMadTestOptin(signup.publicId))) return null
-  return { token, signup }
-}
 
 function sameAnswers(a: SurveyAnswers, b: SurveyAnswers): boolean {
   return (

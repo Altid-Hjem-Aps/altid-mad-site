@@ -20,6 +20,11 @@
  * there to press. The Android route asks for the Google account on the phone, because Google Play only lets listed Google accounts
  * install an internal test build (up to 100, no review; read on
  * support.google.com/googleplay/android-developer/answer/9845334, 29/9).
+ *
+ * Opening a page is recorded by the browser, not the GET (Thor 2/10, so we see
+ * who opened a page and left): the form, the iPhone route and the Google-account
+ * step each send one beacon to /api/mad-testen/open when a real browser shows
+ * them (reportOpen below). The answer never waits for it.
  */
 
 /**
@@ -151,6 +156,34 @@ const RESET_BUTTONS = `var f=document.querySelector('form');if(f){delete f.datas
 // back, so going back never answers twice.
 const AUTO_SEND = `var f=document.querySelector('form');if(f){if(event.persisted){delete f.dataset.sent;f.querySelectorAll('button').forEach(function(b){b.textContent=b.dataset.l})}else if(!navigator.webdriver){if(f.requestSubmit){f.requestSubmit(f.querySelector('button'))}}}`
 
+/**
+ * The two pages whose opening is recorded (supabase/migrations/20261002…): the
+ * yes-page in all its asking screens, and the survey form.
+ */
+export const MAD_TEST_PAGES = ['optin', 'survey'] as const
+export type MadTestPage = (typeof MAD_TEST_PAGES)[number]
+
+export function isMadTestPage(value: unknown): value is MadTestPage {
+  return typeof value === 'string' && (MAD_TEST_PAGES as readonly string[]).includes(value)
+}
+
+/**
+ * Tells /api/mad-testen/open that a real browser showed this page, for the
+ * person whose token the page already carries. A beacon, so it survives the
+ * iPhone route sending its form straight after, and nothing waits for it: the
+ * page and the answer work the same whether it lands or not. Same guard as
+ * AUTO_SEND: a mail scanner that only fetches the page runs no script, and an
+ * automated browser (navigator.webdriver) sends nothing. Every open sends; the
+ * server keeps the first.
+ * The token goes into a single-quoted string inside a double-quoted attribute,
+ * so it is URL-encoded with ' encoded too (encodeURIComponent leaves it): what
+ * is left holds no quote, & or <, and needs no further escaping.
+ */
+export function reportOpen(token: string, page: MadTestPage): string {
+  const url = `/api/mad-testen/open?t=${encodeURIComponent(token).replace(/'/g, '%27')}`
+  return `if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('${url}',new URLSearchParams('page=${page}'))}}`
+}
+
 // The Google-account step: "Fortsæt med Android" is switched off until the field
 // holds an address (same pattern as normalizeGoogleAccount). Set by script only,
 // so without JavaScript the button works and the server does the check.
@@ -199,7 +232,7 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
     case 'form':
       return {
         title: 'Vil du teste Altid Mad?',
-        onPageShow: RESET_BUTTONS,
+        onPageShow: `${reportOpen(screen.token, 'optin')};${RESET_BUTTONS}`,
         body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad før alle andre?</h1>
 <p class="lead">Vælg, om du vil teste på iPhone eller Android.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit personlige testlogin på mail.</p>
@@ -212,7 +245,8 @@ function content(screen: MadTestScreen): { title: string; body: string; onPageSh
     case 'confirm':
       return {
         title: 'Test Altid Mad på iPhone',
-        onPageShow: AUTO_SEND,
+        // The beacon first: it is queued before the form sends and leaves.
+        onPageShow: `${reportOpen(screen.token, 'optin')};${AUTO_SEND}`,
         body: `<h1>${greeting(screen.firstName)}, vil du teste Altid&nbsp;Mad på din iPhone?</h1>
 <p class="lead">Testen foregår gennem Apples gratis app TestFlight.</p>
 <p class="note">Vi opretter en testkonto på din <span class="nw">e-mailadresse</span> og sender dig dit login på mail, så snart testversionen er klar i TestFlight.</p>
@@ -225,7 +259,7 @@ ${otherPhone(screen.token, 'android', 'Jeg har Android')}
     case 'google':
       return {
         title: 'Din Google-konto',
-        onPageShow: `${RESET_BUTTONS};${GA_CHECK}`,
+        onPageShow: `${reportOpen(screen.token, 'optin')};${RESET_BUTTONS};${GA_CHECK}`,
         body: `<h1>Hvilken Google-konto bruger du på din Android-telefon?</h1>
 <p class="lead">For at give dig adgang til testen skal vi bruge den Google-konto, du er logget ind med i Google&nbsp;Play på din Android-telefon.</p>
 <p class="lead">Det er ofte en Gmail-adresse.</p>

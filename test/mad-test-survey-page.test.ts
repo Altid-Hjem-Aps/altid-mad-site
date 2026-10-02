@@ -485,6 +485,25 @@ describe('renderSurveyScreen', () => {
     expect(html).not.toContain('<button')
   })
 
+  it.each([SCREENS[0], ERRORS])(
+    'the form (errors: $errors): a real browser reports the open of page survey, a scanner or automated browser does not',
+    (screen) => {
+      const handler = renderSurveyScreen(screen).match(/onpageshow="([^"]*)"/)?.[1] ?? ''
+      expect(handler).toContain(
+        "if(!navigator.webdriver){if(navigator.sendBeacon){navigator.sendBeacon('/api/mad-testen/open?t=tok',new URLSearchParams('page=survey'))}}",
+      )
+      expect(handler.match(/sendBeacon\(/g)).toHaveLength(1)
+      // Inline handler in a double-quoted attribute: no bare ampersand.
+      expect(handler).not.toContain('&')
+      // The back/forward reset of the button still runs after it.
+      expect(handler).toContain("f.querySelector('button').textContent='Send mine svar'")
+    },
+  )
+
+  it.each(SCREENS.filter((s) => s.kind !== 'form'))('$kind: no open reported', (screen) => {
+    expect(renderSurveyScreen(screen)).not.toContain('sendBeacon')
+  })
+
   it('the wording version names the day and the survey', () => {
     expect(MAD_TEST_SURVEY_COPY_VERSION).toBe('2026-10-01-mad-test-survey-3')
   })
