@@ -25,13 +25,36 @@ export const SAVINGS_DISCLAIMER =
 // Mad box (its launch is covered by signing up) but KEPT in the group box (a
 // Mad signer never asked about the other brands' launches). Both boxes stay
 // optional and independent of joining the waitlist.
-export const CONSENT_VERSION = '2026-07-14.2-mad'
+//
+// 2026-10-16 (Alex): the signup form now shows ONE box, like Altid Forsikring.
+// The broad sentence (SIGNUP_CONSENT_ALL) is the default and names every brand
+// as a sender; "Kun Mad? Skift her" narrows it to SIGNUP_CONSENT_MAD, and
+// "Hvem står bag?" lists the companies behind the brands. SIGNUP_CONSENT_MAD
+// and SIGNUP_CONSENT_GROUP stay unchanged: the confirm mail, /bekraeft and the
+// preference centre still use them.
+export const CONSENT_VERSION = '2026-10-16.1-mad'
 export const SIGNUP_LAUNCH_NOTICE =
   'Når du skriver dig op, beder du Altid Hjem ApS om at sende dig én e-mail, når Altid Mad er klar. Du kan til enhver tid forlade ventelisten.'
 export const SIGNUP_CONSENT_MAD =
   'Ja tak. Jeg vil gerne modtage e-mails med nyheder, tilbud og anden markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
 export const SIGNUP_CONSENT_GROUP =
   'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og anden markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
+export const SIGNUP_CONSENT_ALL =
+  'Ja tak til nyheder og gode tilbud på mail om forsikring, el, mobil og madvarer fra Altid Hjem, Altid Forsikring, Altid Energi, Altid Mobil og Altid Mad.'
+export const SIGNUP_CONSENT_WITHDRAW = 'Afmeld når som helst'
+// Small text link under the box: swaps the broad sentence for the narrow one
+// (SIGNUP_CONSENT_MAD, Altid Mad only), and back via SIGNUP_CONSENT_BROAD_LINK.
+export const SIGNUP_CONSENT_NARROW_LINK = 'Kun Mad? Skift her'
+export const SIGNUP_CONSENT_BROAD_LINK = 'Hele familien igen? Skift her'
+// Shown next to the broad sentence only: it opens SIGNUP_CONSENT_SENDERS, the
+// company behind each brand that the broad sentence names as a sender.
+export const SIGNUP_CONSENT_SENDERS_LINK = 'Hvem står bag?'
+export const SIGNUP_CONSENT_SENDERS = [
+  'Altid Hjem ApS (CVR 45637476): Altid Hjem og Altid Forsikring',
+  'Altid Mobil ApS (CVR 46169093): Altid Mobil',
+  'Altid Energi ApS (CVR 44373580): Altid Energi',
+  'Spari ApS (CVR 44307170): Altid Mad',
+]
 
 // The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
 // things: they signed up on this site, or they are already on the shared list
