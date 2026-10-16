@@ -1,60 +1,46 @@
+import { consentSentences, consentVersion } from 'altid-consent'
+
 // Legal/compliance copy that MUST stay identical everywhere it appears.
 // Rendered under the Ét hjem animation in both the WhatIs section and the
 // exit-intent dialog — an edit to one must never strand the other.
 export const SAVINGS_DISCLAIMER =
   'Eksempelberegning. Besparelsen er vejledende og baseret på antagelser. Den faktiske besparelse afhænger af husstandens forbrug, adresse, aftaler, dækning og gældende priser.'
 
-// Marketing-consent copy for the two signup checkboxes. Verbatim from the
-// legal fact-check (based on Forbrugerombudsmanden's spam guidance): active,
-// non-pre-checked, exhaustively names each brand, and says it is marketing.
-// Present structure: Altid Mad has no CVR yet, so it is a brand run by Altid
-// Hjem ApS (CVR 45637476), which is also the sender — hence "fra Altid Hjem
-// ApS". WHEN Altid Mad becomes a registered company with its own CVR, revisit:
-// a data-sharing agreement between the entities and possibly naming Altid Mad
-// ApS as its own sender. CONSENT_VERSION is stored with each signup; the site
-// suffix ('-mad', vs the altidhjem.dk '-hjem') makes it self-documenting on the
-// SHARED waitlist, since the two sites use different wording — the exact text
-// accepted is identifiable from the version alone, not only via signup_source.
-// Bumped from 2026-07-13 when the wording softened to "vil gerne modtage" —
-// consent_version stores the exact text accepted, so a wording change bumps it.
-// 2026-07-14 (legal fact-check): the Altid Mad launch mail IS direct marketing,
-// but the waitlist signup itself is the prior, specific markedsføringslov §10
-// consent to that one mail — the purpose is stated right before the button in
-// SIGNUP_LAUNCH_NOTICE. That mail may carry ONLY launch/access info: no offers,
-// other brands, or referral push. "lanceringer" is therefore dropped from the
-// Mad box (its launch is covered by signing up) but KEPT in the group box (a
-// Mad signer never asked about the other brands' launches). Both boxes stay
-// optional and independent of joining the waitlist.
+// Marketing consent. The wording, the family of brands and the version are
+// decided at Altid Hjem level and live in the altid-consent package: its
+// DECISIONS.md says why the box works the way it does, and its CHANGELOG.md
+// holds the exact text of every version. Change them there, never here.
 //
-// 2026-10-16 (Alex): the signup form now shows ONE box, like Altid Forsikring.
-// The broad sentence (SIGNUP_CONSENT_ALL) is the default and names every brand
-// as a sender; "Kun Mad? Skift her" narrows it to SIGNUP_CONSENT_MAD, and
-// "Hvem står bag?" lists the companies behind the brands. SIGNUP_CONSENT_MAD
-// and SIGNUP_CONSENT_GROUP stay unchanged: the confirm mail, /bekraeft and the
-// preference centre still use them.
-export const CONSENT_VERSION = '2026-10-16.1-mad'
+// Mad-specific, so still here:
+// - Altid Mad has no CVR yet; it is a brand run by Altid Hjem ApS (CVR
+//   45637476), which is also the sender (the package's senders list names Spari
+//   ApS for Altid Mad). WHEN Altid Mad becomes a registered company with its
+//   own CVR, revisit a data-sharing agreement between the entities and whether
+//   Altid Mad ApS becomes its own sender.
+// - CONSENT_VERSION is stored with each signup. The package derives it
+//   ('<template>-mad'), so the exact text accepted is identifiable from the
+//   version alone on the waitlist shared with altidhjem.dk.
+// - 2026-07-14 (legal fact-check): the Altid Mad launch mail IS direct
+//   marketing, but the waitlist signup itself is the prior, specific
+//   markedsføringslov §10 consent to that one mail (SIGNUP_LAUNCH_NOTICE states
+//   the purpose right before the button). That mail may carry ONLY launch/access
+//   info: no offers, other brands, or referral push. The launch notice is this
+//   site's own text and is not versioned by the package.
+// - 2026-10-16 (Alexander Thorup): the narrow and group sentences moved from
+//   this site's own long wording to the package's uniform wording, like every
+//   other brand (package CHANGELOG, 2026-10-16.2). The confirmation mail,
+//   /bekraeft and the preference centre quote them, so a stored
+//   2026-10-16.2-mad row is confirmed on the text the package records.
+// - SIGNUP_CONSENT_MAD and _GROUP are whole sentences on purpose:
+//   emails/consent-confirm.ts quotes one of them as the consent itself, since
+//   clicking the link in that mail IS the act of consenting.
+const MAD = consentSentences('mad')
+
+export const CONSENT_VERSION = consentVersion('mad')
 export const SIGNUP_LAUNCH_NOTICE =
   'Når du skriver dig op, beder du Altid Hjem ApS om at sende dig én e-mail, når Altid Mad er klar. Du kan til enhver tid forlade ventelisten.'
-export const SIGNUP_CONSENT_MAD =
-  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, tilbud og anden markedsføring om Altid Mad fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
-export const SIGNUP_CONSENT_GROUP =
-  'Ja tak. Jeg vil gerne modtage e-mails med nyheder, lanceringer, tilbud og anden markedsføring om Altid Hjem, Altid Forsikring og Altid Mobil fra Altid Hjem ApS. Jeg kan til enhver tid trække mit samtykke tilbage.'
-export const SIGNUP_CONSENT_ALL =
-  'Ja tak til nyheder og gode tilbud på mail om forsikring, el, mobil og madvarer fra Altid Hjem, Altid Forsikring, Altid Energi, Altid Mobil og Altid Mad.'
-export const SIGNUP_CONSENT_WITHDRAW = 'Afmeld når som helst'
-// Small text link under the box: swaps the broad sentence for the narrow one
-// (SIGNUP_CONSENT_MAD, Altid Mad only), and back via SIGNUP_CONSENT_BROAD_LINK.
-export const SIGNUP_CONSENT_NARROW_LINK = 'Kun Mad? Skift her'
-export const SIGNUP_CONSENT_BROAD_LINK = 'Hele familien igen? Skift her'
-// Shown next to the broad sentence only: it opens SIGNUP_CONSENT_SENDERS, the
-// company behind each brand that the broad sentence names as a sender.
-export const SIGNUP_CONSENT_SENDERS_LINK = 'Hvem står bag?'
-export const SIGNUP_CONSENT_SENDERS = [
-  'Altid Hjem ApS (CVR 45637476): Altid Hjem og Altid Forsikring',
-  'Altid Mobil ApS (CVR 46169093): Altid Mobil',
-  'Altid Energi ApS (CVR 44373580): Altid Energi',
-  'Spari ApS (CVR 44307170): Altid Mad',
-]
+export const SIGNUP_CONSENT_MAD = MAD.own
+export const SIGNUP_CONSENT_GROUP = MAD.group
 
 // The waitlist is shared with altidhjem.dk, so a duplicate signup can mean two
 // things: they signed up on this site, or they are already on the shared list
@@ -158,9 +144,9 @@ export const CONFIRM_SENDS_PER_HOUR = 100
 export const DUPLICATE_ERROR = 'Du er allerede skrevet op til Altid Hjem.'
 
 // Aliases so the confirmation email and confirm page are byte-identical across
-// altidmad.dk and altidhjem.dk. The two sites collect consent with different
-// forms (Mad has two boxes, Hjem one combined box) but they write the SAME two
-// flags to the SAME shared row — so the wording shown when confirming or editing
-// a flag must not depend on which site the person happens to be looking at.
+// altidmad.dk and altidhjem.dk. Both sites write the SAME two flags to the SAME
+// shared row, so the wording shown when confirming or editing a flag must not
+// depend on which site the person happens to be looking at. altidhjem.dk quotes
+// consentSentences('mad') for the same two flags.
 export const PREF_CONSENT_MAD = SIGNUP_CONSENT_MAD
 export const PREF_CONSENT_GROUP = SIGNUP_CONSENT_GROUP

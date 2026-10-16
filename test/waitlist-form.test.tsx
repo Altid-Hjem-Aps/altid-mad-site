@@ -1,22 +1,26 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import WaitlistForm from '@/components/WaitlistForm'
+import { CONSENT_SENDERS, consentSentences } from 'altid-consent'
 import {
   CONSENT_VERSION,
-  SIGNUP_CONSENT_ALL,
   SIGNUP_CONSENT_MAD,
   SIGNUP_CONSENT_GROUP,
   SIGNUP_LAUNCH_NOTICE,
-  SIGNUP_CONSENT_WITHDRAW,
-  SIGNUP_CONSENT_NARROW_LINK,
-  SIGNUP_CONSENT_BROAD_LINK,
-  SIGNUP_CONSENT_SENDERS_LINK,
-  SIGNUP_CONSENT_SENDERS,
   DUPLICATE_SIGNUP_HEADING,
   CONFIRM_SENT_HEADING,
   confirmSentBody,
   ALREADY_CONSENTED_HEADING,
 } from '@/lib/copy'
+
+// The form's consent text comes from altid-consent, not from lib/copy.ts.
+const MAD = consentSentences('mad')
+const SIGNUP_CONSENT_ALL = MAD.all
+const SIGNUP_CONSENT_WITHDRAW = MAD.withdraw
+const SIGNUP_CONSENT_NARROW_LINK = MAD.narrowLink
+const SIGNUP_CONSENT_BROAD_LINK = MAD.broadLink
+const SIGNUP_CONSENT_SENDERS_LINK = MAD.sendersLink
+const SIGNUP_CONSENT_SENDERS = CONSENT_SENDERS
 
 // Amplitude is a browser SDK with network side effects — mock it.
 vi.mock('@amplitude/analytics-browser', () => ({ track: vi.fn() }))
@@ -338,12 +342,18 @@ describe('consent copy: one sentence, opt-down to Altid Mad only', () => {
   })
 
   it('versions the new wording, since consent_version records the text accepted', () => {
-    expect(CONSENT_VERSION).toBe('2026-10-16.1-mad')
+    expect(CONSENT_VERSION).toBe('2026-10-16.2-mad')
   })
 
-  it('keeps the group sentence for the confirm mail and preference centre, still naming lanceringer', () => {
-    expect(SIGNUP_CONSENT_MAD).not.toContain('lanceringer')
-    expect(SIGNUP_CONSENT_GROUP).toContain('lanceringer')
+  // Deliberate wording change (2026-10-16, package CHANGELOG 2026-10-16.2): the
+  // confirm mail, /bekraeft and the preference centre quote the package's
+  // uniform own and group sentences, not this site's old long wording, so
+  // "lanceringer" is gone and Energi is named.
+  it('quotes the package sentences for the confirm mail and preference centre', () => {
+    expect(SIGNUP_CONSENT_MAD).toBe(MAD.own)
+    expect(SIGNUP_CONSENT_GROUP).toBe(MAD.group)
+    expect(SIGNUP_CONSENT_GROUP).toContain('Forsikring, Energi og Mobil')
+    expect(SIGNUP_CONSENT_GROUP).not.toContain('Altid Mad')
   })
 
   it('shows the signup-grounded launch notice once the visitor starts typing', () => {
