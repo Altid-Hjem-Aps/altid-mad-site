@@ -202,7 +202,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [surveyToken, setSurveyToken] = useState('')
   const [referredBy, setReferredBy] = useState('')
   // Marketing consent (Forbrugerombudsmanden): the single box starts UNCHECKED
-  // and is fully optional — consent may never be a condition for joining the
+  // and is fully optional: consent may never be a condition for joining the
   // waitlist (GDPR art. 7(4), koblingsforbud). Scope 'all' (default) opts into
   // every brand; 'brand' opts into Altid Mad marketing only.
   const [consentChecked, setConsentChecked] = useState(false)
