@@ -31,7 +31,7 @@ export function consentTextsFor(pending: ConsentSet): string[] {
 
 export function confirmHeading(pending: ConsentSet): string {
   if (pending.mad && pending.group) return 'Vil du høre nyt fra Altid?'
-  if (pending.group) return 'Vil du høre nyt fra Altid Hjem, Altid Forsikring og Altid Mobil?'
+  if (pending.group) return 'Vil du høre nyt fra Altid Hjem og resten af familien?'
   return 'Vil du høre nyt om Altid Mad?'
 }
 
