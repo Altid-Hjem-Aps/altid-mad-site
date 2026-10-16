@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import * as amplitude from '@amplitude/analytics-browser'
 import { DEFAULT_SIGNUP_SOURCE } from '@/lib/signup-source'
-import { DUPLICATE_SIGNUP_HEADING, SIGNUP_CONSENT_MAD, SIGNUP_CONSENT_GROUP, SIGNUP_LAUNCH_NOTICE, CONSENT_VERSION } from '@/lib/copy'
+import { DUPLICATE_SIGNUP_HEADING, SIGNUP_CONSENT_ALL, SIGNUP_CONSENT_MAD, SIGNUP_LAUNCH_NOTICE, SIGNUP_CONSENT_WITHDRAW, SIGNUP_CONSENT_NARROW_LINK, SIGNUP_CONSENT_BROAD_LINK, SIGNUP_CONSENT_SENDERS_LINK, SIGNUP_CONSENT_SENDERS, CONSENT_VERSION } from '@/lib/copy'
 import { markWaitlistJoined } from '@/lib/waitlist-joined'
 import { BUTTON_PRIMARY, FINE_PRINT } from '@/lib/typography'
 
@@ -33,32 +33,90 @@ const DK_GROCERY_CHAINS = [
 // the heading instead.
 const DUPLICATE_HEADING = DUPLICATE_SIGNUP_HEADING
 
-// The launch notice plus two active, non-pre-checked, OPTIONAL marketing-consent
-// checkboxes. Signing up is itself the specific markedsføringslov §10 consent to
+// The launch notice plus ONE active, non-pre-checked, OPTIONAL marketing-consent
+// checkbox. Signing up is itself the specific markedsføringslov §10 consent to
 // the one Altid Mad launch mail (SIGNUP_LAUNCH_NOTICE states that purpose above
-// the button), so the boxes below are purely for ONGOING marketing and are never
-// a condition for joining. Adapts colour to the dark/light form variant.
-function ConsentCheckboxes({ dark, mad, group, onMad, onGroup }: {
+// the box), so the box below is purely for ONGOING marketing and is never a
+// condition for joining. Adapts colour to the dark/light form variant.
+//
+// One sentence covers every brand by default (SIGNUP_CONSENT_ALL); a small text
+// link swaps it to the Altid Mad-only sentence (SIGNUP_CONSENT_MAD). Refusing
+// stays as easy as accepting (leave the box unticked); narrowing is a visible
+// second click on the link, never the default. Toggling the link clears the
+// tick: the person should only ever tick the sentence they are looking at.
+function ConsentBox({ dark, checked, scope, onChecked, onScope }: {
   dark: boolean
-  mad: boolean
-  group: boolean
-  onMad: (v: boolean) => void
-  onGroup: (v: boolean) => void
+  checked: boolean
+  scope: 'all' | 'brand'
+  onChecked: (v: boolean) => void
+  onScope: (s: 'all' | 'brand') => void
 }) {
   const color = dark ? 'rgba(255,255,255,0.7)' : '#6f6a61'
   const noticeColor = dark ? 'rgba(255,255,255,0.6)' : '#6f6a61'
   const boxStyle: React.CSSProperties = { width: 17, height: 17, marginTop: 2, flexShrink: 0, accentColor: dark ? '#DCD799' : '#3E6924', cursor: 'pointer' }
+  const boxId = useId()
+  const withdrawId = useId()
+  const sendersId = useId()
+  const [sendersOpen, setSendersOpen] = useState(false)
+  const sentence = scope === 'all' ? SIGNUP_CONSENT_ALL : SIGNUP_CONSENT_MAD
+  const linkLabel = scope === 'all' ? SIGNUP_CONSENT_NARROW_LINK : SIGNUP_CONSENT_BROAD_LINK
   return (
     <div className="flex flex-col gap-2.5 mt-4 mb-1 text-left">
       <p className={FINE_PRINT} style={{ color: noticeColor, lineHeight: 1.45 }}>{SIGNUP_LAUNCH_NOTICE}</p>
-      <label className={`flex gap-2.5 items-start ${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
-        <input type="checkbox" checked={mad} onChange={e => onMad(e.target.checked)} style={boxStyle} />
-        <span>{SIGNUP_CONSENT_MAD}</span>
-      </label>
-      <label className={`flex gap-2.5 items-start ${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
-        <input type="checkbox" checked={group} onChange={e => onGroup(e.target.checked)} style={boxStyle} />
-        <span>{SIGNUP_CONSENT_GROUP}</span>
-      </label>
+      <div className="flex flex-col gap-1">
+        <div className="flex gap-2.5 items-start">
+          <input
+            id={boxId}
+            type="checkbox"
+            checked={checked}
+            onChange={e => onChecked(e.target.checked)}
+            aria-describedby={withdrawId}
+            style={boxStyle}
+          />
+          {/* htmlFor rather than wrapping: keeps the tick target and the reading
+              target the same rectangle without nesting interactive elements. */}
+          <label htmlFor={boxId} className={`${FINE_PRINT} cursor-pointer`} style={{ color, lineHeight: 1.45 }}>
+            {sentence}
+          </label>
+        </div>
+        {/* Second line is deliberately smaller and lighter than the consent
+            sentence, so the eye reads one sentence, not a block of terms. */}
+        <p id={withdrawId} className="text-[11px] font-normal leading-relaxed" style={{ color: noticeColor, opacity: 0.85, marginLeft: 27 }}>
+          {SIGNUP_CONSENT_WITHDRAW}<span aria-hidden="true" style={{ margin: '0 8px' }}>·</span><button
+            type="button"
+            onClick={() => { onScope(scope === 'all' ? 'brand' : 'all'); onChecked(false) }}
+            className="underline underline-offset-2"
+            style={{ color: noticeColor, background: 'transparent', border: 0, padding: 0, font: 'inherit', cursor: 'pointer' }}
+          >
+            {linkLabel}
+          </button>
+          {/* Only the broad sentence names several senders, so only it gets the
+              list of companies behind them. */}
+          {scope === 'all' && (
+            <>
+              <span aria-hidden="true" style={{ margin: '0 8px' }}>·</span><button
+                type="button"
+                onClick={() => setSendersOpen(o => !o)}
+                aria-expanded={sendersOpen}
+                aria-controls={sendersId}
+                className="underline underline-offset-2"
+                style={{ color: noticeColor, background: 'transparent', border: 0, padding: 0, font: 'inherit', cursor: 'pointer' }}
+              >
+                {SIGNUP_CONSENT_SENDERS_LINK}
+              </button>
+            </>
+          )}
+        </p>
+        {scope === 'all' && sendersOpen && (
+          <ul
+            id={sendersId}
+            className="text-[11px] font-normal leading-relaxed rounded-lg px-3 py-2"
+            style={{ color: noticeColor, marginLeft: 27, border: `1px solid ${dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}` }}
+          >
+            {SIGNUP_CONSENT_SENDERS.map(line => <li key={line}>{line}</li>)}
+          </ul>
+        )}
+      </div>
     </div>
   )
 }
@@ -143,12 +201,12 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
   const [signupId, setSignupId] = useState('')
   const [surveyToken, setSurveyToken] = useState('')
   const [referredBy, setReferredBy] = useState('')
-  // Marketing consent (Forbrugerombudsmanden): both start UNCHECKED and are
-  // fully optional — consent may never be a condition for joining the waitlist
-  // (GDPR art. 7(4), koblingsforbud). Ticking Mad opts into Altid Mad marketing;
-  // the group box is a separate opt-in for the other brands.
-  const [consentMad, setConsentMad] = useState(false)
-  const [consentGroup, setConsentGroup] = useState(false)
+  // Marketing consent (Forbrugerombudsmanden): the single box starts UNCHECKED
+  // and is fully optional — consent may never be a condition for joining the
+  // waitlist (GDPR art. 7(4), koblingsforbud). Scope 'all' (default) opts into
+  // every brand; 'brand' opts into Altid Mad marketing only.
+  const [consentChecked, setConsentChecked] = useState(false)
+  const [consentScope, setConsentScope] = useState<'all' | 'brand'>('all')
   // Set on a 409 where the API could recover their referral link — renders the
   // share card (skipping the survey step; they already answered it once).
   // heading is set by the API for the confirmation states; a plain duplicate
@@ -217,10 +275,11 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone, name, email, referredBy, source, step: 1,
-          // Documented consent (wording version + the two active choices) so
-          // the exact permission each person gave is provable. The backend
-          // must persist these and gate marketing sends on them.
-          consent: { version: CONSENT_VERSION, mad: consentMad, group: consentGroup },
+          // Documented consent (wording version + the active choice) so the
+          // exact permission each person gave is provable. The backend must
+          // persist these and gate marketing sends on them. Broad scope ticks
+          // both flags; the narrow Altid Mad sentence ticks only mad.
+          consent: { version: CONSENT_VERSION, mad: consentChecked, group: consentChecked && consentScope === 'all' },
         }),
       })
     } catch {
@@ -401,7 +460,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
         </div>
         {/* Consent sits just above the button, and only appears once the visitor
             has started filling in the form (name, email or phone). */}
-        {(name || email || phone) && <ConsentCheckboxes dark mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />}
+        {(name || email || phone) && <ConsentBox dark checked={consentChecked} scope={consentScope} onChecked={setConsentChecked} onScope={setConsentScope} />}
         {error && <p className="text-sm mb-3 mt-2 text-center" style={{ color: '#ff8080' }}>{error}</p>}
         <button type="submit" disabled={loading} className={`w-full mt-2 disabled:opacity-60 ${BUTTON_PRIMARY}`} style={{ background: ctaColor, color: '#163223' }}>
           {loading ? 'Sender...' : 'Skriv mig på ventelisten'}
@@ -532,7 +591,7 @@ export default function WaitlistForm({ variant = 'light', id, defaultView = 'for
       {/* Single button — always visible, drops down as fields expand above it */}
       {/* Consent sits just above the button, and only appears once the visitor
           has started filling in the form (name, email or phone). */}
-      {(name || email || phone) && <ConsentCheckboxes dark={false} mad={consentMad} group={consentGroup} onMad={setConsentMad} onGroup={setConsentGroup} />}
+      {(name || email || phone) && <ConsentBox dark={false} checked={consentChecked} scope={consentScope} onChecked={setConsentChecked} onScope={setConsentScope} />}
       {error && <p className="text-sm mb-2 mt-2 text-center" style={{ color: '#c6000f' }}>{error}</p>}
       <button
         type={expanded ? 'submit' : 'button'}

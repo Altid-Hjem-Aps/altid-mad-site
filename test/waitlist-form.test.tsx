@@ -3,9 +3,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import WaitlistForm from '@/components/WaitlistForm'
 import {
   CONSENT_VERSION,
+  SIGNUP_CONSENT_ALL,
   SIGNUP_CONSENT_MAD,
   SIGNUP_CONSENT_GROUP,
   SIGNUP_LAUNCH_NOTICE,
+  SIGNUP_CONSENT_WITHDRAW,
+  SIGNUP_CONSENT_NARROW_LINK,
+  SIGNUP_CONSENT_BROAD_LINK,
+  SIGNUP_CONSENT_SENDERS_LINK,
+  SIGNUP_CONSENT_SENDERS,
   DUPLICATE_SIGNUP_HEADING,
   CONFIRM_SENT_HEADING,
   confirmSentBody,
@@ -25,7 +31,7 @@ function fillAndSubmitDark() {
   fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
   fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
   fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
-  fireEvent.click(screen.getAllByRole('checkbox')[0]) // tick required Mad consent
+  fireEvent.click(screen.getByRole('checkbox')) // tick the consent box
   fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
 }
 
@@ -43,7 +49,7 @@ describe('WaitlistForm embedded mode (exit-intent dialog)', () => {
     fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
     fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
     fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
-    fireEvent.click(screen.getAllByRole('checkbox')[0]) // tick required Mad consent
+    fireEvent.click(screen.getByRole('checkbox')) // tick the consent box
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).source).toBe('exit-intent')
@@ -250,19 +256,98 @@ describe('duplicate signup with recovered referral link (409 + inviteUrl)', () =
   })
 })
 
-describe('consent copy: launch notice separated from marketing', () => {
-  it('drops "lanceringer" from the Mad box but keeps it in the group box', () => {
-    // The Mad launch is covered by signing up (the §10 consent for that one mail),
-    // so it must not sit behind the optional Mad marketing box. The other brands'
-    // launches are marketing a Mad signer never asked for, so they stay in the
-    // group box.
+describe('consent copy: one sentence, opt-down to Altid Mad only', () => {
+  function typeName() {
+    render(<WaitlistForm variant="dark" />)
+    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+  }
+
+  it('shows the broad (every brand) sentence by default, not the narrow one', () => {
+    typeName()
+    expect(screen.getByText(SIGNUP_CONSENT_ALL)).toBeVisible()
+    expect(screen.queryByText(SIGNUP_CONSENT_MAD)).toBeNull()
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1)
+  })
+
+  it('is never pre-ticked, regardless of which sentence is showing', () => {
+    typeName()
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+  })
+
+  it('swaps to the narrow (Altid Mad-only) sentence when the link is clicked, and back again', () => {
+    typeName()
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+    expect(screen.getByText(SIGNUP_CONSENT_MAD)).toBeVisible()
+    expect(screen.queryByText(SIGNUP_CONSENT_ALL)).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_BROAD_LINK }))
+    expect(screen.getByText(SIGNUP_CONSENT_ALL)).toBeVisible()
+    expect(screen.queryByText(SIGNUP_CONSENT_MAD)).toBeNull()
+  })
+
+  it('clears an existing tick when the scope link is toggled, since the person ticked a sentence they can no longer see', () => {
+    typeName()
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(screen.getByRole('checkbox')).toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+  })
+
+  it('names its withdraw sentence via aria-describedby, so the box has an accessible description', () => {
+    typeName()
+    const checkbox = screen.getByRole('checkbox')
+    const describedById = checkbox.getAttribute('aria-describedby')
+    expect(describedById).toBeTruthy()
+    expect(document.getElementById(describedById!)).toHaveTextContent(SIGNUP_CONSENT_WITHDRAW)
+  })
+
+  it('names every brand in the broad sentence, and keeps the narrow sentence to Altid Mad alone', () => {
+    for (const brand of ['Altid Hjem', 'Altid Forsikring', 'Altid Energi', 'Altid Mobil', 'Altid Mad']) {
+      expect(SIGNUP_CONSENT_ALL).toContain(brand)
+    }
+    expect(SIGNUP_CONSENT_MAD).toContain('Altid Mad')
+    for (const brand of ['Energi', 'Mobil', 'Forsikring']) {
+      expect(SIGNUP_CONSENT_MAD).not.toContain(brand)
+    }
+  })
+
+  it('opens the list of companies behind the senders from "Hvem står bag?", and closes it again', () => {
+    typeName()
+    const link = screen.getByRole('button', { name: SIGNUP_CONSENT_SENDERS_LINK })
+    expect(link).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText(SIGNUP_CONSENT_SENDERS[0])).toBeNull()
+
+    fireEvent.click(link)
+    expect(link).toHaveAttribute('aria-expanded', 'true')
+    for (const line of SIGNUP_CONSENT_SENDERS) expect(screen.getByText(line)).toBeVisible()
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+
+    fireEvent.click(link)
+    expect(screen.queryByText(SIGNUP_CONSENT_SENDERS[0])).toBeNull()
+  })
+
+  it('hides "Hvem står bag?" on the narrow sentence, which has a single sender', () => {
+    typeName()
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_SENDERS_LINK }))
+    fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+    expect(screen.queryByRole('button', { name: SIGNUP_CONSENT_SENDERS_LINK })).toBeNull()
+    expect(screen.queryByText(SIGNUP_CONSENT_SENDERS[0])).toBeNull()
+  })
+
+  it('versions the new wording, since consent_version records the text accepted', () => {
+    expect(CONSENT_VERSION).toBe('2026-10-16.1-mad')
+  })
+
+  it('keeps the group sentence for the confirm mail and preference centre, still naming lanceringer', () => {
     expect(SIGNUP_CONSENT_MAD).not.toContain('lanceringer')
     expect(SIGNUP_CONSENT_GROUP).toContain('lanceringer')
   })
 
   it('shows the signup-grounded launch notice once the visitor starts typing', () => {
-    render(<WaitlistForm variant="dark" />)
-    fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
+    typeName()
     expect(screen.getByText(SIGNUP_LAUNCH_NOTICE)).toBeInTheDocument()
   })
 })
@@ -295,18 +380,37 @@ describe('marketing consent gating', () => {
     expect(body.phone).toBe('')
   })
 
-  it('sends the documented consent (version + both choices) in the POST body', async () => {
+  async function submitWithConsent(setup: () => void) {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ id: 'abc', surveyToken: 'tok' }) })
     vi.stubGlobal('fetch', fetchMock)
     render(<WaitlistForm variant="dark" />)
     fireEvent.change(screen.getByPlaceholderText('Dit fulde navn'), { target: { value: 'Test Testesen' } })
     fireEvent.change(screen.getByPlaceholderText('din@email.dk'), { target: { value: 'test@test.dk' } })
     fireEvent.change(screen.getByPlaceholderText('12 34 56 78'), { target: { value: '12345678' } })
-    fireEvent.click(screen.getAllByRole('checkbox')[0]) // Mad
-    fireEvent.click(screen.getAllByRole('checkbox')[1]) // group
+    setup()
     fireEvent.click(screen.getByRole('button', { name: /skriv mig på ventelisten/i }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return JSON.parse(fetchMock.mock.calls[0][1].body)
+  }
+
+  it('sends mad + group when the broad sentence is ticked', async () => {
+    const body = await submitWithConsent(() => fireEvent.click(screen.getByRole('checkbox')))
     expect(body.consent).toEqual({ version: CONSENT_VERSION, mad: true, group: true })
+  })
+
+  it('sends mad only when the narrow Altid Mad sentence is ticked', async () => {
+    const body = await submitWithConsent(() => {
+      fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+      fireEvent.click(screen.getByRole('checkbox'))
+    })
+    expect(body.consent).toEqual({ version: CONSENT_VERSION, mad: true, group: false })
+  })
+
+  it('sends neither flag when the box is unticked, including after a scope swap cleared a tick', async () => {
+    const body = await submitWithConsent(() => {
+      fireEvent.click(screen.getByRole('checkbox'))
+      fireEvent.click(screen.getByRole('button', { name: SIGNUP_CONSENT_NARROW_LINK }))
+    })
+    expect(body.consent).toEqual({ version: CONSENT_VERSION, mad: false, group: false })
   })
 })
