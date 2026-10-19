@@ -14,6 +14,7 @@ The suite is a cost: every test runs on every PR and has to be read and kept. A 
 - Fake only at the boundary: the thin adapter of ours that talks to something outside the process (an HTTP or SDK client, database access), and the clock. Never fake our own logic to test other logic. A mocking library is fine at the boundary.
 - Every new test maps to an acceptance criterion or a named risk: one concrete wrong behaviour a plausible change would cause, in one line. A test that maps to nothing is not added. A bug fix gets a test that fails on the old code.
 - Would a wrong implementation pass? Before handing off, break each behaviour you changed on purpose (flip a condition, drop a branch, return the old value), run the targeted tests, then undo it. A break no test catches is a missing assertion; add it.
+- Locally, run only the tests that cover what you changed. The full suite is CI's job.
 - Test shared code once: one table test of the shared thing, one check per caller that it goes through it. No matrices over shared code (every endpoint times every error, every flag times every state).
 - Don't test implementation: private helpers, call order no caller sees, framework or library behaviour, generated code, and in UI code position, size, colour, styling or the exact markup tree. Assert what a user sees or what was sent.
 - The PR body states the cost: `+N tests, -M tests, +X s`, X being the wall time of the touched test files before and after.
