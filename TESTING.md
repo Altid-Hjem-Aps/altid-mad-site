@@ -1,6 +1,6 @@
 # Testing
 
-100% test coverage is the key to great vibe coding. Tests let you move fast, trust your instincts, and ship with confidence — without them, vibe coding is just yolo coding. With tests, it's a superpower.
+What to test, and what not to, is the Tests section in `AGENTS.md`. This file covers the mechanics.
 
 ## Framework
 
@@ -22,7 +22,7 @@ A PR can't merge green with failing tests or a broken build.
 
 ## Test layers
 
-- **Unit tests** — pure functions in `lib/` (e.g. `test/survey-token.test.ts`). Write one whenever you add a function with logic.
+- **Unit tests** — pure functions in `lib/` (e.g. `test/survey-token.test.ts`).
 - **Component/page tests** — render App Router pages and components with Testing Library (e.g. `test/slet-konto.test.tsx`). Mock client components with browser-only side effects (Nav, Amplitude).
 - **Smoke/E2E** — not set up yet; the dev-server + Playwright screenshot flow is run manually via /verify or /design-review.
 

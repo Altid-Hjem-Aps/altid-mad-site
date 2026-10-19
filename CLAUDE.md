@@ -42,13 +42,7 @@ Simple, fair, no hidden fees. Clean Scandinavian minimalism — not SaaS, not en
 
 ## Testing
 
-- Run: `npm test` (vitest, tests in `test/`). See `TESTING.md` for conventions.
-- 100% test coverage is the goal — tests make vibe coding safe.
-- When writing new functions, write a corresponding test.
-- When fixing a bug, write a regression test.
-- When adding error handling, write a test that triggers the error.
-- When adding a conditional (if/else, switch), write tests for BOTH paths.
-- Never commit code that makes existing tests fail.
+The test rules are the Tests section in `AGENTS.md` (imported above); mechanics are in `TESTING.md`.
 
 ## Skill routing
 
