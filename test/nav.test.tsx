@@ -137,3 +137,60 @@ describe('Spiir banner', () => {
     expect(push).toHaveBeenCalledWith('/#venteliste')
   })
 })
+
+describe('Nav active state', () => {
+  const MINT = 'rgb(220, 215, 153)'
+  const MUTED = 'rgb(111, 106, 97)'
+  const WHITE = 'rgb(255, 255, 255)'
+
+  // Mad is the current site on every altidmad.dk page, SEO pages included.
+  it.each(['/', '/kontakt', '/madbudget', '/slet-konto'])(
+    'renders Mad as the selected item on %s',
+    (path) => {
+      stubLocation(path)
+      render(<Nav />)
+      const mad = screen.getAllByRole('link', { name: 'Mad' })[0]
+      expect(mad).toHaveStyle({ color: MINT })
+      // The marker dot is the other half of the active affordance — assert it
+      // renders, so deleting it can't pass silently.
+      const dot = mad.parentElement?.querySelector('span[aria-hidden]')
+      expect(dot).toBeTruthy()
+      expect(dot).toHaveStyle({ background: MINT })
+    }
+  )
+
+  it('marks Mad with aria-current: the page itself on /, the section elsewhere', () => {
+    stubLocation('/')
+    const { unmount } = render(<Nav />)
+    expect(screen.getAllByRole('link', { name: 'Mad' })[0]).toHaveAttribute('aria-current', 'page')
+    unmount()
+
+    stubLocation('/madbudget')
+    render(<Nav />)
+    expect(screen.getAllByRole('link', { name: 'Mad' })[0]).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('keeps the other brands white and the unlaunched services muted off the front page', () => {
+    stubLocation('/madbudget')
+    render(<Nav />)
+    expect(screen.getAllByRole('link', { name: 'Hjem' })[0]).toHaveStyle({ color: WHITE })
+    expect(screen.getAllByRole('link', { name: 'Energi' })[0]).toHaveStyle({ color: WHITE })
+    expect(screen.getAllByRole('link', { name: 'Forsikring' })[0]).toHaveStyle({ color: WHITE })
+    // "Kommer snart" services are not links and stay muted.
+    expect(screen.queryAllByRole('link', { name: 'Alarm' })).toHaveLength(0)
+    expect(screen.getAllByText('Alarm')[0]).toHaveStyle({ color: MUTED })
+  })
+
+  it('marks Mad active in the burger menu too', () => {
+    stubLocation('/madbudget')
+    render(<Nav />)
+    fireEvent.click(screen.getByRole('button', { name: 'Åbn menu' }))
+    const links = screen.getAllByRole('link', { name: 'Mad' })
+    // desktop menu + open panel both render it; every instance is active
+    expect(links.length).toBeGreaterThan(1)
+    for (const link of links) {
+      expect(link).toHaveStyle({ color: MINT })
+      expect(link).toHaveAttribute('aria-current', 'true')
+    }
+  })
+})
