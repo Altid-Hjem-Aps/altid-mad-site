@@ -325,11 +325,28 @@ describe('failures say retry, write nothing and let the retry through', () => {
     expect(fake.signups).toEqual([])
   })
 
-  it('stops storing new addresses at 500 an hour for the whole site, and says retry', async () => {
-    fake.limits.set('newsletter-new:global', 500)
+  it('stops at 500 submits an hour for the whole site, and says retry, storing nothing', async () => {
+    fake.limits.set('newsletter-submits:global', 500)
     expect((await call(VALID)).status).toBe(503)
     expect(fake.signups).toEqual([])
     expect(fake.events).toEqual([])
+  })
+
+  it('over the ceiling a known and an unknown address get the same answer, so it reveals nobody', async () => {
+    fake.limits.set('newsletter-submits:global', 500)
+    const unknown = await call({ ...VALID, email: 'ukendt@example.dk' })
+    fake.signups = [{ public_id: 'b1946ac9-2c1d-4f3e-8a11-000000000003', email: 'kendt@example.dk', unsubscribed: false, marketing_consent_mad: true }]
+    const known = await call({ ...VALID, email: 'kendt@example.dk' })
+    expect(known.status).toBe(unknown.status)
+    expect(await known.json()).toEqual(await unknown.json())
+  })
+
+  it('counts every accepted submit, known addresses too, and never a refused one', async () => {
+    fake.signups = [{ public_id: 'b1946ac9-2c1d-4f3e-8a11-000000000003', email: 'kendt@example.dk', unsubscribed: false, marketing_consent_mad: true }]
+    await call({ ...VALID, email: 'kendt@example.dk' })
+    await call({ ...VALID, email: 'ny2@example.dk' })
+    await call({ ...VALID, consent: false })
+    expect(fake.limits.get('newsletter-submits:global')).toBe(2)
   })
 
   it('a limiter that cannot run stores nothing and says retry', async () => {
@@ -482,6 +499,30 @@ describe('the step 1 path, for pages cached before the flip', () => {
     const { html } = resendSend.mock.calls[0][0]
     expect(html).toContain(greeting)
     expect(html).not.toContain('præmie')
+  })
+})
+
+describe('the step 1 confirm mail when Resend refuses', () => {
+  it('is logged, and not counted as sent', async () => {
+    vi.stubEnv('SURVEY_TOKEN_SECRET', 'survey-test-secret')
+    fetchStub.mockImplementation(() => Promise.resolve(new Response('{}', { status: 409 })))
+    fake.signups = [
+      {
+        public_id: 'b1946ac9-2c1d-4f3e-8a11-000000000004',
+        email: 'ny@example.dk',
+        first_name: 'Karen',
+        unsub_token: 'unsub-4',
+        unsubscribed: false,
+        marketing_consent_mad: false,
+        marketing_consent_group: false,
+      },
+    ]
+    resendSend.mockResolvedValueOnce({ data: null, error: { message: 'over quota' } })
+    const { track } = await import('@amplitude/analytics-node')
+    vi.mocked(track).mockClear()
+    await call({ step: 1, email: 'ny@example.dk', name: 'Karen', consent: { mad: true, group: false } })
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('refused by Resend'))
+    expect(track).not.toHaveBeenCalledWith('Consent Confirmation Sent', expect.anything(), expect.anything())
   })
 })
 

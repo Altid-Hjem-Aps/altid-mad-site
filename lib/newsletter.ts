@@ -33,8 +33,11 @@ const MAX_EMAIL_LENGTH = 254
 const SCOPE = 'mad'
 const SIGNUPS_PER_IP_PER_HOUR = 5
 // For the whole site, as confirm mails have: rotating IPs must not be able to fill
-// the table with other people's addresses without a ceiling. Over it, retry copy.
-const NEW_ADDRESSES_PER_HOUR = 500
+// the table with other people's addresses without a ceiling. It counts every
+// accepted submit and runs before the lookup: a ceiling on new addresses only would
+// answer 503 for unknown and 200 for known ones once used up, telling a stranger
+// who is on file.
+const SUBMITS_PER_HOUR = 500
 const HOUR = 60 * 60
 
 function refuse(status: number, error: string) {
@@ -90,11 +93,11 @@ export async function handleNewsletter(req: NextRequest, body: Record<string, un
   }
 
   try {
+    if (await checkRateLimitStrict('newsletter-submits:global', SUBMITS_PER_HOUR, HOUR)) {
+      throw new Error('over the hourly ceiling on submits')
+    }
     const existing = await getSignupByEmailStrict(email)
     if (!existing) {
-      if (await checkRateLimitStrict('newsletter-new:global', NEW_ADDRESSES_PER_HOUR, HOUR)) {
-        throw new Error('over the hourly ceiling on new addresses')
-      }
       await createNewsletterSignup({
         publicId: newsletterPublicId(email),
         email,

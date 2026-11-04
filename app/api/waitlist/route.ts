@@ -176,7 +176,8 @@ export async function POST(req: NextRequest) {
 
         if (allowed) {
           const token = signConfirmToken(existing.publicId, pending, Date.now() / 1000)
-          await sendConsentConfirmation({
+          // Resend reports a refusal (quota, validation) in the result, it does not throw.
+          const { error: sendError } = await sendConsentConfirmation({
             // The name on file only: the form is anonymous, so a typed name would
             // let a stranger choose words in a mail to someone else's inbox.
             name: existing.firstName ?? '',
@@ -185,7 +186,8 @@ export async function POST(req: NextRequest) {
             unsubscribeUrl: `https://altidhjem.dk/api/unsubscribe?token=${encodeURIComponent(existing.unsubToken as string)}`,
             pending,
           })
-          trackServer('Consent Confirmation Sent', { signup_id: existing.publicId }, existing.publicId)
+          if (sendError) console.error(`consent confirmation refused by Resend for ${existing.publicId}: ${sendError.message}`)
+          else trackServer('Consent Confirmation Sent', { signup_id: existing.publicId }, existing.publicId)
         }
       }
 
