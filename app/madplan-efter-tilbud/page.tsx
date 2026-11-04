@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madplan efter tilbud, spar på ugens mad – Altid Mad',
+  title: 'Madplan efter tilbud, spar på ugens mad | Altid Mad',
   description:
     'Lav en madplan efter ugens tilbud, undgå dyre impulskøb og få en enkel metode til billigere hverdagsmad. Se guiden, og hent appen Altid Hjem.',
 }

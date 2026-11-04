@@ -18,7 +18,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madbudget: Sammenlign jeres forbrug med gennemsnittet – Altid Mad',
+  title: 'Madbudget: Sammenlign jeres forbrug med gennemsnittet | Altid Mad',
   description:
     'Se, hvad danske husstande bruger på dagligvarer, og få et konkret sammenligningsgrundlag til jeres madbudget.',
 }

@@ -15,6 +15,12 @@ describe('/slet-konto', () => {
     expect(decodeURIComponent(mailto!.getAttribute('href')!)).toContain('Slet min konto')
   })
 
+  it('states the in-app path as it is in app 1.0.3, and promises nothing for later', () => {
+    const { container } = render(<SletKonto />)
+    expect(screen.getByText('Mere → Profil → Slet konto')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/snart|arbejder på/i)
+  })
+
   it('links to the privacy policy for retention details', () => {
     render(<SletKonto />)
     expect(screen.getByRole('link', { name: 'privatlivspolitik' })).toHaveAttribute('href', '/privatlivspolitik')
@@ -30,7 +36,7 @@ describe('/slet-konto', () => {
   // NOTE: actual production indexability also depends on robots.txt and deploy
   // headers (e.g. Vercel preview noindex) — this only checks the page's own metadata.
   it('page metadata does not opt out of indexing', () => {
-    expect(metadata.title).toBe('Slet din konto – Altid Mad')
+    expect(metadata.title).toBe('Slet din konto | Altid Mad')
     expect(metadata.description).toBeTruthy()
     expect(metadata.robots).toBeUndefined()
   })

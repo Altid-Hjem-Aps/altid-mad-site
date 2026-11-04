@@ -12,7 +12,7 @@ export default function PressStrip() {
       href={ARTICLE.url}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Omtale i pressen – Ekstra Bladet"
+      aria-label="Omtale i pressen: Ekstra Bladet"
       className="group flex items-center justify-center gap-3 sm:gap-4 text-center"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

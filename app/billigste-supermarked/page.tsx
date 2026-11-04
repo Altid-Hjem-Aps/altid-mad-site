@@ -7,7 +7,7 @@ import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Billigste supermarked 2026, se pristjek – Altid Mad',
+  title: 'Billigste supermarked 2026, se pristjek | Altid Mad',
   description:
     'Se hvilket supermarked der var billigst i vores pristjek, hvad en familie kan spare, og hvordan du selv handler billigere. Læs analysen hos Altid Mad.',
 }

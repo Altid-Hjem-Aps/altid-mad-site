@@ -30,7 +30,7 @@ const BENEFITS: Benefit[] = [
   },
   {
     title: 'Automatisk indkøbsliste',
-    desc: 'Vælg måltiderne, og listen laver sig selv – med prissammenligning klar til at dele med familien. ',
+    desc: 'Vælg måltiderne, og listen laver sig selv, med prissammenligning klar til at dele med familien. ',
     icon: '/benefits/liste.svg',
     Anim: ChecklistIcon,
   },
@@ -48,12 +48,12 @@ const BENEFITS: Benefit[] = [
   },
   {
     title: 'Madplan på 5 minutter',
-    desc: 'Ikke mere "hvad skal vi spise?" – en komplet ugeplan på få minutter, uden at nogen skal tænke på det. ',
+    desc: 'Ikke mere "hvad skal vi spise?", men en komplet ugeplan på få minutter, uden at nogen skal tænke på det. ',
     icon: '/benefits/madplan.svg',
   },
   {
     title: 'Nemt at komme i gang',
-    desc: 'Du skifter ikke til noget svært. Altid Mad er bygget til at blive det bedste system – fra dag ét. ',
+    desc: 'Du skifter ikke til noget svært. Altid Mad er bygget til at blive det bedste system fra dag ét. ',
     icon: '/benefits/igang.svg',
   },
 ]

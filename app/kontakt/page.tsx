@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 
 export const metadata: Metadata = {
-  title: 'Support – Altid Mad',
+  title: 'Support | Altid Mad',
   description: 'Har du brug for hjælp til Altid Hjem-appen? Skriv til os på hej@altidhjem.dk, så vender vi tilbage hurtigst muligt.',
 }
 
@@ -14,7 +14,7 @@ const energiLink = (
 const faq = [
   {
     q: 'Jeg kan ikke logge ind',
-    a: <>Har du problemer med at logge ind, så skriv til os på <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a> – så hjælper vi dig videre.</>,
+    a: <>Har du problemer med at logge ind, så skriv til os på <a href="mailto:hej@altidhjem.dk" className="underline underline-offset-2 transition-colors hover:text-white">hej@altidhjem.dk</a>, så hjælper vi dig videre.</>,
   },
   {
     q: 'Spørgsmål til elforbrug og priser',

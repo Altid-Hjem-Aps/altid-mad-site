@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Jul på budget: Spar på julemaden – Altid Mad',
+  title: 'Jul på budget: Spar på julemaden | Altid Mad',
   description:
     'Få en jul på budget med en planlagt menu, tilbudskøb og mindre madspild. Se konkrete råd til billig julemad, og hent appen Altid Hjem.',
 }

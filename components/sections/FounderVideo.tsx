@@ -372,7 +372,7 @@ export default function FounderVideo() {
             // every visitor, including those who never scroll here.
             preload="metadata"
             metadata={{
-              video_title: 'Altid Mad — Werner Valeur',
+              video_title: 'Altid Mad: Werner Valeur',
               // Ratio-specific id so Mux Data separates phone (1:1) from
               // desktop (16:9) plays.
               video_id: playbackId === PLAYBACK_ID_SQUARE ? 'founder-mad-1x1' : 'founder-mad-16x9',
@@ -400,7 +400,7 @@ export default function FounderVideo() {
             <button
               type="button"
               onClick={handleSoundModeTap}
-              aria-label="Vis afspillerknapper — dobbelttryk for fuld skærm"
+              aria-label="Vis afspillerknapper, dobbelttryk for fuld skærm"
               className="absolute inset-0 z-10 cursor-pointer"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', background: 'transparent' }}
             />
@@ -413,7 +413,7 @@ export default function FounderVideo() {
             <button
               type="button"
               onClick={handleWatchWithSound}
-              aria-label="Se med lyd — afspil videoen forfra"
+              aria-label="Se med lyd, afspil videoen forfra"
               // Pill sits top-left below lg — on the narrow crops the burned-in
               // subtitles own the bottom of the frame; desktop has room at the
               // bottom-left.

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 
 export const metadata: Metadata = {
-  title: 'Slet din konto – Altid Mad',
+  title: 'Slet din konto | Altid Mad',
   description: 'Sådan sletter du din Altid Hjem-konto, og hvad der sker med dine data.',
 }
 
@@ -20,7 +20,7 @@ export default function SletKonto() {
 
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">Slet din Altid Hjem-konto</h1>
           <p className="text-sm mb-2 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Altid Hjem ApS · CVR 45637476 · hej@altidhjem.dk</p>
-          <p className="text-xs mb-12" style={{ color: 'rgba(255,255,255,0.55)' }}>Senest opdateret: juni 2026</p>
+          <p className="text-xs mb-12" style={{ color: 'rgba(255,255,255,0.55)' }}>Senest opdateret: november 2026</p>
 
           <div className="space-y-10 text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
 
@@ -30,14 +30,15 @@ export default function SletKonto() {
 
             <section>
               <h2 className="text-white font-semibold text-base mb-3">Sådan sletter du din konto</h2>
-              <p className="mb-3">Send en e-mail til <a href="mailto:hej@altidhjem.dk?subject=Slet%20min%20konto" className="underline underline-offset-2 text-white transition-colors hover:text-white/80">hej@altidhjem.dk</a> med emnet <span className="font-medium text-white">&ldquo;Slet min konto&rdquo;</span> fra den e-mailadresse, din konto er oprettet med. Som sikkerhed sender vi en bekræftelse til din kontos e-mailadresse, og sletningen gennemføres først, når du har bekræftet. Din konto slettes herefter inden for 30 dage.</p>
-              <p>Vi arbejder på, at du snart kan slette din konto direkte i appen under <span className="font-medium text-white">Profil → Slet konto</span>. Denne side bliver opdateret, når funktionen er klar.</p>
+              <p className="mb-3">Du sletter din konto direkte i appen under <span className="font-medium text-white">Mere → Profil → Slet konto</span>. Appen viser, hvad der sker i hver tjeneste, og kontoen slettes, når du trykker på <span className="font-medium text-white">Slet kontoen</span>. Det kan ikke fortrydes.</p>
+              <p className="mb-3">Har du kun en konto hos Altid Energi og ingen Altid Hjem-konto, viser <span className="font-medium text-white">Slet konto</span> i stedet, hvordan du kommer videre hos Altid Energi.</p>
+              <p>Du kan også sende en e-mail til <a href="mailto:hej@altidhjem.dk?subject=Slet%20min%20konto" className="underline underline-offset-2 text-white transition-colors hover:text-white/80">hej@altidhjem.dk</a> med emnet <span className="font-medium text-white">&ldquo;Slet min konto&rdquo;</span> fra den e-mailadresse, din konto er oprettet med. Som sikkerhed sender vi en bekræftelse til din kontos e-mailadresse, og sletningen gennemføres først, når du har bekræftet. Din konto slettes herefter inden for 30 dage.</p>
             </section>
 
             <section>
               <h2 className="text-white font-semibold text-base mb-3">Hvad bliver slettet</h2>
               <p className="mb-3">Når din konto slettes, fjerner vi din profil og dine kontaktoplysninger, dine app-data og dit login.</p>
-              <p>Oplysninger, som vi er retligt forpligtede til at opbevare – fx bogføringsmateriale efter bogføringsloven samt aftale- og betalingshistorik – opbevares i op til 5 år efter kundeforholdets ophør og slettes derefter. Du kan læse mere i vores <Link href="/privatlivspolitik" className="underline underline-offset-2 text-white transition-colors hover:text-white/80">privatlivspolitik</Link>.</p>
+              <p>Oplysninger, som vi er retligt forpligtede til at opbevare, fx bogføringsmateriale efter bogføringsloven samt aftale- og betalingshistorik, opbevares i op til 5 år efter kundeforholdets ophør og slettes derefter. Du kan læse mere i vores <Link href="/privatlivspolitik" className="underline underline-offset-2 text-white transition-colors hover:text-white/80">privatlivspolitik</Link>.</p>
             </section>
 
             <section>

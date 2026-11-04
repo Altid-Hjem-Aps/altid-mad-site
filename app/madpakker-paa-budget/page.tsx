@@ -7,7 +7,7 @@ import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Madpakker på budget til skolestart – Altid Mad',
+  title: 'Madpakker på budget til skolestart | Altid Mad',
   description:
     'Få idéer til madpakker på budget, en enkel ugeplan og råd til billigere indkøb ved skolestart. Læs guiden, og kom godt i gang.',
 }

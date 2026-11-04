@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 
 export const metadata: Metadata = {
-  title: 'Presse – Altid Mad',
+  title: 'Presse | Altid Mad',
   description:
     'Pressemateriale for Altid Mad: pressebilleder til fri redaktionel brug, Q3-rapporten bag besparelsestallene og pressekontakt.',
 }
@@ -103,8 +103,8 @@ export default function Presse() {
                   style={{ color: '#163223' }}
                 >
                   Q3-rapporten
-                </a>{' '}
-                — beregningerne bag besparelsestallene.
+                </a>
+                : beregningerne bag besparelsestallene.
               </li>
               <li>
                 <a
@@ -121,12 +121,12 @@ export default function Presse() {
             </ul>
             <h2 className="text-xl font-medium mt-10 mb-3">Pressekontakt</h2>
             <p className="text-sm leading-relaxed" style={{ color: '#6f6a61' }}>
-              Thor Jekes —{' '}
+              Thor Jekes:{' '}
               <a href="mailto:t@altidhjem.dk" className="underline underline-offset-2" style={{ color: '#163223' }}>
                 t@altidhjem.dk
               </a>
               <br />
-              Werner Valeur er tilgængelig for interview —{' '}
+              Werner Valeur er tilgængelig for interview:{' '}
               <a href="mailto:w@madhousehq.com" className="underline underline-offset-2" style={{ color: '#163223' }}>
                 w@madhousehq.com
               </a>{' '}

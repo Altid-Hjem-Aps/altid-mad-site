@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Mad for 3.000 om måneden, sådan gør I – Altid Mad',
+  title: 'Mad for 3.000 om måneden, sådan gør I | Altid Mad',
   description:
     'Kan en familie få mad for 3.000 kr. om måneden? Se det ærlige regnestykke og konkrete greb, der hjælper jer tættere på. Få overblik hos Altid Mad.',
 }

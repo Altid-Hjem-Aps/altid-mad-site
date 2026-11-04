@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Spar penge på dagligvarer, praktisk guide – Altid Mad',
+  title: 'Spar penge på dagligvarer, praktisk guide | Altid Mad',
   description:
     'Spar penge på dagligvarer med madplan, indkøbsliste og gode butiksvaner. Se dokumenterede prisforskelle fra vores pristjek, og kom enkelt i gang i denne uge.',
 }

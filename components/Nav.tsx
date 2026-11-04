@@ -49,7 +49,7 @@ interface NavProps {
 }
 
 const SPIIR_BANNER: BannerConfig = {
-  longPrefix: 'Spiir er lukket — mist ikke overblikket over dine faste udgifter. ',
+  longPrefix: 'Spiir er lukket. Mist ikke overblikket over dine faste udgifter. ',
   shortPrefix: 'Brugte du Spiir? ',
   source: 'spiir-banner',
 }
@@ -256,7 +256,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
 
   const navInner = (
     <>
-      <a href="/" aria-label="Altid Mad – forside" className="shrink-0">
+      <a href="/" aria-label="Altid Mad forside" className="shrink-0">
         <MadLogo className="h-11 w-auto" />
       </a>
       {desktopMenu}
