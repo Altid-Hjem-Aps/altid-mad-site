@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import * as amplitude from '@amplitude/analytics-browser'
 import dynamic from 'next/dynamic'
 import { fluid } from '@/lib/fluid'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
 // The Altid Mad founder video exists as two Mux assets: a 16:9 master for
@@ -288,14 +289,13 @@ export default function FounderVideo() {
     amplitude.track('Founder Video Sound On')
   }
 
-  // Same signup flow as nav/hero: scroll to the bottom form, otherwise expand
-  // the hero form, otherwise navigate home with #venteliste.
+  // Same as the nav: scroll to the store badges on this page, otherwise go to
+  // the front page's.
   function handleCTA() {
-    amplitude.track('Waitlist CTA Clicked', { source: 'founder' })
-    const onPageForm = document.getElementById('venteliste2')
-    if (onPageForm) { onPageForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
-    if (window.location.pathname !== '/') { router.push('/#venteliste'); return }
-    window.dispatchEvent(new CustomEvent('expand-waitlist'))
+    amplitude.track('App CTA Clicked', { source: 'founder' })
+    const badges = document.getElementById(STORE_ANCHOR)
+    if (badges) { badges.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+    router.push(`/#${STORE_ANCHOR}`)
   }
 
   return (
@@ -334,7 +334,7 @@ export default function FounderVideo() {
             className="mt-9 inline-flex w-fit items-center justify-center font-medium rounded-[20px] px-8 py-[18px] xl:px-0 xl:py-[23px] xl:w-[clamp(200px,15.83vw,304px)] text-[16px] transition-opacity hover:opacity-90"
             style={{ background: '#DCD799', color: '#163223', cursor: 'pointer', touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
           >
-            Skriv dig på ventelisten
+            Hent appen
           </button>
         </div>
 

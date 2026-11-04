@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import SparVanerMockup from '@/components/SparVanerMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -160,9 +161,9 @@ export default function SparPengePaaDagligvarer() {
           <P>
             Ved højtider er det især menu, gæsteantal og indkøbstidspunkt, der påvirker budgettet. Vores guide til <A href="/jul-paa-budget">jul på budget</A> hjælper med at prioritere det vigtigste og skære det overflødige fra.
           </P>
-          <H2>Sådan skal Altid Mad hjælpe</H2>
+          <H2>Sådan kan Altid Mad hjælpe</H2>
           <P>
-            Altid Mad er en kommende dansk app, som læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Ventelisten er åben på altidmad.dk.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem. Den læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Appen kan hentes i App Store og Google Play.
           </P>
           <P>
             Målet er at gøre det nemmere at bruge tilbud uden selv at sammenligne alle varer og butikker. Det skal stadig være familiens præferencer og hverdag, der bestemmer menuen.
@@ -177,11 +178,10 @@ export default function SparPengePaaDagligvarer() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Slip for selv at holde øje med tilbuddene'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad er klar til at finde ugens bedste priser for jer. Gratis.'
-            source='spar-penge-paa-dagligvarer'
+            subtitle='Lad Altid Mad finde ugens bedste priser for jer.'
           />
         </div>
       </main>

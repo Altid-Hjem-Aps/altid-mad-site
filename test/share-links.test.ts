@@ -15,7 +15,7 @@ describe('buildShareLinks', () => {
 
   it('carries message + link for whatsapp, sms and email', () => {
     for (const link of [links.whatsapp, links.sms, links.email]) {
-      expect(link).toContain('Tilmeld%20dig%20med%20mit%20link')
+      expect(link).toContain('Se%20mere%20her')
       expect(link).toContain(enc)
     }
     expect(links.whatsapp.startsWith('https://wa.me/?text=')).toBe(true)

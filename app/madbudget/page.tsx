@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import MadbudgetBenchmark from '@/components/MadbudgetBenchmark'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -159,10 +160,10 @@ export default function Madbudget() {
           </P>
           <H2>Hvad kan Altid Mad hjælpe med?</H2>
           <P>
-            Altid Mad bliver en dansk app, der læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Målet er at gøre det lettere at planlægge både måltider og indkøb uden selv at gennemgå alle tilbud.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem, der læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Målet er at gøre det lettere at planlægge både måltider og indkøb uden selv at gennemgå alle tilbud.
           </P>
           <P>
-            Ventelisten er åben på altidmad.dk. Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login, og teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
+            Appen kan hentes i App Store og Google Play. Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login, og teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
         </div>
 
@@ -171,11 +172,10 @@ export default function Madbudget() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Fra benchmark til plan'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan lægge madplanen efter jeres budget. Gratis.'
-            source='madbudget'
+            subtitle='Lad Altid Mad lægge madplanen efter jeres budget.'
           />
         </div>
       </main>

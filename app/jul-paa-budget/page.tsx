@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import JulekurvMockup from '@/components/JulekurvMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -20,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: 'Jul på budget: Spar på julemaden – Altid Mad',
   description:
-    'Få en jul på budget med en planlagt menu, tilbudskøb og mindre madspild. Se konkrete råd til billig julemad, og skriv dig på ventelisten.',
+    'Få en jul på budget med en planlagt menu, tilbudskøb og mindre madspild. Se konkrete råd til billig julemad, og hent appen Altid Hjem.',
 }
 
 // FAQ copy is used twice: rendered on the page AND serialized as FAQPage
@@ -64,8 +65,8 @@ const FAQ: FaqItem[] = [
   {
     q: 'Kan Altid Mad hjælpe med julen?',
     a: [
-      'Ja, Altid Mad er udviklet til at læse tilbudsaviserne, foreslå en madplan efter familiens smag og finde dagligvarerne til de bedste priser.',
-      'Appen er ikke lanceret endnu, men I kan skrive jer på ventelisten på altidmad.dk.',
+      'Ja. Altid Mad læser tilbudsaviserne, foreslår en madplan efter familiens smag og finder dagligvarerne til de bedste priser.',
+      'I finder Altid Mad i appen Altid Hjem, som kan hentes i App Store og Google Play.',
     ],
   },
 ]
@@ -156,10 +157,10 @@ export default function JulPaaBudget() {
           </P>
           <H2>Sådan kan Altid Mad hjælpe</H2>
           <P>
-            Altid Mad bliver en dansk app, der læser tilbudsaviserne, lærer familiens smag at kende og bygger en madplan med ugens dagligvarer til de bedste priser. Det gælder også tilbud på julevarer, når de dukker op i butikkerne.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem, der læser tilbudsaviserne, lærer familiens smag at kende og bygger en madplan med ugens dagligvarer til de bedste priser. Det gælder også tilbud på julevarer, når de dukker op i butikkerne.
           </P>
           <P>
-            Appen er ikke lanceret endnu, men ventelisten er åben på altidmad.dk. Indtil da kan I bruge principperne her og vores guide til en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>.
+            Appen kan hentes i App Store og Google Play. I kan også bruge principperne her og vores guide til en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>.
           </P>
           <P>
             Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login. Teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
@@ -171,11 +172,10 @@ export default function JulPaaBudget() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Julen planlagt, budgettet helt'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan planlægge højtiderne med jer. Gratis.'
-            source='jul-paa-budget'
+            subtitle='Lad Altid Mad lægge madplanen efter ugens tilbud, også i julen.'
           />
         </div>
       </main>

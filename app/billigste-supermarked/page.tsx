@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import PristjekMockup from '@/components/PristjekMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
@@ -159,7 +160,7 @@ export default function BilligsteSupermarked() {
 
           <div className="my-8 flex justify-center">
             <a
-              href="#venteliste"
+              href={`#${STORE_ANCHOR}`}
               className="inline-flex items-center justify-center rounded-full px-7 py-4 text-[16px] font-medium transition-opacity hover:opacity-85"
               style={{ background: '#DCD799', color: FOREST }}
             >
@@ -212,14 +213,14 @@ export default function BilligsteSupermarked() {
             .
           </P>
 
-          <H2>Sådan skal Altid Mad hjælpe</H2>
+          <H2>Sådan hjælper Altid Mad</H2>
           <P>
-            Altid Mad er udviklet til at læse tilbudsaviserne, bygge en madplan efter familiens smag og
-            finde ugens dagligvarer til de bedste priser. Målet er at gøre det lettere at bruge pristjek og
+            Altid Mad læser tilbudsaviserne, bygger en madplan efter familiens smag og
+            finder ugens dagligvarer til de bedste priser. Målet er at gøre det lettere at bruge pristjek og
             tilbud i hverdagen uden selv at gennemgå hver enkelt tilbudsavis.
           </P>
           <P>
-            Appen er endnu ikke lanceret, men ventelisten er åben på altidmad.dk. Altid Mad er en del af
+            Appen kan hentes i App Store og Google Play. Altid Mad er en del af
             Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login, og teamet står også
             bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
@@ -273,11 +274,10 @@ export default function BilligsteSupermarked() {
           </div>
         </div>
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
         <BottomCta
           eyebrow="Slip for selv at holde pristjek"
-          subtitle="Skriv dig på ventelisten, så får du besked, når Altid Mad er klar til at finde ugens bedste priser for jer. Gratis."
-          source="billigste-supermarked"
+          subtitle="Lad Altid Mad finde ugens bedste priser for jer."
         />
         </div>
       </main>

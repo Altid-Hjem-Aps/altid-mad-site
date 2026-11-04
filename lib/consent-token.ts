@@ -48,6 +48,24 @@ export function assertConsentTokenConfigured(): void {
   secret()
 }
 
+/**
+ * The public_id of a newsletter signup: a uuid-shaped HMAC of the lowercased
+ * email (version 8, RFC 9562). signup has no unique index on email on the table
+ * shared with altidhjem.dk, so a deterministic primary key is what makes two
+ * submits of one address land on one row. A plain uuid in shape because
+ * consent_event.public_id is uuid and redeem_consent_token casts to it. The
+ * prefix keeps it apart from the confirm tokens signed with the same key.
+ *
+ * The key is this site's secret, which differs from altidhjem.dk's. The email
+ * lookup runs first and finds a row made by either site, so one address only
+ * gets two rows if both sites insert it in the same instant.
+ */
+export function newsletterPublicId(lowercasedEmail: string): string {
+  const hex = crypto.createHmac('sha256', secret()).update(`newsletter-public-id:${lowercasedEmail}`).digest('hex')
+  const variant = ((parseInt(hex[16], 16) & 0x3) | 0x8).toString(16)
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`
+}
+
 function sign(payload: string): string {
   return crypto.createHmac('sha256', secret()).update(`confirm:${payload}`).digest('base64url')
 }

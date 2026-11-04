@@ -4,8 +4,10 @@
  * ikke kan drifte fra hinanden.
  */
 // 'altid-mad-exit' mirrors Hjem's 'exit-intent' but stays distinguishable
-// from Hjem's exit signups in the shared Supabase/Amplitude backend.
-export const SIGNUP_SOURCES = ['altid-mad', 'altid-mad-exit'] as const
+// from Hjem's exit signups in the shared Supabase/Amplitude backend. The exit
+// dialog is gone; a page cached before it went can still send this value.
+// 'newsletter' is written by lib/newsletter.ts, never by the step 1 path.
+export const SIGNUP_SOURCES = ['altid-mad', 'altid-mad-exit', 'newsletter'] as const
 
 export type SignupSource = (typeof SIGNUP_SOURCES)[number]
 

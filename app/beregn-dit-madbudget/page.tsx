@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import MadbudgetSammenligningMockup from '@/components/MadbudgetSammenligningMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -57,7 +58,7 @@ const FAQ: FaqItem[] = [
     q: 'Gemmer I mine svar?',
     a: [
       'Nej, jeres svar beregnes lokalt på siden og gemmes ikke.',
-      'Vi gemmer kun de oplysninger, I selv afgiver, hvis I vælger at skrive jer på ventelisten.',
+      'Vi gemmer kun de oplysninger, I selv afgiver, hvis I vælger at tilmelde jer nyheder fra Altid Mad.',
     ],
   },
   {
@@ -134,26 +135,25 @@ export default function BeregnDitMadbudget() {
           <P>
             Hvis hver vare købes dér, hvor den er billigst, kostede kurven 599,81 kr. om ugen. Det giver op til 37.135 kr. om året sammenlignet med den dyreste samlede kurv, men kan kræve indkøb flere steder. Se, hvordan I kan lave en <A href="/madplan-efter-tilbud">madplan efter tilbud</A>, og læs vores sammenligning af det <A href="/billigste-supermarked">billigste supermarked</A>.
           </P>
-          <H2>Hvad Altid Mad skal hjælpe med</H2>
+          <H2>Hvad Altid Mad hjælper med</H2>
           <P>
-            Altid Mad skal læse tilbudsaviserne, foreslå en madplan efter familiens smag og finde ugens dagligvarer til gode priser. Målet er at gøre det lettere at omsætte et madbudget til konkrete måltider og indkøb.
+            Altid Mad læser tilbudsaviserne, foreslår en madplan efter familiens smag og finder ugens dagligvarer til gode priser. Målet er at gøre det lettere at omsætte et madbudget til konkrete måltider og indkøb.
           </P>
           <P>
             Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login. Teamet står også bag Altid Energi, Danmarks første gebyrfri energiselskab.
           </P>
           <P>
-            Appen er ikke lanceret endnu. I kan skrive jer på ventelisten på altidmad.dk, hvis I vil følge med.
+            I finder Altid Mad i appen Altid Hjem, som kan hentes i App Store og Google Play.
           </P>
         </div>
 
 
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Fra estimat til besparelse'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad er klar til at hente estimatet hjem i hverdagen. Gratis.'
-            source='beregn-dit-madbudget'
+            subtitle='Lad Altid Mad omsætte budgettet til madplan og indkøb i hverdagen.'
           />
         </div>
       </main>

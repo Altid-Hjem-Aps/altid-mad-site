@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Onest, Afacad } from 'next/font/google'
 import './globals.css'
 import ResetScrollOnLoad from '@/components/ResetScrollOnLoad'
-import ExitIntentModal from '@/components/ExitIntentModal'
 import CookieBanner from '@/components/CookieBanner'
 
 const onest = Onest({
@@ -24,11 +23,11 @@ export const metadata: Metadata = {
   // confirms DNS ownership; swap here + robots/sitemap when decided.
   metadataBase: new URL('https://altidmad.dk'),
   alternates: { canonical: './' },
-  title: 'Altid Mad – Skriv dig på ventelisten',
-  description: 'Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen – så familien sparer penge på dagligvarer. Altid.',
+  title: 'Altid Mad: madplan og indkøbsliste i Altid Hjem-appen',
+  description: 'Hent Altid Hjem, og få ugens madplan og en indkøbsliste, der viser, hvor varerne er billigst.',
   openGraph: {
-    title: 'Altid Mad – Skriv dig på ventelisten',
-    description: 'Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen – så familien sparer penge på dagligvarer. Altid.',
+    title: 'Altid Mad: madplan og indkøbsliste i Altid Hjem-appen',
+    description: 'Hent Altid Hjem, og få ugens madplan og en indkøbsliste, der viser, hvor varerne er billigst.',
     url: 'https://altidmad.dk',
     siteName: 'Altid Mad',
     locale: 'da_DK',
@@ -52,7 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ResetScrollOnLoad />
         {children}
-        <ExitIntentModal />
         <CookieBanner />
       </body>
     </html>

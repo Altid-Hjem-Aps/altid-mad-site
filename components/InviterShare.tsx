@@ -89,7 +89,7 @@ export default function InviterShare({ code }: { code: string }) {
     try {
       await navigator.share({
         title: 'Altid Mad',
-        text: 'Kom med på Altid Mad. Tilmeld dig med mit link:',
+        text: 'Altid Mad finder du i appen Altid Hjem. Se mere her:',
         url: inviteUrl,
       })
     } catch (err) {
@@ -103,7 +103,7 @@ export default function InviterShare({ code }: { code: string }) {
         Inviter dine venner
       </h1>
       <p style={{ color: '#6f6a61' }} className="mt-3 text-base leading-relaxed">
-        Jo flere der tilmelder sig med dit link, jo hurtigere kommer du frem i køen.
+        Del dit personlige link, så dine venner også kan finde Altid Mad i appen Altid Hjem.
       </p>
 
       {/* Personal link + copy — matches the email's link block */}

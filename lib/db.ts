@@ -89,7 +89,7 @@ function copenhagenDateKey(date: Date): string {
 }
 
 /**
- * Real waitlist signup counts, straight from the `signup` table (the source of
+ * Real signup counts, straight from the `signup` table (the source of
  * truth the Slack tracker should use — NOT delivered Resend emails, whose
  * `last_event` drifts off "delivered" as recipients open them and which also
  * count non-signup blasts). Returns the all-time total, today's count, and a
@@ -112,6 +112,9 @@ export async function getSignupCounts(): Promise<{
     const { data, error } = await supabase
       .from('signup')
       .select('created_at')
+      // Newsletter rows are not counted here. NULL-safe: a plain neq would
+      // also drop every row with no source, which is most of the old list.
+      .or('signup_source.is.null,signup_source.neq.newsletter')
       .order('created_at', { ascending: false })
       .range(from, from + PAGE - 1)
     if (error) throw new Error(error.message)
@@ -314,6 +317,53 @@ export async function isConfirmTokenRedeemed(tokenId: string): Promise<boolean> 
   return Boolean(data)
 }
 
+export type SignupLookup = {
+  publicId: string
+  source: string | null
+  firstName: string | null
+  unsubToken: string | null
+  unsubscribed: boolean
+  consentMad: boolean
+  consentGroup: boolean
+}
+
+type SignupLookupRow = {
+  public_id?: string | null
+  signup_source?: string | null
+  first_name?: string | null
+  unsub_token?: string | null
+  unsubscribed?: boolean | null
+  marketing_consent_mad?: boolean | null
+  marketing_consent_group?: boolean | null
+}
+
+function signupLookupQuery(email: string) {
+  return getClient()
+    .from('signup')
+    .select(
+      'public_id, signup_source, first_name, unsub_token, unsubscribed, marketing_consent_mad, marketing_consent_group',
+    )
+    .eq('email', String(email).toLowerCase().trim())
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+}
+
+function toSignupLookup(row: SignupLookupRow): SignupLookup | null {
+  if (!row.public_id) return null
+  return {
+    publicId: row.public_id,
+    source: row.signup_source ?? null,
+    firstName: row.first_name ?? null,
+    unsubToken: row.unsub_token ?? null,
+    // A NULL flag is a legacy row with no consent recorded: treat it as "not
+    // consented", never as consented.
+    unsubscribed: row.unsubscribed === true,
+    consentMad: row.marketing_consent_mad === true,
+    consentGroup: row.marketing_consent_group === true,
+  }
+}
+
 /**
  * Look up an existing signup by email: which site it came from (phrases the
  * duplicate message) and its public_id (rebuilds their referral link so a
@@ -323,54 +373,74 @@ export async function isConfirmTokenRedeemed(tokenId: string): Promise<boolean> 
  * can't stall the 409 response (which used to return instantly). Oldest
  * row wins (that is the original signup).
  */
-export async function getSignupByEmail(email: string): Promise<{
-  publicId: string
-  source: string | null
-  firstName: string | null
-  unsubToken: string | null
-  unsubscribed: boolean
-  consentMad: boolean
-  consentGroup: boolean
-} | null> {
+export async function getSignupByEmail(email: string): Promise<SignupLookup | null> {
   try {
-    const result = await boundedRead(
-      getClient()
-        .from('signup')
-        .select(
-          'public_id, signup_source, first_name, unsub_token, unsubscribed, marketing_consent_mad, marketing_consent_group',
-        )
-        .eq('email', String(email).toLowerCase().trim())
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle(),
-    )
+    const result = await boundedRead(signupLookupQuery(email))
     if (!result) return null
     const { data, error } = result
     if (error || !data) return null
-    const row = data as {
-      public_id?: string | null
-      signup_source?: string | null
-      first_name?: string | null
-      unsub_token?: string | null
-      unsubscribed?: boolean | null
-      marketing_consent_mad?: boolean | null
-      marketing_consent_group?: boolean | null
-    }
-    if (!row.public_id) return null
-    return {
-      publicId: row.public_id,
-      source: row.signup_source ?? null,
-      firstName: row.first_name ?? null,
-      unsubToken: row.unsub_token ?? null,
-      // A NULL flag is a legacy row with no consent recorded — treat it as "not
-      // consented", never as consented.
-      unsubscribed: row.unsubscribed === true,
-      consentMad: row.marketing_consent_mad === true,
-      consentGroup: row.marketing_consent_group === true,
-    }
+    return toSignupLookup(data as SignupLookupRow)
   } catch {
     return null
   }
+}
+
+/**
+ * The same lookup for a path that writes on "no such person": null means the
+ * address has no row, and only that. An error or a timeout throws, because
+ * reading one as "new person" would write consent onto an existing address.
+ */
+export async function getSignupByEmailStrict(email: string): Promise<SignupLookup | null> {
+  const result = await boundedRead(signupLookupQuery(email))
+  if (!result) throw new Error('signup lookup timed out')
+  const { data, error } = result
+  if (error) throw new Error(`signup lookup failed: ${error.message}`)
+  if (!data) return null
+  const lookup = toSignupLookup(data as SignupLookupRow)
+  if (!lookup) throw new Error('signup lookup returned a row without public_id')
+  return lookup
+}
+
+/**
+ * Store a newsletter signup: the consent evidence first, then the row. Evidence
+ * first so that a failure in between can never leave a consenting row without
+ * its proof; a retry writes both. The upsert on the deterministic public_id
+ * makes a double submit one row. Throws on any failure: the caller answers 503
+ * and the person retries.
+ */
+export async function createNewsletterSignup(signup: {
+  publicId: string
+  email: string
+  version: string
+  mad: boolean
+  group: boolean
+}): Promise<void> {
+  const supabase = getClient()
+  const now = new Date().toISOString()
+  const { error: eventError } = await supabase.from('consent_event').insert({
+    public_id: signup.publicId,
+    method: 'newsletter-form',
+    consent_version: signup.version,
+    marketing_consent_mad: signup.mad,
+    marketing_consent_group: signup.group,
+  })
+  if (eventError) throw new Error(`consent_event insert failed: ${eventError.message}`)
+  const { error } = await supabase.from('signup').upsert(
+    {
+      public_id: signup.publicId,
+      // Explicit: signup.created_at has no default on the table shared with
+      // altidhjem.dk.
+      created_at: now,
+      email: signup.email,
+      signup_source: 'newsletter',
+      marketing_consent_mad: signup.mad,
+      marketing_consent_group: signup.group,
+      consent_version: signup.version,
+      consent_at: now,
+    },
+    { onConflict: 'public_id', ignoreDuplicates: true },
+  )
+  if (error) throw new Error(`signup insert failed: ${error.message}`)
 }
 
 /** The row an unsubscribe/preference token names, with its current consent state. */

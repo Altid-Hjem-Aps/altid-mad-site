@@ -1,23 +1,15 @@
 [
   {
-    "name": "Waitlist CTA Clicked",
-    "description": "Fires when the hero or nav CTA button is clicked to open the waitlist form."
+    "name": "App CTA Clicked",
+    "description": "Fires when a Hent appen button in the nav, the founder video or How it works is clicked; it scrolls to the store badges."
   },
   {
-    "name": "Waitlist Step 1 Submitted",
-    "description": "Fires when a user successfully submits their name, email, and phone in step 1."
+    "name": "Store Badge Clicked",
+    "description": "Fires server-side and anonymously when an App Store or Google Play badge is clicked. Properties: store, position."
   },
   {
-    "name": "Waitlist Step 1 Failed",
-    "description": "Fires when step 1 submission fails due to validation or API error."
-  },
-  {
-    "name": "Waitlist Step 2 Submitted",
-    "description": "Fires when a user submits the optional survey questions in step 2."
-  },
-  {
-    "name": "Waitlist Step 2 Skipped",
-    "description": "Fires when a user skips the step 2 survey by clicking Ikke nu."
+    "name": "Newsletter Signup",
+    "description": "Fires server-side and anonymously for every accepted newsletter form submit, whatever happened to the address. Property: scope."
   },
   {
     "name": "Founder Video Played",

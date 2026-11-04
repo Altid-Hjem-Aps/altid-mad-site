@@ -41,50 +41,49 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+function placeBadges() {
+  const badges = document.createElement('div')
+  badges.id = 'hent-appen'
+  badges.scrollIntoView = vi.fn()
+  document.body.appendChild(badges)
+  return badges
+}
+
 describe('Nav CTA', () => {
-  it('on the front page: tracks the click and expands the waitlist form in place', () => {
+  it('on a page with the store badges: tracks the click and scrolls to them', () => {
     stubLocation('/')
-    const expandListener = vi.fn()
-    window.addEventListener('expand-waitlist', expandListener)
+    const badges = placeBadges()
 
     render(<Nav />)
-    fireEvent.click(screen.getByRole('button', { name: /ventelisten/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hent appen' }))
 
-    expect(amplitude.track).toHaveBeenCalledWith('Waitlist CTA Clicked', { source: 'nav' })
-    expect(expandListener).toHaveBeenCalledTimes(1)
-    // Stayed on the page — no navigation.
+    expect(amplitude.track).toHaveBeenCalledWith('App CTA Clicked', { source: 'nav' })
+    expect(badges.scrollIntoView).toHaveBeenCalled()
+    // Stayed on the page: no navigation.
     expect(push).not.toHaveBeenCalled()
 
-    window.removeEventListener('expand-waitlist', expandListener)
+    badges.remove()
   })
 
-  it('off the front page: client-navigates home with the auto-expand hash', () => {
+  it('on a page without badges: client-navigates to the front page’s', () => {
     stubLocation('/slet-konto')
-    const expandListener = vi.fn()
-    window.addEventListener('expand-waitlist', expandListener)
 
     render(<Nav />)
-    fireEvent.click(screen.getByRole('button', { name: /ventelisten/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Hent appen' }))
 
-    expect(amplitude.track).toHaveBeenCalledWith('Waitlist CTA Clicked', { source: 'nav' })
-    // router.push (not a full page load) so the tracked event isn't dropped,
-    // with #venteliste so the hero form expands on arrival.
-    expect(push).toHaveBeenCalledWith('/#venteliste')
-    expect(expandListener).not.toHaveBeenCalled()
-
-    window.removeEventListener('expand-waitlist', expandListener)
+    expect(amplitude.track).toHaveBeenCalledWith('App CTA Clicked', { source: 'nav' })
+    // router.push (not a full page load) so the tracked event isn't dropped.
+    expect(push).toHaveBeenCalledWith('/#hent-appen')
   })
 })
 
-describe('Spiir banner', () => {
-  it('is ABSENT by default — the front page must render without campaign content', () => {
+describe('Nav links', () => {
+  it('promises no service that is not in the app', () => {
     stubLocation('/')
     render(<Nav />)
-    expect(screen.queryByText(/Spiir/)).toBeNull()
-    // Only the nav's own controls: the waitlist CTA and the burger toggle.
-    expect(screen.getByRole('button', { name: /ventelisten/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Åbn menu' })).toBeInTheDocument()
-    expect(screen.getAllByRole('button')).toHaveLength(2)
+    fireEvent.click(screen.getByRole('button', { name: 'Åbn menu' }))
+    expect(screen.queryByText(/Kommer snart/i)).toBeNull()
+    for (const name of ['Alarm', 'Opladning', 'Mobil']) expect(screen.queryByText(name)).toBeNull()
   })
 
   it('burger menu opens with the nav links and closes when a link is clicked', () => {
@@ -94,14 +93,23 @@ describe('Spiir banner', () => {
     fireEvent.click(burger)
     expect(screen.getByRole('button', { name: 'Luk menu' })).toHaveAttribute('aria-expanded', 'true')
     // Panel + desktop menu both render the links; the panel adds a second set.
-    // "Kommer snart" services are inactive text, so Alarm renders no link —
-    // Mad (home), Energi and Forsikring are the clickable ones on this site.
-    expect(screen.queryAllByRole('link', { name: /Alarm/ })).toHaveLength(0)
     expect(screen.getAllByRole('link', { name: 'Energi' }).length).toBeGreaterThan(1)
     expect(screen.getAllByRole("link", { name: "Forsikring" }).length).toBeGreaterThan(1)
     expect(screen.getAllByRole("link", { name: "Forsikring" })[0]).toHaveAttribute("href", "https://altidforsikring.dk")
     fireEvent.click(screen.getAllByRole('link', { name: 'Energi' })[1])
     expect(screen.getByRole('button', { name: 'Åbn menu' })).toHaveAttribute('aria-expanded', 'false')
+  })
+})
+
+describe('Spiir banner', () => {
+  it('is ABSENT by default: the front page must render without campaign content', () => {
+    stubLocation('/')
+    render(<Nav />)
+    expect(screen.queryByText(/Spiir/)).toBeNull()
+    // Only the nav's own controls: the CTA and the burger toggle.
+    expect(screen.getByRole('button', { name: 'Hent appen' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Åbn menu' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button')).toHaveLength(2)
   })
 
   it('renders above the nav when spiirBanner is set', () => {
@@ -110,30 +118,25 @@ describe('Spiir banner', () => {
     expect(screen.getByText(/Brugte du Spiir\?/)).toBeInTheDocument()
   })
 
-  it('scrolls to the on-page form when one exists, so the signup keeps its source tag', () => {
+  it('scrolls to the store badges on the page when clicked', () => {
     stubLocation('/spiir-alternativ')
-    // /spiir-alternativ has BottomCta's form on the page (id venteliste2).
-    const onPageForm = document.createElement('div')
-    onPageForm.id = 'venteliste2'
-    onPageForm.scrollIntoView = vi.fn()
-    document.body.appendChild(onPageForm)
+    const badges = placeBadges()
 
     render(<Nav spiirBanner />)
     fireEvent.click(screen.getByText(/Brugte du Spiir\?/).closest('button') as HTMLElement)
 
-    expect(amplitude.track).toHaveBeenCalledWith('Waitlist CTA Clicked', { source: 'spiir-banner' })
-    expect(onPageForm.scrollIntoView).toHaveBeenCalled()
-    // Crucially: NO navigation to the front page, whose form tags 'forside'.
+    expect(amplitude.track).toHaveBeenCalledWith('App CTA Clicked', { source: 'spiir-banner' })
+    expect(badges.scrollIntoView).toHaveBeenCalled()
     expect(push).not.toHaveBeenCalled()
 
-    onPageForm.remove()
+    badges.remove()
   })
 
-  it('falls back to navigating home if the page has no form of its own', () => {
+  it('goes to the front page’s badges if the page has none', () => {
     stubLocation('/spiir-alternativ')
     render(<Nav spiirBanner />)
     fireEvent.click(screen.getByText(/Brugte du Spiir\?/).closest('button') as HTMLElement)
 
-    expect(push).toHaveBeenCalledWith('/#venteliste')
+    expect(push).toHaveBeenCalledWith('/#hent-appen')
   })
 })
