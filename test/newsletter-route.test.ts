@@ -325,6 +325,19 @@ describe('failures say retry, write nothing and let the retry through', () => {
     expect(fake.signups).toEqual([])
   })
 
+  it('stops storing new addresses at 500 an hour for the whole site, and says retry', async () => {
+    fake.limits.set('newsletter-new:global', 500)
+    expect((await call(VALID)).status).toBe(503)
+    expect(fake.signups).toEqual([])
+    expect(fake.events).toEqual([])
+  })
+
+  it('a limiter that cannot run stores nothing and says retry', async () => {
+    fake.limiterError = { message: 'limiter down' }
+    expect((await call(VALID)).status).toBe(503)
+    expect(fake.signups).toEqual([])
+  })
+
   it('limits one IP to 5 an hour', async () => {
     for (let i = 0; i < 5; i++) expect((await call({ ...VALID, email: `n${i}@example.dk` }, '10.9.9.9')).status).toBe(200)
     const res = await call({ ...VALID, email: 'n6@example.dk' }, '10.9.9.9')
@@ -438,6 +451,37 @@ describe('an address already on the table', () => {
     expect(resendSend).not.toHaveBeenCalled()
     expect(fake.signups).toEqual([onFile(over)])
     expect(fake.events).toEqual([])
+  })
+})
+
+describe('the step 1 path, for pages cached before the flip', () => {
+  const step1 = { step: 1, email: 'ny@example.dk', name: 'Vind en præmie her', consent: { mad: true, group: false } }
+  const row = (first_name: string | null): Row => ({
+    public_id: 'b1946ac9-2c1d-4f3e-8a11-000000000002',
+    email: 'ny@example.dk',
+    first_name,
+    signup_source: 'altid-mad',
+    unsub_token: 'unsub-2',
+    unsubscribed: false,
+    marketing_consent_mad: false,
+    marketing_consent_group: false,
+  })
+
+  beforeEach(() => {
+    vi.stubEnv('SURVEY_TOKEN_SECRET', 'survey-test-secret')
+    fetchStub.mockImplementation(() => Promise.resolve(new Response('{}', { status: 409 })))
+  })
+
+  it.each([
+    ['the name on file', 'Karen', 'Hej Karen'],
+    ['no name when the row has none', null, '>Hej</p>'],
+  ])('the confirm mail uses %s, never what the form typed', async (_name, firstName, greeting) => {
+    fake.signups = [row(firstName)]
+    await call(step1)
+    expect(resendSend).toHaveBeenCalledTimes(1)
+    const { html } = resendSend.mock.calls[0][0]
+    expect(html).toContain(greeting)
+    expect(html).not.toContain('præmie')
   })
 })
 

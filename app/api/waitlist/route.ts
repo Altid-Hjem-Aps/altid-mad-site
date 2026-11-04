@@ -177,7 +177,9 @@ export async function POST(req: NextRequest) {
         if (allowed) {
           const token = signConfirmToken(existing.publicId, pending, Date.now() / 1000)
           await sendConsentConfirmation({
-            name: existing.firstName || String(name).trim(),
+            // The name on file only: the form is anonymous, so a typed name would
+            // let a stranger choose words in a mail to someone else's inbox.
+            name: existing.firstName ?? '',
             email: String(email).toLowerCase().trim(),
             confirmUrl: `${SITE_ORIGIN}/api/bekraeft?t=${encodeURIComponent(token)}`,
             unsubscribeUrl: `https://altidhjem.dk/api/unsubscribe?token=${encodeURIComponent(existing.unsubToken as string)}`,
