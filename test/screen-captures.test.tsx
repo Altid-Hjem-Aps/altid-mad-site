@@ -60,10 +60,9 @@ describe('the pictures on the site', () => {
   // that adds mad.savings, whose figures are seeded, or any Hjem or Energi frame.
   it('holds only frames somebody has looked at against the board', () => {
     expect(Object.keys(SCREENS).sort()).toEqual([
-      'mad.flow.11b_others',
       'mad.flow.12b_cheapest',
       'mad.flow.13_combinations',
-      'mad.flow.14_done',
+      'mad.flow.14_done.oneflow',
       'mad.flow.1_tastes',
       'mad.flow.2_avoid',
       'mad.flow.4_household',
@@ -75,10 +74,11 @@ describe('the pictures on the site', () => {
       'mad.meal_plan',
       'mad.meal_plan.scrolled',
       'mad.meal_plan.swap_picker',
-      'mad.shopping_list',
-      'mad.trip',
+      'mad.shopping_list.oneflow',
       'mad.trip.in_progress',
-      'mad.trip.replace_sheet',
+      'mad.trip.in_progress.oneflow',
+      'mad.trip.oneflow',
+      'mad.trip.replace_sheet.oneflow',
       'mad.welcome.1',
       'mad.welcome.3',
       'mad.welcome.4',
@@ -134,11 +134,10 @@ describe('the pictures on the site', () => {
     expect([...used].sort()).toEqual(Object.keys(SCREENS).sort())
   })
 
-  // The board's limits, by frame: mad.savings stays out, and so does the one-budget
-  // run's enemy, a frame from another staged household where a household shows.
-  it('keeps the two staged households apart in the Madplan story', () => {
-    const frames = MADPLAN_SCENES.flatMap((s) => s.beats.map((b) => b.frame))
-    for (const other of ['mad.home', 'mad.meal_plan', 'mad.meal_plan.scrolled', 'mad.shopping_list', 'mad.trip'] as ScreenId[]) {
+  // A story is one household: a 108-item tab next to a 55-item flow reads as a mistake.
+  it.each(STORIES)('keeps the other staged household out of the %s story', (_name, scenes) => {
+    const frames = scenes.flatMap((s) => s.beats.flatMap((b) => [b.frame, ...(b.reveals ?? []).map((r) => r.from)]))
+    for (const other of ['mad.home', 'mad.meal_plan', 'mad.meal_plan.scrolled', 'mad.trip.in_progress'] as ScreenId[]) {
       expect(frames).not.toContain(other)
     }
   })
@@ -326,7 +325,7 @@ describe('the phone stories', () => {
     intersect(true)
     fireEvent.click(screen.getByRole('button', { name: 'Gå til Første stop: Bilka' }))
     await advance(600)
-    expect(shownFrame(container)).toBe(file('mad.trip'))
+    expect(shownFrame(container)).toBe(file('mad.trip.oneflow'))
     expect(on()).toBe(0)
     await advance(1000)
     expect(on()).toBe(1)
@@ -347,11 +346,11 @@ describe('the phone stories', () => {
   it('under reduced motion rests on the end state, does not move, and steps by hand', async () => {
     stubReducedMotion(true)
     const { container } = render(<ProblemMadplan />)
-    expect(shownFrame(container)).toBe(file('mad.flow.14_done'))
+    expect(shownFrame(container)).toBe(file('mad.flow.14_done.oneflow'))
     expect(screen.queryByRole('button', { name: /animationen/ })).toBeNull()
     intersect(true)
     await advance(20_000)
-    expect(shownFrame(container)).toBe(file('mad.flow.14_done'))
+    expect(shownFrame(container)).toBe(file('mad.flow.14_done.oneflow'))
 
     fireEvent.click(screen.getByRole('button', { name: 'Gå til Hvem spiser med?' }))
     await advance(0)

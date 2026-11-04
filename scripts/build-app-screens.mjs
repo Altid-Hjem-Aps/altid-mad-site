@@ -46,7 +46,7 @@ function erase(data, { x0 = 0, x1 = CAPTURE.width, y0, y1, from }) {
 
 const STATUS_BAR_H = 170
 
-// Board: "mad.flow.14_done, crop above the 60 kr. figure" (40 kr. in the one-budget
+// Board: "mad.flow.14_done, crop above the 60 kr. figure" (34 kr. in the .oneflow
 // run). A phone needs a whole screen, so the figure goes and the rest of the screen,
 // the Færdig button included, stays where the app has it.
 function doneWithoutFigure(data) {
@@ -84,15 +84,15 @@ const FRAMES = [
   { id: 'mad.flow.8_building' },
   { id: 'mad.flow.9_week_plan' },
   { id: 'mad.meal_plan.swap_picker', edit: swapPickerWithoutFigure },
-  { id: 'mad.flow.14_done', edit: doneWithoutFigure },
-  // Indkøb story
-  { id: 'mad.shopping_list' },
-  { id: 'mad.trip.replace_sheet' },
-  { id: 'mad.flow.11b_others' },
+  { id: 'mad.flow.14_done.oneflow', edit: doneWithoutFigure },
+  // Indkøb story, the same household and budget carried on to the list and the trip
+  { id: 'mad.shopping_list.oneflow' },
+  { id: 'mad.trip.replace_sheet.oneflow' },
   { id: 'mad.flow.12b_cheapest' },
   { id: 'mad.flow.13_combinations' },
   { id: 'mad.welcome.3' },
-  { id: 'mad.trip' },
+  { id: 'mad.trip.oneflow' },
+  { id: 'mad.trip.in_progress.oneflow' },
   // Guide pages
   { id: 'mad.flow.6_budget.3000' },
   { id: 'mad.welcome.4' },

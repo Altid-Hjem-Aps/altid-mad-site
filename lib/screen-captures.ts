@@ -9,13 +9,17 @@
 // data, not a claim. The caption near the first phone on a page says so. The 11.207 kr.
 // on mad.welcome.1 is the app's own documented claim and carries its report footnote.
 //
-// Two staged households: mad.flow.* is 2 voksne + 2 børn, dinners, 6.650 kr./md.;
-// mad.home, .meal_plan, .shopping_list and .trip are 2 + 1, all meals, another budget.
+// Two staged households, never side by side in one story. mad.flow.* and *.oneflow are
+// 2 voksne + 2 børn, dinners, 6.650 kr./md.: the Madplan and Indkøb stories. mad.home,
+// .meal_plan and .trip.in_progress are 2 + 1, all meals, another budget: the hero and
+// guide pages. The swap sheet in the Madplan story shows no household.
 //
 // Not on this list, and why:
 //   mad.savings              seeded savings figures; never on the site (Thor, on the board)
 //   mad.home.scrolled, .full show the seeded "Ugens besparelse 96 kr."
 //   mad.flow.11_basics       a list of the app's photo placeholders
+//   mad.flow.11b_others      a photo placeholder and "Kaffebønner 9 kr.", a test stand-in
+//   mad.shopping_list, .trip, .trip.replace_sheet, .flow.14_done   superseded by .oneflow
 //   mad.flow.12_optimise     recommends Bilka alone; the board's row is about splitting
 //                            across stores, which is 12b_cheapest in the one-budget run
 //   mad.recipe               quantities for 4 while the header says 3; no board row
@@ -25,7 +29,6 @@ const frame = (id: string, source = `v1.0.3 sim/mad/${id}`) => ({ file: `/app-sc
 
 export const SCREENS = {
   'mad.meal_plan': frame('mad.meal_plan'),
-  'mad.trip': frame('mad.trip'),
   'mad.trip.in_progress': frame('mad.trip.in_progress'),
   'mad.meal_plan.scrolled': frame('mad.meal_plan.scrolled', 'v1.0.3 sim/mad/mad.meal_plan.scrolled, below the cut-off number, status bar from mad.meal_plan'),
   'mad.flow.1_tastes': frame('mad.flow.1_tastes'),
@@ -36,10 +39,11 @@ export const SCREENS = {
   'mad.flow.8_building': frame('mad.flow.8_building'),
   'mad.flow.9_week_plan': frame('mad.flow.9_week_plan'),
   'mad.meal_plan.swap_picker': frame('mad.meal_plan.swap_picker', 'v1.0.3 sim/mad/mad.meal_plan.swap_picker, without the budget figure peeking out above the sheet'),
-  'mad.flow.14_done': frame('mad.flow.14_done', 'v1.0.3 sim/mad/mad.flow.14_done, without the figure below the title'),
-  'mad.shopping_list': frame('mad.shopping_list'),
-  'mad.trip.replace_sheet': frame('mad.trip.replace_sheet'),
-  'mad.flow.11b_others': frame('mad.flow.11b_others'),
+  'mad.flow.14_done.oneflow': frame('mad.flow.14_done.oneflow', 'v1.0.3 sim/mad/mad.flow.14_done.oneflow, without the figure below the title'),
+  'mad.shopping_list.oneflow': frame('mad.shopping_list.oneflow'),
+  'mad.trip.replace_sheet.oneflow': frame('mad.trip.replace_sheet.oneflow'),
+  'mad.trip.oneflow': frame('mad.trip.oneflow'),
+  'mad.trip.in_progress.oneflow': frame('mad.trip.in_progress.oneflow'),
   'mad.flow.12b_cheapest': frame('mad.flow.12b_cheapest'),
   'mad.flow.13_combinations': frame('mad.flow.13_combinations'),
   'mad.welcome.3': frame('mad.welcome.3'),
@@ -88,9 +92,8 @@ export const HERO_LABEL = 'Altid Mad i appen Altid Hjem: ugens madplan, indkøbs
 /** Foreground, back left, back right; the same order on the phone carousel. */
 export const HERO_FRAMES: ScreenId[] = ['mad.meal_plan', 'mad.trip.in_progress', 'mad.meal_plan.scrolled']
 
-// The dark button at the foot of a flow step, with no tab bar below it and with one.
+// The dark button at the foot of a flow step.
 const BUTTON_FOOT: Region = { x: 37, y: 1368, w: 646, h: 101 }
-const BUTTON_ABOVE_TABS: Region = { x: 37, y: 1282, w: 646, h: 101 }
 const DONE_BUTTON: Region = { x: 44, y: 1374, w: 632, h: 95 }
 
 export const APP_ICON_SCENE: FlowScene = { key: 'appikon', label: 'Altid Hjem', ms: 3600, beats: [], opener: true }
@@ -167,7 +170,7 @@ export const MADPLAN_SCENES: FlowScene[] = [
     label: 'Jeres indkøbsliste er klar',
     ms: 4200,
     beats: [{
-      frame: 'mad.flow.14_done',
+      frame: 'mad.flow.14_done.oneflow',
       at: 0,
       alt: 'Ugens retter på en række og beskeden om, at jeres indkøbsliste er klar',
       press: { region: DONE_BUTTON, at: 3400, tone: 'on-light' },
@@ -177,10 +180,11 @@ export const MADPLAN_SCENES: FlowScene[] = [
 ]
 export const MADPLAN_REST = 'godkendt'
 
-// mad.trip to mad.trip.in_progress: the two captures differ only in these places.
+// mad.trip.oneflow to mad.trip.in_progress.oneflow: the captures differ only in these
+// places. The count takes the words after it along, because 52 is narrower than 54.
 const TICK_ONE: Region = { x: 170, y: 849, w: 490, h: 86 }
 const TICK_TWO: Region = { x: 170, y: 977, w: 490, h: 86 }
-const ITEMS_LEFT: Region = { x: 155, y: 216, w: 70, h: 95 }
+const ITEMS_LEFT: Region = { x: 105, y: 214, w: 330, h: 104 }
 const BILKA_COUNT: Region = { x: 90, y: 376, w: 90, h: 24 }
 const BILKA_BAR: Region = { x: 40, y: 438, w: 20, h: 28 }
 
@@ -189,24 +193,13 @@ export const INDKOEB_SCENES: FlowScene[] = [
     key: 'indkobsliste',
     label: 'Dine indkøbslister',
     ms: 6300,
-    beats: [{ frame: 'mad.shopping_list', at: 0, alt: 'Indkøbslisten med alle ugens varer, samlet butik for butik' }],
+    beats: [{ frame: 'mad.shopping_list.oneflow', at: 0, alt: 'Indkøbslisten med alle ugens varer, samlet butik for butik' }],
   },
   {
     key: 'basishunt',
     label: 'Lignende varer og priser',
     ms: 8000,
-    beats: [{ frame: 'mad.trip.replace_sheet', at: 0, alt: 'En vare med lignende varer i samme butik, den billigste først, og prisen i en anden butik' }],
-  },
-  {
-    key: 'basisklar',
-    label: 'Øvrige varer',
-    ms: 5000,
-    beats: [{
-      frame: 'mad.flow.11b_others',
-      at: 0,
-      alt: 'Øvrige varer, der lægges på listen, før den bliver optimeret',
-      press: { region: BUTTON_ABOVE_TABS, at: 4400, tone: 'on-dark' },
-    }],
+    beats: [{ frame: 'mad.trip.replace_sheet.oneflow', at: 0, alt: 'En vare med lignende varer i samme butik, den billigste først, og prisen i en anden butik' }],
   },
   {
     key: 'planlaeg',
@@ -228,15 +221,15 @@ export const INDKOEB_SCENES: FlowScene[] = [
     label: 'Første stop: Bilka',
     ms: 5600,
     beats: [{
-      frame: 'mad.trip',
+      frame: 'mad.trip.oneflow',
       at: 0,
       alt: 'Indkøbsturen i Bilka, hvor varerne krydses af en efter en',
       reveals: [
-        { from: 'mad.trip.in_progress', region: TICK_ONE, at: 1400 },
-        { from: 'mad.trip.in_progress', region: TICK_TWO, at: 2800 },
-        { from: 'mad.trip.in_progress', region: ITEMS_LEFT, at: 2800 },
-        { from: 'mad.trip.in_progress', region: BILKA_COUNT, at: 2800 },
-        { from: 'mad.trip.in_progress', region: BILKA_BAR, at: 2800 },
+        { from: 'mad.trip.in_progress.oneflow', region: TICK_ONE, at: 1400 },
+        { from: 'mad.trip.in_progress.oneflow', region: TICK_TWO, at: 2800 },
+        { from: 'mad.trip.in_progress.oneflow', region: ITEMS_LEFT, at: 2800 },
+        { from: 'mad.trip.in_progress.oneflow', region: BILKA_COUNT, at: 2800 },
+        { from: 'mad.trip.in_progress.oneflow', region: BILKA_BAR, at: 2800 },
       ],
     }],
   },
