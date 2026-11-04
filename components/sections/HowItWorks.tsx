@@ -13,7 +13,7 @@ type Step = { n: string; title: string; desc: React.ReactNode; still: ScreenId }
 const STEPS: Step[] = [
   { n: '01', title: 'Fortæl os om din familie', desc: 'Hvem er I, hvad kan I lide, hvor meget tid bruger I i køkkenet, og hvad er jeres ugentlige madbudget?', still: 'mad.flow.1_tastes' },
   { n: '02', title: 'Vælg ugens måltider', desc: 'Få et udvalg af opskrifter tilpasset jeres præferencer, eller lad Altid Mad foreslå en madplan baseret på ugens bedste tilbud.', still: 'mad.flow.9_week_plan' },
-  { n: '03', title: 'Få din indkøbsliste', desc: 'Automatisk genereret med prissammenligning på tværs af butikker. Du ser præcis hvad du sparer – og hvad der er billigst hvor.', still: 'mad.shopping_list' },
+  { n: '03', title: 'Få din indkøbsliste', desc: 'Automatisk genereret med prissammenligning på tværs af butikker. Du ser præcis, hvad du sparer, og hvad der er billigst hvor.', still: 'mad.shopping_list' },
   { n: '04', title: 'Spar penge. Hver uge. Altid.', desc: 'Del listen med familien og køb ind. Glæd jer til at se, hvad det gør for madbudgettet, når I køber varerne, hvor de er billigst.', still: 'mad.trip.in_progress' },
 ]
 

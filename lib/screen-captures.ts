@@ -21,6 +21,8 @@
 //   mad.flow.11_basics         the app's placeholders instead of product photos
 //   mad.flow.10_basics_intro   a sheet over a legend reading "Øvrige 0 kr."
 //   mad.meal_plan.scrolled     the big number is cut by the status bar
+//   mad.flow.6_budget          "880 kr. om ugen", while the week plan after it reads
+//                              1.615 kr. because the capture run changed the budget
 const FRAME = { width: 720, height: 1561 } as const
 
 const frame = (id: string, source = `v1.0.3 sim/mad/${id}`) => ({ file: `/app-screens/${id}.webp`, source, ...FRAME })
@@ -34,7 +36,7 @@ export const SCREENS = {
   'mad.trip.in_progress': frame('mad.trip.in_progress'),
   'mad.flow.1_tastes': frame('mad.flow.1_tastes'),
   'mad.flow.4_household': frame('mad.flow.4_household'),
-  'mad.flow.6_budget': frame('mad.flow.6_budget'),
+  'mad.flow.5_cooking_time': frame('mad.flow.5_cooking_time'),
   'mad.flow.7_stores': frame('mad.flow.7_stores'),
   'mad.flow.9_week_plan': frame('mad.flow.9_week_plan'),
 } as const
@@ -69,6 +71,9 @@ export type Scene = {
 // The big green button at the foot of the flow's steps.
 const FLOW_BUTTON: Region = { x: 44, y: 1369, w: 632, h: 100 }
 
+/** Near the first phone on a page, and wherever frames show real chains with staged prices. */
+export const SAMPLE_DATA_CAPTION = 'Skærmbilleder fra appen med eksempeldata.'
+
 export const HERO_LABEL = 'Altid Mad i appen Altid Hjem: ugens retter, madplanen og indkøbslisten'
 export const HERO_SCENES: Scene[] = [
   {
@@ -90,10 +95,10 @@ export const HERO_SCENES: Scene[] = [
 /** The two stills beside the hero's tour on wide screens. */
 export const HERO_STILLS: ScreenId[] = ['mad.recipe', 'mad.trip.in_progress']
 
-export const MADPLAN_LABEL = 'Altid Mad i appen Altid Hjem: fra husstand og budget til ugens madplan'
+export const MADPLAN_LABEL = 'Altid Mad i appen Altid Hjem: fra husstand og tid i køkkenet til ugens madplan'
 export const MADPLAN_SCENES: Scene[] = [
   { id: 'mad.flow.4_household', alt: 'Spørgsmålet om, hvem der spiser med', holdMs: 2600, tap: [FLOW_BUTTON] },
-  { id: 'mad.flow.6_budget', alt: 'Budgettet til dagligvarer', holdMs: 2800, tap: [FLOW_BUTTON] },
+  { id: 'mad.flow.5_cooking_time', alt: 'Spørgsmålet om, hvor lang tid I vil bruge på aftensmaden', holdMs: 2800, tap: [FLOW_BUTTON] },
   {
     id: 'mad.flow.9_week_plan',
     alt: 'Den færdige madplan for ugen',

@@ -1,6 +1,6 @@
 import ScreenTour from '@/components/ScreenTour'
 import { PhoneStill } from '@/components/iphone/PhoneShell'
-import { HERO_LABEL, HERO_SCENES, HERO_STILLS } from '@/lib/screen-captures'
+import { HERO_LABEL, HERO_SCENES, HERO_STILLS, SAMPLE_DATA_CAPTION } from '@/lib/screen-captures'
 
 // The hero's phones. The middle one runs the tour; from 1200 px two stills fan out
 // behind it. They are CSS only, so nothing pops in when the page hydrates, and being
@@ -33,7 +33,7 @@ export default function HeroPhones() {
         </div>
       </div>
       <p className="mt-1 text-[12px] leading-snug text-center" style={{ color: '#6f6a61' }}>
-        Skærmbilleder fra appen med eksempeldata.
+        {SAMPLE_DATA_CAPTION}
       </p>
     </div>
   )

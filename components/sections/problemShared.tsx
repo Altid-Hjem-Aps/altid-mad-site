@@ -19,6 +19,8 @@ export interface QuestionSectionProps {
   mirror?: boolean
   /** The tour in the phone. */
   tour: { scenes: Scene[]; label: string }
+  /** Under the phone, for frames that need saying they hold sample data. */
+  caption?: string
 }
 
 export default function QuestionSection({
@@ -27,6 +29,7 @@ export default function QuestionSection({
   chips,
   mirror = false,
   tour,
+  caption,
 }: QuestionSectionProps) {
   const reduced = useReducedMotion()
   // Own in-view flag for the chip reveal — framer's whileInView constructs an
@@ -126,10 +129,15 @@ export default function QuestionSection({
 
         {/* The phone, centred in its own half. */}
         <motion.div
-          className={mirror ? 'w-full flex justify-center px-6 lg:order-1' : 'w-full flex justify-center px-6'}
+          className={mirror ? 'w-full flex flex-col items-center px-6 lg:order-1' : 'w-full flex flex-col items-center px-6'}
           {...rise(0.15)}
         >
           <ScreenTour scenes={tour.scenes} label={tour.label} />
+          {caption && (
+            <p className="mt-1 text-[12px] leading-snug text-center" style={{ color: MUTED }}>
+              {caption}
+            </p>
+          )}
         </motion.div>
       </div>
     </section>

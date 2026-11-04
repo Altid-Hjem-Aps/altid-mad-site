@@ -34,7 +34,7 @@ const FRAMES = [
   { id: 'mad.trip.in_progress' },
   { id: 'mad.flow.1_tastes' },
   { id: 'mad.flow.4_household' },
-  { id: 'mad.flow.6_budget' },
+  { id: 'mad.flow.5_cooking_time' },
   { id: 'mad.flow.7_stores' },
   { id: 'mad.flow.9_week_plan' },
 ]

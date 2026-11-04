@@ -14,6 +14,7 @@ import {
   HERO_STILLS,
   INDKOEB_SCENES,
   MADPLAN_SCENES,
+  SAMPLE_DATA_CAPTION,
   SCREENS,
   type Scene,
   type ScreenId,
@@ -40,7 +41,7 @@ describe('the pictures on the site', () => {
     expect(Object.keys(SCREENS).sort()).toEqual([
       'mad.flow.1_tastes',
       'mad.flow.4_household',
-      'mad.flow.6_budget',
+      'mad.flow.5_cooking_time',
       'mad.flow.7_stores',
       'mad.flow.9_week_plan',
       'mad.home',
@@ -117,9 +118,11 @@ describe('the pictures on the site', () => {
   it.each([
     ['the front page', <HeroPhones key="hero" />],
     ['the madplan guide', <MadplanMockup key="guide" />],
+    // Real chains with staged prices, far down the page from the hero's caption.
+    ['the shopping tour', <ProblemIndkoebPlus key="indkoeb" />],
   ])('%s says the screens hold sample data', (_page, element) => {
     render(element)
-    expect(screen.getAllByText('Skærmbilleder fra appen med eksempeldata.')).toHaveLength(1)
+    expect(screen.getAllByText(SAMPLE_DATA_CAPTION)).toHaveLength(1)
   })
 })
 

@@ -4,7 +4,7 @@ import QuestionSection from './problemShared'
 import { MADPLAN_LABEL, MADPLAN_SCENES } from '@/lib/screen-captures'
 
 // Section 1 of the pair: "Hvad skal vi have til aftensmad?". The phone goes through
-// the app's own setup: who eats with you, the budget, and the finished week.
+// the app's own setup: who eats with you, the time for dinner, and the finished week.
 export default function ProblemMadplan() {
   return (
     <QuestionSection
