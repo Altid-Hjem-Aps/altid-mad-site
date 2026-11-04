@@ -12,7 +12,6 @@ export const HAIRLINE = 'rgba(62,105,36,0.06)'
 export const CARD_BORDER = 'rgba(62,105,36,0.1)'
 export const CARD_SHADOW = '0 14px 34px rgba(15,55,30,0.10)'
 export const MINT_WASH = 'rgba(220,215,153,0.22)'
-export const ROW_WASH = 'rgba(220,215,153,0.28)'
 export const BADGE_BG = 'rgba(220,215,153,0.5)'
 // Secondary text on TEAL: 0.78 keeps small functional text at ≥4.5:1.
 export const ON_TEAL_MUTED = 'rgba(255,255,255,0.78)'

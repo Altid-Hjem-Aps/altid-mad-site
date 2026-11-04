@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import SparVanerMockup from '@/components/SparVanerMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Spar penge på dagligvarer, praktisk guide – Altid Mad',
+  title: 'Spar penge på dagligvarer, praktisk guide | Altid Mad',
   description:
     'Spar penge på dagligvarer med madplan, indkøbsliste og gode butiksvaner. Se dokumenterede prisforskelle fra vores pristjek, og kom enkelt i gang i denne uge.',
 }
@@ -173,8 +173,8 @@ export default function SparPengePaaDagligvarer() {
           </P>
         </div>
 
-        <MockupFrame caption="Fem vaner der flytter madbudgettet, samlet som én ugeplan.">
-          <SparVanerMockup />
+        <MockupFrame caption="Ugens retter og indkøbsturen samlet ét sted i Altid Mad.">
+          <AppScreenFigure guide="spar" />
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 

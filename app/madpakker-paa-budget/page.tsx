@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
-import MadpakkeMockup from '@/components/MadpakkeMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  title: 'Madpakker på budget til skolestart – Altid Mad',
+  title: 'Madpakker på budget til skolestart | Altid Mad',
   description:
     'Få idéer til madpakker på budget, en enkel ugeplan og råd til billigere indkøb ved skolestart. Læs guiden, og kom godt i gang.',
 }
@@ -247,17 +247,16 @@ export default function MadpakkerPaaBudget() {
           </P>
         </div>
 
-        {/* Animated madpakke mockup — the week's lunchboxes planned from the
-            tilbudsaviser, built for this page (forsikring-page pattern). */}
+        {/* The meal plan, with lunch as one of the day's meals. */}
         <div className="max-w-2xl mx-auto px-6 pb-20">
           <div
             className="rounded-3xl flex justify-center py-10 px-4"
             style={{ background: 'linear-gradient(160deg, rgba(168,224,99,0.12) 0%, rgba(22,50,35,0.05) 100%)' }}
           >
-            <MadpakkeMockup />
+            <AppScreenFigure guide="madpakker" />
           </div>
           <p className="text-xs mt-3 text-center" style={{ color: 'rgba(22,50,35,0.5)' }}>
-            Altid Mad planlægger ugens madpakker efter tilbudsaviserne og skriver indkøbslisten for jer.
+            Frokost er et af dagens måltider i madplanen i Altid Mad.
           </p>
         </div>
 

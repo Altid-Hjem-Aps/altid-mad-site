@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import JulekurvMockup from '@/components/JulekurvMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Jul på budget: Spar på julemaden – Altid Mad',
+  title: 'Jul på budget: Spar på julemaden | Altid Mad',
   description:
     'Få en jul på budget med en planlagt menu, tilbudskøb og mindre madspild. Se konkrete råd til billig julemad, og hent appen Altid Hjem.',
 }
@@ -167,8 +167,8 @@ export default function JulPaaBudget() {
           </P>
         </div>
 
-        <MockupFrame caption="Juleindkøbene spredt over ugerne op til jul, planlagt efter tilbud.">
-          <JulekurvMockup />
+        <MockupFrame caption="Ugevælgeren i Altid Mad: madplanen lægges uge for uge.">
+          <AppScreenFigure guide="jul" />
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 

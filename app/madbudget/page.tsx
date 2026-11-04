@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madbudget for familien: Hvad er normalt? – Altid Mad',
+  title: 'Madbudget for familien: Hvad er normalt? | Altid Mad',
   description:
     'Se, hvad et normalt madbudget er for familier og andre husstande, og få konkrete råd til at lægge et budget, der holder. Kom godt i gang.',
 }

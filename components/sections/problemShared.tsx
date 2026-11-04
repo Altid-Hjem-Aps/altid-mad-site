@@ -1,179 +1,32 @@
 'use client'
 
-import { ReactNode, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion'
-import PhoneShell, { TabBar, HomeIndicator } from '@/components/iphone/PhoneShell'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import PhoneShell, { PhoneScreen, decodeFrame } from '@/components/iphone/PhoneShell'
+import { SCREENS, type Beat, type FlowScene, type Region, type Reveal, type Press } from '@/lib/screen-captures'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
+import { useReducedMotion, useTabHidden } from '@/lib/use-page-state'
 
 // Shared kit for the two "Problemet, vi løser automatisk" sections. Each
 // section poses one everyday question (copy column) next to the SAME iPhone
-// the hero uses (PhoneShell), where the answer plays out as an in-app user
-// flow — scene by scene, exactly like the Altid Mad UI-animation storyboard
-// (video/Altid Mad - UI Animation 16x9.html). One 200ms tick drives each
-// phone's whole choreography, so pause/resume freezes scenes, pops and the
+// the hero uses (PhoneShell), where the answer plays out scene by scene in real
+// pictures of the app (lib/screen-captures.ts). One 200ms tick drives each
+// phone's whole choreography, so pause/resume freezes frames, ticks and the
 // pagination pill in lockstep (the ProblemSolved pattern, kept verbatim).
 
-// Tokens live in problemTokens.ts (kept out of this framer-heavy module so
-// server-rendered consumers stay light); re-exported for the flow components.
-export { TEAL, MINT, FOREST, MUTED, HAIRLINE, ACCENT, SAVE_TEAL, EASE_EXPO, EASE_QUINT } from './problemTokens'
-import { TEAL, MINT, FOREST, MUTED, HAIRLINE, ACCENT, SAVE_TEAL, EASE_EXPO, EASE_QUINT } from './problemTokens'
+import { TEAL, FOREST, MUTED, EASE_EXPO, EASE_QUINT } from './problemTokens'
 
 const TICK_MS = 200
+const FRAME_FADE_S = 0.45
 
-// ── Small in-phone primitives ───────────────────────────────────────────────
-
-/** The Altid Mad four-point star from the storyboard's kicker. */
-export function Star({ size = 12, color = TEAL }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="-9 -9 18 18" fill="none" aria-hidden>
-      <path
-        d="M0 -9C1.2 -3.4 3.4 -1.2 9 0C3.4 1.2 1.2 3.4 0 9C-1.2 3.4 -3.4 1.2 -9 0C-3.4 -1.2 -1.2 -3.4 0 -9Z"
-        fill={color}
-      />
-    </svg>
-  )
-}
-
-export function SceneHeader({ title, sub }: { title: string; sub: string }) {
-  return (
-    <div className="mb-2.5">
-      <p className="text-[14.5px] font-semibold leading-tight" style={{ color: FOREST }}>{title}</p>
-      <p className="mt-0.5 text-[10px]" style={{ color: MUTED }}>{sub}</p>
-    </div>
-  )
-}
-
-export function PopCheck({ show, size = 15 }: { show: boolean; size?: number }) {
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.span
-          className="flex items-center justify-center rounded-full shrink-0"
-          style={{ width: size, height: size, background: TEAL }}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
-          transition={{ duration: 0.32, ease: EASE_QUINT }}
-        >
-          <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 10 10" fill="none" aria-hidden>
-            <path d="M1.5 5.5L4 8l4.5-5.5" stroke={MINT} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </motion.span>
-      )}
-    </AnimatePresence>
-  )
-}
-
-export function Thumb({ src, size, radius = 7 }: { src: string; size: number; radius?: number }) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      className="shrink-0 object-cover"
-      style={{ width: size, height: size, borderRadius: radius }}
-    />
-  )
-}
-
-/** Mint primary button. Always in the layout; starts disabled (washed mint)
- *  and becomes active with a small confirming pop once the flow allows it.
- *  When `pressing` flips true it does a tap-down (button press) to signal the
- *  slide is about to change. States are driven by a variant NAME string so the
- *  keyframe pop fires exactly once on the edge, not on every 200ms tick. */
-export function MintCta({
-  label,
-  show = true,
-  active = true,
-  pressing = false,
-  tone = 'mint',
-  pop = true,
-}: {
-  label: string
-  show?: boolean
-  active?: boolean
-  pressing?: boolean
-  /** 'white' = white pill + hairline + lift; 'teal' = solid teal pill (a strong
-   *  primary that stands out over the blur overlay). */
-  tone?: 'mint' | 'white' | 'teal'
-  /** Set false to activate quietly (colour only) — the scale pop can read as
-   *  an early press when the real click follows soon after. */
-  pop?: boolean
-}) {
-  const state = pressing ? 'pressing' : active ? 'active' : 'inactive'
-  const white = tone === 'white'
-  const teal = tone === 'teal'
-  return (
-    <motion.div
-      className="flex items-center justify-center rounded-2xl font-semibold"
-      style={{
-        height: 38,
-        fontSize: 11,
-        background: teal
-          ? active ? TEAL : 'rgba(62,105,36,0.4)'
-          : white
-            ? active ? '#fff' : 'rgba(255,255,255,0.55)'
-            : active ? MINT : 'rgba(220,215,153,0.35)',
-        color: teal ? (active ? '#EEF6E6' : 'rgba(238,246,230,0.65)') : active ? FOREST : 'rgba(22,50,35,0.4)',
-        border: white ? `1px solid ${active ? 'rgba(62,105,36,0.28)' : HAIRLINE}` : 'none',
-        boxShadow: white && active ? '0 10px 24px -12px rgba(22,50,35,0.45)' : teal && active ? '0 10px 24px -12px rgba(62,105,36,0.55)' : 'none',
-        transition: 'background 0.4s ease, color 0.4s ease',
-        transformOrigin: 'center',
-      }}
-      initial={false}
-      animate={state}
-      variants={{
-        inactive: { opacity: show ? 1 : 0, y: show ? 0 : 8, scale: 1 },
-        active: { opacity: show ? 1 : 0, y: show ? 0 : 8, scale: pop ? [1, 1.05, 1] : 1 },
-        // Quick click: dip down a touch, then pop straight back up.
-        pressing: { opacity: 1, y: 0, scale: [1, 0.93, 1] },
-      }}
-      transition={{
-        duration: 0.4,
-        ease: EASE_EXPO,
-        scale: pressing ? { duration: 0.26, ease: 'easeOut' } : { duration: 0.5, ease: EASE_QUINT },
-      }}
-    >
-      {label}
-    </motion.div>
-  )
-}
-
-/** The FAQ-style "Vis flere" pill — positioned by the call site (it floats
- *  over the faded last pill row, so more options clearly wait below). */
-export function VisFlerePill() {
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full px-3 font-semibold"
-      style={{
-        height: 28,
-        fontSize: 9.5,
-        background: '#fff',
-        color: FOREST,
-        border: `1px solid ${HAIRLINE}`,
-        boxShadow: '0 2px 10px rgba(22,50,35,0.08)',
-      }}
-    >
-      Vis flere
-      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden>
-        <path d="M2.5 4.5L6 8l3.5-3.5" stroke={TEAL} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  )
-}
 
 // ── The app-icon closer ─────────────────────────────────────────────────────
 
 // The shared final scene: the phone shrinks away (via the flow's `opener`
 // mechanism) into the Altid Hjem app icon with the group tagline.
-export const APP_ICON_MS = 3600
-
-export function AppIconClose() {
+function AppIconClose() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-5">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <motion.img
         src="/app-badge.png"
         alt=""
@@ -197,86 +50,197 @@ export function AppIconClose() {
 
 // ── The flow phone ──────────────────────────────────────────────────────────
 
-export interface FlowScene {
-  key: string
-  /** Pagination label (Danish, human-readable). */
-  label: string
-  render: (t: number) => ReactNode
-  /** Optional per-scene window in ms (defaults to the flow's sceneMs). Lets a
-   *  single scene run longer — e.g. the swipe lingering on one card. */
-  ms?: number
-  /** An "opener" scene renders FULL over the phone (no bezel/chrome) — a real
-   *  physical scene — and the phone stays closed until the scene's last beat,
-   *  when it opens (scales up from the centre icon). Used by the Indkøb intro. */
-  opener?: boolean
+/** A region of a frame as a percentage box over that frame. */
+function boxOf(region: Region, id: keyof typeof SCREENS) {
+  const { width, height } = SCREENS[id]
+  return {
+    left: `${(region.x / width) * 100}%`,
+    top: `${(region.y / height) * 100}%`,
+    width: `${(region.w / width) * 100}%`,
+    height: `${(region.h / height) * 100}%`,
+  }
 }
 
-// Scene-to-scene is a quick step forward; the LOOP back to scene 0 is its own
-// beat — the finished flow sinks away and the story rises in fresh, slightly
-// slower and with a breath of delay, so the restart never reads as a glitch.
-const sceneVariants: Variants = {
-  enter: (loop: boolean) => (loop ? { opacity: 0, y: 26, scale: 0.985 } : { opacity: 0, y: 14 }),
-  center: (loop: boolean) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: loop ? 0.65 : 0.5, ease: EASE_EXPO, delay: loop ? 0.15 : 0 },
-  }),
-  exit: (loop: boolean) =>
-    loop
-      ? { opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.5, ease: EASE_QUINT } }
-      : { opacity: 0, y: -10, transition: { duration: 0.32, ease: EASE_QUINT } },
+function RevealOver({ reveal, base, shown, reduced }: { reveal: Reveal; base: keyof typeof SCREENS; shown: boolean; reduced: boolean }) {
+  const { width, height } = SCREENS[base]
+  const { x, y, w, h } = reveal.region
+  const clip = `inset(${(y / height) * 100}% ${((width - x - w) / width) * 100}% ${((height - y - h) / height) * 100}% ${(x / width) * 100}%)`
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SCREENS[reveal.from].file}
+      alt=""
+      aria-hidden
+      draggable={false}
+      data-reveal={shown ? 'on' : 'off'}
+      onError={() => console.error(`Altid Mad frame failed to load: ${SCREENS[reveal.from].file}`)}
+      className="absolute inset-0 w-full h-full block"
+      style={{ clipPath: clip, opacity: shown ? 1 : 0, transition: reduced ? 'none' : 'opacity 0.25s ease' }}
+    />
+  )
 }
 
-function ScreenChrome({ title, tab, children }: { title: string; tab: 'hjem' | 'mad'; children: ReactNode }) {
+function PressOver({ press, base, t }: { press: Press; base: keyof typeof SCREENS; t: number }) {
+  const on = t >= press.at && t < press.at + 400
+  return (
+    <span
+      aria-hidden
+      className="absolute block"
+      style={{
+        ...boxOf(press.region, base),
+        borderRadius: 10,
+        background: press.tone === 'on-dark' ? 'rgba(255,255,255,0.2)' : 'rgba(22,50,35,0.12)',
+        opacity: on ? 1 : 0,
+        transition: 'opacity 0.16s ease',
+      }}
+    />
+  )
+}
+
+/**
+ * Which frame is up. A frame goes up only once it has decoded; one that fails keeps the
+ * frame on screen. Anything that belongs to a frame, like the report's footnote, follows
+ * this and not the clock, so the two can never part on a slow connection.
+ */
+function useFrameOnScreen(beat: Beat, next: Beat, reduced: boolean) {
+  const [up, setUp] = useState(beat)
+  const [under, setUnder] = useState<Beat | null>(null)
+  // A later beat on the same frame needs no decoding, and carries its own overlays.
+  const shown = beat.frame === up.frame ? beat : up
+
+  useEffect(() => {
+    if (beat.frame === up.frame) return
+    let live = true
+    decodeFrame(beat.frame).then(
+      () => {
+        if (!live) return
+        setUnder(reduced ? null : up)
+        setUp(beat)
+      },
+      (err) => console.error(`Altid Mad frame failed: ${beat.frame}`, err),
+    )
+    return () => {
+      live = false
+    }
+  }, [beat, up, reduced])
+
+  // The next frame is ready before its turn, so the fade never waits for the network.
+  useEffect(() => {
+    if (next.frame === beat.frame) return
+    decodeFrame(next.frame).catch((err) => console.error(`Altid Mad frame failed: ${next.frame}`, err))
+  }, [next.frame, beat.frame])
+
+  return { shown, under, clearUnder: () => setUnder(null) }
+}
+
+/**
+ * The frame on screen, over the frame before it while it fades in. Keyed by frame, so
+ * the one going under is never remounted and cannot flash. Reveals and presses are a
+ * pure function of `t`, so pausing and scrubbing hold, and they run only while the clock
+ * and the picture agree: a frame kept after a failure stays still.
+ */
+function FrameStage({ shown, under, clearUnder, inStep, t, reduced }: {
+  shown: Beat
+  under: Beat | null
+  clearUnder: () => void
+  inStep: boolean
+  t: number
+  reduced: boolean
+}) {
+  const layers = under && under.frame !== shown.frame ? [under, shown] : [shown]
   return (
     <>
-      <div className="px-5 pt-2 pb-2.5 shrink-0 flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-medium uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-light)' }}>
-            Altid Mad
-          </p>
-          <p className="text-base font-bold" style={{ color: TEAL }}>{title}</p>
-        </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/services/icon-mad.svg" alt="" style={{ width: 30, height: 30, flexShrink: 0 }} />
-      </div>
-      <div className="relative flex-1 min-h-0 mx-4">{children}</div>
-      <TabBar active={tab} />
-      <HomeIndicator />
+      {layers.map((layer) => {
+        const top = layer === shown
+        return (
+          <motion.div
+            key={layer.frame}
+            className="absolute inset-0"
+            aria-hidden={top ? undefined : true}
+            initial={{ opacity: under ? 0 : 1 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: FRAME_FADE_S, ease: 'easeOut' }}
+            onAnimationComplete={top ? clearUnder : undefined}
+          >
+            <PhoneScreen id={layer.frame} alt={layer.alt}>
+              {top && inStep && layer.reveals?.map((reveal) => (
+                <RevealOver
+                  key={`${reveal.region.x},${reveal.region.y}`}
+                  reveal={reveal}
+                  base={layer.frame}
+                  shown={t >= reveal.at}
+                  reduced={reduced}
+                />
+              ))}
+              {top && inStep && !reduced && layer.press && <PressOver press={layer.press} base={layer.frame} t={t} />}
+            </PhoneScreen>
+          </motion.div>
+        )
+      })}
     </>
   )
 }
 
-export interface FlowPhoneProps {
-  scenes: FlowScene[]
-  /** Uniform scene window in ms — keeps the pagination pill truthful. */
-  sceneMs: number
-  screenTitle: string
-  tab: 'hjem' | 'mad'
-  /** Reduced-motion still: the flow's end state. */
-  still: ReactNode
+/** The report's footnote, by the phone for as long as the frame states its figure. */
+function ReportNote({ show }: { show: boolean }) {
+  return (
+    <p
+      className="mt-3 text-center text-[12px] leading-snug"
+      style={{ color: MUTED, maxWidth: 300, minHeight: 64, opacity: show ? 1 : 0, transition: 'opacity 0.35s ease', visibility: show ? 'visible' : 'hidden' }}
+    >
+      *En gennemsnitlig husstand på fire personer kan spare 11.207 kr. om året på dagligvarer med Altid Mad.{' '}
+      <a href="/altid-mad-kvartalsrapport-q3.pdf" target="_blank" rel="noopener" style={{ textDecoration: 'underline' }}>
+        Læs Altid Mad-rapporten
+      </a>
+    </p>
+  )
 }
 
-function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps) {
+function beatAt(scene: FlowScene, t: number) {
+  let found = scene.beats[0]
+  for (const beat of scene.beats) if (t >= beat.at) found = beat
+  return found
+}
+
+export interface FlowPhoneProps {
+  scenes: FlowScene[]
+  /** The scene shown at rest under reduced motion. */
+  rest: string
+}
+
+function restTick(scenes: FlowScene[], rest: string) {
+  let acc = 0
+  for (const scene of scenes) {
+    if (scene.key === rest) return Math.ceil((acc + scene.ms) / TICK_MS) - 1
+    acc += scene.ms
+  }
+  throw new Error(`no scene called ${rest}`)
+}
+
+// Remounted if the setting changes, so a story always starts from the right place.
+function FlowPhone(props: FlowPhoneProps) {
   const reduced = useReducedMotion()
-  const [tick, setTick] = useState(0)
+  return <FlowPhoneStage key={String(reduced)} {...props} reduced={reduced} />
+}
+
+/** The phone finishes closing into the app icon on its old frame, then changes behind it. */
+const CLOSER_SWAP_MS = 800
+
+function FlowPhoneStage({ scenes, rest, reduced }: FlowPhoneProps & { reduced: boolean }) {
+  const [tick, setTick] = useState(() => (reduced ? restTick(scenes, rest) : 0))
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
+  const tabHidden = useTabHidden()
   // Scrub-in-progress — the clock freezes so a held pointer can't drift the
   // playhead across a scene boundary (or into the opener) on its own.
   const [scrubbing, setScrubbing] = useState(false)
-  // Bumped on every viewport entry: scenes mount at PAGE load, so their
-  // wall-clock entrance animations would otherwise play out off-screen and
-  // the first scene would look "already finished" when scrolled to. Keying
-  // the scene by runId remounts it fresh alongside the tick reset.
-  const [runId, setRunId] = useState(0)
   const stageRef = useRef<HTMLDivElement>(null)
 
   // Play only while in view — paused off-screen (perf). Every entry into the
   // viewport RESTARTS the story from scene 1, so scrolling to a section
   // always shows the flow from its beginning rather than mid-loop.
   useEffect(() => {
+    if (reduced) return
     const el = stageRef.current
     if (!el || typeof IntersectionObserver === 'undefined') {
       setPlaying(true)
@@ -284,25 +248,21 @@ function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps)
     }
     const io = new IntersectionObserver(([e]) => {
       setPlaying(e.isIntersecting)
-      if (e.isIntersecting) {
-        setTick(0)
-        setRunId((r) => r + 1)
-      }
+      if (e.isIntersecting) setTick(0)
     }, { threshold: 0.35 })
     io.observe(el)
     return () => io.disconnect()
-  }, [])
+  }, [reduced])
 
   // The shared clock — stopping the interval IS the pause (and the scrub).
   useEffect(() => {
-    if (reduced || !playing || paused || scrubbing) return
+    if (reduced || !playing || paused || scrubbing || tabHidden) return
     const id = setInterval(() => setTick((t) => t + 1), TICK_MS)
     return () => clearInterval(id)
-  }, [reduced, playing, paused, scrubbing])
+  }, [reduced, playing, paused, scrubbing, tabHidden])
 
-  // Per-scene windows: each scene runs for its own `ms` (default sceneMs), so
-  // one scene (the swipe) can linger longer without speeding up the rest.
-  const durations = scenes.map((s) => s.ms ?? sceneMs)
+  // Per-scene windows: each scene runs for its own `ms`.
+  const durations = scenes.map((s) => s.ms)
   const starts: number[] = []
   let acc = 0
   for (const d of durations) {
@@ -322,19 +282,23 @@ function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps)
   for (let i = 0; i < starts.length; i++) if (elapsed >= starts[i]) index = i
   const t = elapsed - starts[index]
 
-  // Wrap detection: the jump from the last scene back to the first gets the
-  // loop choreography instead of the ordinary scene step.
-  const prevIndexRef = useRef(0)
-  const looping = index === 0 && prevIndexRef.current === scenes.length - 1
-  useEffect(() => {
-    prevIndexRef.current = index
-  }, [index])
-
   // Opener handling: the phone is closed (scaled into the centre) for the whole
   // opener scene; the moment the opener hands off to the first real scene it
   // opens (scales up from the icon) while the opener overlay fades out over it.
   const isOpener = !reduced && !!scenes[index].opener
   const phoneOpen = !isOpener
+  const scene = scenes[index]
+  const lastScene = scenes[index - 1]
+  const beat = !scene.opener
+    ? beatAt(scene, t)
+    : t < CLOSER_SWAP_MS
+      ? beatAt(lastScene, lastScene.ms)
+      : scenes[0].beats[0]
+  const laterBeat = scene.beats.find((b) => b.at > t)
+  const nextScene = scenes[(index + 1) % scenes.length]
+  const next = laterBeat ?? (nextScene.opener ? scenes[0].beats[0] : nextScene.beats[0])
+  const hasReportNote = scenes.some((s) => s.beats.some((b) => b.reportNote))
+  const { shown, under, clearUnder } = useFrameOnScreen(beat, next, reduced)
 
   return (
     <div ref={stageRef} className="relative flex flex-col items-center">
@@ -361,30 +325,18 @@ function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps)
           style={{ transformOrigin: 'center center' }}
           initial={false}
           animate={{ scale: phoneOpen ? 1 : 0.34, opacity: phoneOpen ? 1 : 0 }}
-          transition={{ duration: 0.55, ease: EASE_EXPO }}
+          transition={{ duration: reduced ? 0 : 0.55, ease: EASE_EXPO }}
         >
           <PhoneShell softShadow>
-            {reduced ? (
-              <ScreenChrome title={screenTitle} tab={tab}>
-                <div className="absolute inset-0">{still}</div>
-              </ScreenChrome>
-            ) : (
-              <ScreenChrome title={screenTitle} tab={tab}>
-                <AnimatePresence custom={looping}>
-                  <motion.div
-                    key={`${scenes[index].key}-${runId}`}
-                    custom={looping}
-                    variants={sceneVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    className="absolute inset-0"
-                  >
-                    {scenes[index].opener ? null : scenes[index].render(t)}
-                  </motion.div>
-                </AnimatePresence>
-              </ScreenChrome>
-            )}
+            <FrameStage
+              shown={shown}
+              under={under}
+              clearUnder={clearUnder}
+              inStep={shown === beat}
+              // While the phone closes, the last frame holds its end state.
+              t={scene.opener ? lastScene.ms : t}
+              reduced={reduced}
+            />
           </PhoneShell>
         </motion.div>
 
@@ -402,31 +354,31 @@ function FlowPhone({ scenes, sceneMs, screenTitle, tab, still }: FlowPhoneProps)
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5, ease: EASE_EXPO }}
             >
-              {scenes[index].render(t)}
+              <AppIconClose />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {!reduced && (
-        <div className="relative mt-7">
-          <FlowTimeline
-            scenes={scenes}
-            durations={durations}
-            starts={starts}
-            elapsed={elapsed}
-            paused={paused}
-            hidden={isOpener}
-            dragging={scrubbing}
-            onDraggingChange={setScrubbing}
-            // Ceil, not round: several scene starts aren't multiples of the
-            // 200ms tick, and rounding DOWN would land a keyboard seek one
-            // tick before its target scene (the arrow key then goes nowhere).
-            onSeek={(ms) => setTick(Math.ceil(ms / TICK_MS))}
-            onTogglePaused={() => setPaused((p) => !p)}
-          />
-        </div>
-      )}
+      <div className="relative mt-7">
+        <FlowTimeline
+          scenes={scenes}
+          durations={durations}
+          starts={starts}
+          elapsed={elapsed}
+          paused={paused}
+          canPause={!reduced}
+          hidden={isOpener}
+          dragging={scrubbing}
+          onDraggingChange={setScrubbing}
+          // Ceil, not round: several scene starts aren't multiples of the
+          // 200ms tick, and rounding DOWN would land a keyboard seek one
+          // tick before its target scene (the arrow key then goes nowhere).
+          onSeek={(ms) => setTick(Math.ceil(ms / TICK_MS))}
+          onTogglePaused={() => setPaused((p) => !p)}
+        />
+      </div>
+      {hasReportNote && <ReportNote show={!!shown.reportNote} />}
     </div>
   )
 }
@@ -444,6 +396,7 @@ function FlowTimeline({
   starts,
   elapsed,
   paused,
+  canPause,
   hidden,
   dragging,
   onDraggingChange,
@@ -455,6 +408,7 @@ function FlowTimeline({
   starts: number[]
   elapsed: number
   paused: boolean
+  canPause: boolean
   hidden: boolean
   dragging: boolean
   onDraggingChange: (d: boolean) => void
@@ -516,17 +470,21 @@ function FlowTimeline({
         const segFill = Math.min(1, Math.max(0, (elapsed - starts[i]) / durations[i]))
         const sceneT = Math.min(durations[i], Math.max(0, elapsed - starts[i]))
         return (
-          <div key={s.key} className="flex items-center justify-center" style={{ minWidth: 24, height: 24 }}>
+          <div
+            key={s.key}
+            className="flex items-center justify-center"
+            style={{ minWidth: 24, height: 24, cursor: active ? undefined : 'pointer' }}
+            onClick={active ? undefined : () => onSeek(starts[i])}
+          >
             <div
               ref={active ? barRef : undefined}
               role={active ? 'slider' : 'button'}
               tabIndex={hidden ? -1 : 0}
-              aria-label={active ? `${s.label} — træk eller brug piletasterne for at spole` : `Gå til ${s.label}`}
+              aria-label={active ? `${s.label}, træk eller brug piletasterne for at spole` : `Gå til ${s.label}`}
               aria-valuemin={active ? 0 : undefined}
               aria-valuemax={active ? Math.round(durations[i] / 1000) : undefined}
               aria-valuenow={active ? Math.round(sceneT / 1000) : undefined}
               aria-valuetext={active ? `${Math.round(sceneT / 1000)} af ${Math.round(durations[i] / 1000)} sekunder` : undefined}
-              onClick={active ? undefined : () => onSeek(starts[i])}
               onPointerDown={
                 active
                   ? (e) => {
@@ -592,8 +550,9 @@ function FlowTimeline({
         )
       })}
 
-      {/* Pause/play toggle, same control as the site's other carousels */}
-      <button
+      {/* Pause/play toggle, same control as the site's other carousels. Under
+          reduced motion nothing plays, so the dots are all there is. */}
+      {canPause && <button
         type="button"
         aria-label={paused ? 'Afspil animationen' : 'Sæt animationen på pause'}
         onClick={onTogglePaused}
@@ -611,7 +570,7 @@ function FlowTimeline({
             <rect x="7.3" y="1" width="3.2" height="10" rx="1.1" />
           </svg>
         )}
-      </button>
+      </button>}
     </motion.div>
   )
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import MadplanMockup from '@/components/MadplanMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madplan efter tilbud, spar på ugens mad – Altid Mad',
+  title: 'Madplan efter tilbud, spar på ugens mad | Altid Mad',
   description:
     'Lav en madplan efter ugens tilbud, undgå dyre impulskøb og få en enkel metode til billigere hverdagsmad. Se guiden, og hent appen Altid Hjem.',
 }
@@ -167,7 +167,7 @@ export default function MadplanEfterTilbud() {
         </div>
 
         <MockupFrame caption="Altid Mad læser tilbudsaviserne og bygger ugens madplan, før du handler.">
-          <MadplanMockup />
+          <AppScreenFigure guide="tilbud" />
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 

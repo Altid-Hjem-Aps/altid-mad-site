@@ -4,7 +4,7 @@ import { FOREST, MUTED, TEAL } from './problemTokens'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
 // Centered intro for the two "Problemet, vi løser automatisk" mockup
-// sections — poses the two weekly questions the phones then answer.
+// sections: poses the two weekly questions the phones then answer.
 export default function ProblemIntro() {
   return (
     <section className="relative overflow-hidden" style={{ background: '#ffffff' }}>
@@ -17,9 +17,9 @@ export default function ProblemIntro() {
             To spørgsmål der koster tid og penge hver eneste uge
           </h2>
           <p className={`${BODY} mt-6 text-left lg:text-center lg:text-pretty mx-auto lg:max-w-[780px]`} style={{ color: MUTED }}>
-            I dag er fødevarer dyrere end nogensinde – og alligevel skal hverdagens måltider planlægges,
+            I dag er fødevarer dyrere end nogensinde, og alligevel skal hverdagens måltider planlægges,
             indkøb gennemføres og budgettet holdes. Altid Mad løser de to spørgsmål, der optager mest tid
-            og energi i ethvert travlt hjem – helt automatisk, uge efter uge.
+            og energi i ethvert travlt hjem, helt automatisk, uge efter uge.
           </p>
         </div>
       </div>

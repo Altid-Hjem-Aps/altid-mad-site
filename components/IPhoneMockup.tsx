@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import PhoneShell from './iphone/PhoneShell'
-import MealPlanScreen from './iphone/MealPlanScreen'
-import GroceryListScreen from './iphone/GroceryListScreen'
-import OffersScreen from './iphone/OffersScreen'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import PhoneShell, { PhoneScreen, decodeFrame } from './iphone/PhoneShell'
 import { CarouselPagination } from './useAutoCarousel'
+import { HERO_FRAMES, HERO_LABEL } from '@/lib/screen-captures'
+import { useReducedMotion, useTabHidden } from '@/lib/use-page-state'
 
-const SCREEN_COUNT = 3
+const SCREEN_COUNT = HERO_FRAMES.length
 const AUTO_ADVANCE_MS = 6000
 const SWIPE_THRESHOLD = 40
 
@@ -18,15 +17,8 @@ export default function IPhoneMockup() {
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
   // Real prefers-reduced-motion value — gates autoplay and the pagination pill.
-  const [reducedMotion, setReducedMotion] = useState(false)
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => setReducedMotion(mql.matches)
-    sync()
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
+  const reducedMotion = useReducedMotion()
+  const tabHidden = useTabHidden()
   const containerRef = useRef<HTMLDivElement>(null)
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Autoplay bookkeeping — mirrors useAutoCarousel so the slide advance and
@@ -38,8 +30,26 @@ export default function IPhoneMockup() {
   const touchStartX = useRef<number | null>(null)
   const hoverCountRef = useRef(0)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Only the newest request may move the carousel, and a pause cancels one in flight.
+  const slideRequestRef = useRef(0)
+  // Bumped when a frame fails: the slide stays, and the autoplay timer arms again.
+  const [failedSlides, setFailedSlides] = useState(0)
+  const showSlide = useCallback((i: number) => {
+    const request = ++slideRequestRef.current
+    decodeFrame(HERO_FRAMES[i]).then(
+      () => {
+        if (request === slideRequestRef.current) setCarouselIndex(i)
+      },
+      (err) => {
+        console.error(`Altid Mad frame failed: ${HERO_FRAMES[i]}`, err)
+        if (request === slideRequestRef.current) setFailedSlides((n) => n + 1)
+      },
+    )
+  }, [])
 
-  // JS-driven md+ gate — prevents side phones leaking into mobile DOM
+  // Autoplay runs only in the single-phone layout. The layout itself switches in CSS,
+  // so the page never swaps phones on hydration. Both layouts show the same three
+  // pictures, so the hidden one costs no extra download.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return
     // Below 1050px the side phones crop harshly, so narrower windows get the
@@ -82,7 +92,7 @@ export default function IPhoneMockup() {
   // swipe or dot tap) restarts both this timer and the pill fill together, so
   // the advance always lands exactly when the pill completes.
   useEffect(() => {
-    if (showSidePhones || reducedMotion || !hovered || paused) return
+    if (showSidePhones || reducedMotion || !hovered || paused || tabHidden) return
     if (prevIndexRef.current !== carouselIndex) {
       prevIndexRef.current = carouselIndex
       remainingRef.current = AUTO_ADVANCE_MS
@@ -90,14 +100,14 @@ export default function IPhoneMockup() {
     startedAtRef.current = Date.now()
     const t = setTimeout(() => {
       remainingRef.current = AUTO_ADVANCE_MS
-      setCarouselIndex(i => (i + 1) % SCREEN_COUNT)
+      showSlide((carouselIndex + 1) % SCREEN_COUNT)
     }, remainingRef.current)
     return () => {
       clearTimeout(t)
       // Sentinel: no timer is live — togglePaused must not bank elapsed time.
       startedAtRef.current = 0
     }
-  }, [carouselIndex, hovered, paused, reducedMotion, showSidePhones])
+  }, [carouselIndex, failedSlides, hovered, paused, reducedMotion, showSidePhones, showSlide, tabHidden])
 
   // Leaving the viewport (or switching to/from the desktop fan) resets the
   // pill fill — reset the timer budget with it so they stay in lockstep.
@@ -131,14 +141,13 @@ export default function IPhoneMockup() {
     const delta = e.changedTouches[0].clientX - touchStartX.current
     touchStartX.current = null
     if (Math.abs(delta) < SWIPE_THRESHOLD) return
-    setCarouselIndex(i =>
-      delta < 0 ? (i + 1) % SCREEN_COUNT : (i - 1 + SCREEN_COUNT) % SCREEN_COUNT,
-    )
+    showSlide(delta < 0 ? (carouselIndex + 1) % SCREEN_COUNT : (carouselIndex - 1 + SCREEN_COUNT) % SCREEN_COUNT)
   }
 
   function togglePaused() {
     const next = !pausedRef.current
     pausedRef.current = next
+    if (next) slideRequestRef.current++
     // Bank remaining time only while a timer is actually live (startedAtRef
     // is 0 otherwise) — a pause tap before autoplay starts must not clamp
     // the first slide to the 400ms floor.
@@ -148,108 +157,101 @@ export default function IPhoneMockup() {
     setPaused(next)
   }
 
-  function goToSlide(i: number) {
-    setCarouselIndex(i)
-  }
-
-  const screens = [
-    (active: boolean) => <MealPlanScreen hovered={active} />,
-    (active: boolean) => <GroceryListScreen hovered={active} />,
-    (active: boolean) => <OffersScreen hovered={active} />,
-  ]
+  // Under reduced motion the fan still takes its pose, without moving there.
+  const fan = (transition: string) => (reducedMotion ? 'none' : transition)
+  const [foreground, backLeft, backRight] = HERO_FRAMES
 
   return (
     <div ref={containerRef} className="flex justify-center w-full">
-      {showSidePhones ? (
-        /* Desktop: three phones fan out on hover. Decorative — without
-           aria-hidden the Personlig AI screen's questions would read to
-           screen readers as prompts with no way to answer. */
+      {/* Desktop: three phones fan out on hover. */}
+      <div
+        className="relative w-[580px] hidden min-[1050px]:block"
+        role="img"
+        aria-label={HERO_LABEL}
+        style={{ height: 580 }}
+        onTouchStart={() => setHovered(true)}
+        onTouchEnd={() => {
+          if (resetTimerRef.current) clearTimeout(resetTimerRef.current)
+          resetTimerRef.current = setTimeout(() => setHovered(false), 2800)
+        }}
+      >
+        {/* Back-left: the shopping trip */}
         <div
-          className="relative w-[580px]"
-          aria-hidden
-          style={{ height: 580 }}
-          onTouchStart={() => setHovered(true)}
-          onTouchEnd={() => {
-            if (resetTimerRef.current) clearTimeout(resetTimerRef.current)
-            resetTimerRef.current = setTimeout(() => setHovered(false), 2800)
+          className="absolute"
+          style={{
+            left: '50%',
+            top: 30,
+            transform: hovered
+              ? 'translateX(-50%) translateX(-185px) translateY(-6px) rotate(-11deg) scale(0.85)'
+              : 'translateX(-50%) translateX(-175px) translateY(0) rotate(-10deg) scale(0.85)',
+            transformOrigin: 'center bottom',
+            zIndex: 1,
+            opacity: 0.94,
+            filter: 'saturate(0.92)',
+            transition: fan('transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1)'),
           }}
+          onMouseEnter={onPhoneEnter}
+          onMouseLeave={onPhoneLeave}
         >
-          {/* Back-left: grocery list */}
-          <div
-            className="absolute"
-            style={{
-              left: '50%',
-              top: 30,
-              transform: hovered
-                ? 'translateX(-50%) translateX(-185px) translateY(-6px) rotate(-11deg) scale(0.85)'
-                : 'translateX(-50%) translateX(-175px) translateY(0) rotate(-10deg) scale(0.85)',
-              transformOrigin: 'center bottom',
-              zIndex: 1,
-              opacity: 0.94,
-              filter: 'saturate(0.92)',
-              transition: 'transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1)',
-            }}
-            onMouseEnter={onPhoneEnter}
-            onMouseLeave={onPhoneLeave}
-          >
-            <PhoneShell variant="back" hovered={hovered}>
-              <GroceryListScreen hovered={hovered} />
-            </PhoneShell>
-          </div>
+          <PhoneShell variant="back">
+            <PhoneScreen id={backLeft} lazy />
+          </PhoneShell>
+        </div>
 
-          {/* Back-right: this week's offers */}
-          <div
-            className="absolute"
-            style={{
-              left: '50%',
-              top: 30,
-              transform: hovered
-                ? 'translateX(-50%) translateX(185px) translateY(-6px) rotate(11deg) scale(0.85)'
-                : 'translateX(-50%) translateX(175px) translateY(0) rotate(10deg) scale(0.85)',
-              transformOrigin: 'center bottom',
-              zIndex: 1,
-              opacity: 0.94,
-              filter: 'saturate(0.92)',
-              transition: 'transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1)',
-            }}
-            onMouseEnter={onPhoneEnter}
-            onMouseLeave={onPhoneLeave}
-          >
-            <PhoneShell variant="back" hovered={hovered}>
-              <OffersScreen hovered={hovered} />
-            </PhoneShell>
-          </div>
+        {/* Back-right: today's dishes with their swap buttons */}
+        <div
+          className="absolute"
+          style={{
+            left: '50%',
+            top: 30,
+            transform: hovered
+              ? 'translateX(-50%) translateX(185px) translateY(-6px) rotate(11deg) scale(0.85)'
+              : 'translateX(-50%) translateX(175px) translateY(0) rotate(10deg) scale(0.85)',
+            transformOrigin: 'center bottom',
+            zIndex: 1,
+            opacity: 0.94,
+            filter: 'saturate(0.92)',
+            transition: fan('transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1)'),
+          }}
+          onMouseEnter={onPhoneEnter}
+          onMouseLeave={onPhoneLeave}
+        >
+          <PhoneShell variant="back">
+            <PhoneScreen id={backRight} lazy />
+          </PhoneShell>
+        </div>
 
-          {/* Foreground: the week's meal plan */}
-          <div
-            className="absolute"
-            style={{
-              left: '50%',
-              top: 0,
-              transform: hovered
-                ? 'translateX(-50%) translateY(-10px)'
-                : 'translateX(-50%) translateY(0)',
-              zIndex: 2,
-              transition: hovered
+        {/* Foreground: the week's meal plan */}
+        <div
+          className="absolute"
+          style={{
+            left: '50%',
+            top: 0,
+            transform: hovered
+              ? 'translateX(-50%) translateY(-10px)'
+              : 'translateX(-50%) translateY(0)',
+            zIndex: 2,
+            transition: fan(
+              hovered
                 ? 'transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1)'
                 : 'transform 0.5s ease',
-            }}
-            onMouseEnter={onPhoneEnter}
-            onMouseLeave={onPhoneLeave}
-          >
-            <PhoneShell hovered={hovered}>
-              <MealPlanScreen hovered={hovered} />
-            </PhoneShell>
-          </div>
+            ),
+          }}
+          onMouseEnter={onPhoneEnter}
+          onMouseLeave={onPhoneLeave}
+        >
+          <PhoneShell>
+            <PhoneScreen id={foreground} />
+          </PhoneShell>
         </div>
-      ) : (
-        /* Mobile: single phone, screens slide inside. The phone is decorative
-           (see the desktop note); the pagination below stays exposed. */
-        <div className="flex flex-col items-center">
-          <div aria-hidden>
-          <PhoneShell hovered={hovered} softShadow>
+      </div>
+
+      {/* Mobile: single phone, screens slide inside. The pagination below stays exposed. */}
+      <div className="flex flex-col items-center min-[1050px]:hidden">
+        <div role="img" aria-label={HERO_LABEL}>
+          <PhoneShell softShadow>
             <div
-              style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
+              style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
@@ -259,46 +261,44 @@ export default function IPhoneMockup() {
                   height: '100%',
                   width: `${SCREEN_COUNT * 100}%`,
                   transform: `translateX(${-carouselIndex * (100 / SCREEN_COUNT)}%)`,
-                  transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transition: reducedMotion ? 'none' : 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                {screens.map((renderScreen, i) => (
+                {HERO_FRAMES.map((id, i) => (
                   <div
-                    key={i}
+                    key={id}
                     style={{
                       width: `${100 / SCREEN_COUNT}%`,
                       flexShrink: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
+                      position: 'relative',
                       height: '100%',
                     }}
                   >
-                    {renderScreen(hovered && carouselIndex === i)}
+                    <PhoneScreen id={id} preload={i === 0} lazy={i > 0} />
                   </div>
                 ))}
               </div>
             </div>
           </PhoneShell>
-          </div>
-
-          {/* Same Apple-style pagination as Blog/Testimonials */}
-          <div style={{ marginTop: 28 }}>
-            <CarouselPagination
-              count={SCREEN_COUNT}
-              carousel={{
-                active: carouselIndex,
-                reduced: reducedMotion,
-                inView: hovered,
-                paused,
-                goTo: goToSlide,
-                togglePaused,
-                autoMs: AUTO_ADVANCE_MS,
-              }}
-              itemLabel={(i) => `Skærm ${i + 1}`}
-            />
-          </div>
         </div>
-      )}
+
+        {/* Same Apple-style pagination as Blog/Testimonials */}
+        <div style={{ marginTop: 28 }}>
+          <CarouselPagination
+            count={SCREEN_COUNT}
+            carousel={{
+              active: carouselIndex,
+              reduced: reducedMotion,
+              inView: hovered && !tabHidden,
+              paused,
+              goTo: showSlide,
+              togglePaused,
+              autoMs: AUTO_ADVANCE_MS,
+            }}
+            itemLabel={(i) => `Skærm ${i + 1}`}
+          />
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import MadbudgetSammenligningMockup from '@/components/MadbudgetSammenligningMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -18,7 +18,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Madbudget: Sammenlign jeres forbrug med gennemsnittet – Altid Mad',
+  title: 'Madbudget: Sammenlign jeres forbrug med gennemsnittet | Altid Mad',
   description:
     'Se, hvad danske husstande bruger på dagligvarer, og få et konkret sammenligningsgrundlag til jeres madbudget.',
 }
@@ -101,8 +101,8 @@ export default function BeregnDitMadbudget() {
           </P>
         </div>
 
-        <MockupFrame caption="Illustrationen viser et eksempel på en sammenligning af månedsforbrug og en mulig besparelse. Det er ikke et skærmbillede fra appen.">
-          <MadbudgetSammenligningMockup />
+        <MockupFrame caption="Budgettet i Altid Mad viser, hvad husstande af jeres størrelse typisk bruger.">
+          <AppScreenFigure guide="beregn" />
         </MockupFrame>
         <div className="max-w-2xl mx-auto px-6 pb-20">
           <H2>Sådan får I overblik over jeres madbudget</H2>

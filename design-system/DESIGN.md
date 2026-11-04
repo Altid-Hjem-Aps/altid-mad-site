@@ -59,6 +59,10 @@ hairline) → rows. Benefit cards: white on teal, `radius 20`, shadow
 - **Photos:** square, `radius 7–8` thumbs (24–30px) in rows, 64px banners in
   inspiration cards. Source: Unsplash (free commercial license), in
   `public/food/`.
+- **Pictures of the app:** real captures in `public/app-screens/`, made by
+  `scripts/build-app-screens.mjs` and listed in `lib/screen-captures.ts`. Never
+  redraw an app screen in code. The phones' motion is in
+  `components/sections/problemShared.tsx` and `components/IPhoneMockup.tsx`.
 
 ## Motion (lib/motion.ts + conventions)
 

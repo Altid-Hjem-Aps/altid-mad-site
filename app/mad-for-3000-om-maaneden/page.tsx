@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import TreTusindMockup from '@/components/TreTusindMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Mad for 3.000 om måneden, sådan gør I – Altid Mad',
+  title: 'Mad for 3.000 om måneden, sådan gør I | Altid Mad',
   description:
     'Kan en familie få mad for 3.000 kr. om måneden? Se det ærlige regnestykke og konkrete greb, der hjælper jer tættere på. Få overblik hos Altid Mad.',
 }
@@ -170,8 +170,8 @@ export default function MadFor3000OmMaaneden() {
           </P>
         </div>
 
-        <MockupFrame caption="Regneeksemplet: 3.000 kr. om måneden holdt op mod den billigste testkurv.">
-          <TreTusindMockup />
+        <MockupFrame caption="Budgettet i Altid Mad med 3.000 kr. om måneden, omregnet til uger.">
+          <AppScreenFigure guide="tretusind" />
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 

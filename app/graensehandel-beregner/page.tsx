@@ -19,7 +19,7 @@ import {
 } from '@/components/seo/article'
 
 export const metadata: Metadata = {
-  title: 'Kan grænsehandel betale sig? – Altid Mad',
+  title: 'Kan grænsehandel betale sig? | Altid Mad',
   description:
     'Beregn, om grænsehandel kan betale sig. Se transportens pris og dit break-even, før I kører, og få et ærligt regnestykke fra Altid Mad.',
 }
