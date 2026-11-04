@@ -3,9 +3,9 @@
 import dynamic from 'next/dynamic'
 import LazySection from '@/components/LazySection'
 
-// The page's heavy below-fold sections (the two phone tours, the Mux founder
-// video, the savings counters and the how-it-works cards carry framer-motion).
-// dynamic(ssr:false)
+// The page's heavy below-fold sections (the two phone flows, the Mux
+// founder video, the savings counters and the how-it-works cards carry
+// framer-motion plus thousands of lines of choreography). dynamic(ssr:false)
 // splits each into its own chunk, and LazySection delays the import until the
 // visitor is within 1500px. Each section's placeholder is used BOTH before
 // the observer fires and as the dynamic() loading fallback, so the height
@@ -19,9 +19,9 @@ function Placeholder({ className, background }: { className: string; background:
 
 const founderPh = () => <Placeholder className="min-h-[850px] lg:min-h-[520px]" background="#3E6924" />
 const savingsPh = () => <Placeholder className="min-h-[630px] lg:min-h-[595px]" background="#fdfaf4" />
-const madplanPh = () => <Placeholder className="min-h-[1044px] sm:min-h-[932px] lg:min-h-[810px]" background="#ffffff" />
-const indkoebPh = () => <Placeholder className="min-h-[1065px] sm:min-h-[953px] lg:min-h-[831px]" background="#ffffff" />
-const howItWorksPh = () => <Placeholder className="min-h-[2454px] sm:min-h-[1559px] lg:min-h-[1044px]" background="#fdfaf4" />
+const madplanPh = () => <Placeholder className="min-h-[1116px] lg:min-h-[861px]" background="#ffffff" />
+const indkoebPh = () => <Placeholder className="min-h-[1040px] lg:min-h-[785px]" background="#ffffff" />
+const howItWorksPh = () => <Placeholder className="min-h-[1342px] lg:min-h-[770px]" background="#fdfaf4" />
 
 const FounderVideo = dynamic(() => import('@/components/sections/FounderVideo'), { ssr: false, loading: founderPh })
 const Savings = dynamic(() => import('@/components/sections/Savings'), { ssr: false, loading: savingsPh })

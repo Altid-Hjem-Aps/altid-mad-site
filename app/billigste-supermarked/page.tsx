@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Nav from '@/components/Nav'
-import PristjekMockup from '@/components/PristjekMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -226,14 +226,13 @@ export default function BilligsteSupermarked() {
           </P>
         </div>
 
-        {/* Animated pristjek mockup — the app scanning the week's basket
-            across the 7 chains, built for this page (forsikring-page pattern). */}
+        {/* The app's own picture of splitting the basket across chains. */}
         <div className="max-w-2xl mx-auto px-6 pb-20">
           <div
             className="rounded-3xl flex justify-center py-10 px-4"
             style={{ background: 'linear-gradient(160deg, rgba(168,224,99,0.12) 0%, rgba(22,50,35,0.05) 100%)' }}
           >
-            <PristjekMockup />
+            <AppScreenFigure guide="supermarked" />
           </div>
           <p className="text-xs mt-3 text-center" style={{ color: 'rgba(22,50,35,0.5)' }}>
             Altid Mad sammenligner ugens kurv på tværs af kæderne og viser, hvor familien sparer mest.

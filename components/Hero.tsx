@@ -1,7 +1,8 @@
 import StoreBadges from '@/components/StoreBadges'
-import HeroPhones from '@/components/HeroPhones'
+import IPhoneMockup from '@/components/IPhoneMockup'
 import HeroStatCounter from '@/components/HeroStatCounter'
 import PressStrip from '@/components/sections/PressStrip'
+import { SAMPLE_DATA_CAPTION } from '@/lib/screen-captures'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import { H1, BODY } from '@/lib/typography'
 
@@ -73,10 +74,12 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right: real pictures of the app. Below lg this comes after the copy and
-              the badges. */}
-          <div className="flex items-center justify-center">
-            <HeroPhones />
+          {/* Right: our iPhone mockup, real pictures of the app in the phones. */}
+          <div className="flex flex-col items-center justify-center">
+            <IPhoneMockup />
+            <p className="mt-3 text-[12px] leading-snug text-center" style={{ color: '#6f6a61' }}>
+              {SAMPLE_DATA_CAPTION}
+            </p>
           </div>
 
         </div>

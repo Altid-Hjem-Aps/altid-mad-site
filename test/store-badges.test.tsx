@@ -4,7 +4,7 @@ import StoreBadges from '@/components/StoreBadges'
 import BottomCta from '@/components/sections/BottomCta'
 import Hero from '@/components/Hero'
 
-vi.mock('@/components/HeroPhones', () => ({ default: () => null }))
+vi.mock('@/components/IPhoneMockup', () => ({ default: () => null }))
 vi.mock('@/components/HeroStatCounter', () => ({ default: () => null }))
 vi.mock('@/components/sections/PressStrip', () => ({ default: () => null }))
 
@@ -87,7 +87,7 @@ describe('bottom of every page', () => {
 
 describe('page metadata', () => {
   it('uses ALT-895’s title and description', async () => {
-    vi.doMock('next/font/google', () => ({ Onest: () => ({ variable: '' }), Afacad: () => ({ variable: '' }), DM_Sans: () => ({ variable: '' }) }))
+    vi.doMock('next/font/google', () => ({ Onest: () => ({ variable: '' }), Afacad: () => ({ variable: '' }) }))
     const { metadata } = await import('@/app/layout')
     expect(metadata.title).toBe('Altid Mad: madplan og indkøbsliste i Altid Hjem-appen')
     expect(metadata.description).toBe('Hent Altid Hjem, og få ugens madplan og en indkøbsliste, der viser, hvor varerne er billigst.')

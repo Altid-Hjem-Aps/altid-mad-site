@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
-import MadplanMockup from '@/components/MadplanMockup'
+import AppScreenFigure from '@/components/AppScreenFigure'
 import BottomCta from '@/components/sections/BottomCta'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
@@ -167,7 +167,7 @@ export default function MadplanEfterTilbud() {
         </div>
 
         <MockupFrame caption="Altid Mad læser tilbudsaviserne og bygger ugens madplan, før du handler.">
-          <MadplanMockup />
+          <AppScreenFigure guide="tilbud" />
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 

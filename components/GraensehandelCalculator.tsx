@@ -4,18 +4,16 @@ import { useState } from 'react'
 import {
   AMBER,
   CARD_BORDER,
-  CARD_FONT,
   CARD_SHADOW,
   CardHeader,
-  FOREST,
   Field,
-  INK_MUTED,
-  LAVENDER,
-  LAVENDER_WASH,
-  ON_FOREST_MUTED,
   fieldStyle,
   inputCls,
+  MINT,
+  MINT_WASH,
+  ON_TEAL_MUTED,
   parseDanishNumber,
+  TEAL,
 } from '@/components/seo/mockupKit'
 
 /**
@@ -60,7 +58,7 @@ export default function GraensehandelCalculator() {
       role="group"
       aria-label="Beregner: kan grænsehandelsturen betale sig"
       className="w-full max-w-[440px] rounded-[24px] px-5 pt-5 pb-5"
-      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
+      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: 'var(--font-onest)' }}
     >
       <CardHeader eyebrow="Beregner" title="Kan turen betale sig?" />
 
@@ -80,15 +78,15 @@ export default function GraensehandelCalculator() {
       </div>
 
       <div aria-live="polite">
-        <div className="rounded-2xl px-4 py-3 mb-3" style={{ background: LAVENDER_WASH, border: `1px solid ${CARD_BORDER}` }}>
-          <p className="text-[11px] mb-0.5" style={{ color: INK_MUTED }}>
+        <div className="rounded-2xl px-4 py-3 mb-3" style={{ background: MINT_WASH, border: `1px solid ${CARD_BORDER}` }}>
+          <p className="text-[11px] mb-0.5" style={{ color: 'var(--text-light)' }}>
             Brændstof for turen
           </p>
-          <p className="font-bold text-[17px]" style={{ color: FOREST }}>
+          <p className="font-bold text-[17px]" style={{ color: TEAL }}>
             {hasTransport ? `Ca. ${fmt(transport)} kr.` : 'Udfyld kørsel, forbrug og pris'}
           </p>
           {hasTransport && (
-            <p className="text-[12px] mt-1" style={{ color: FOREST }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--text-dark)' }}>
               I skal spare mere end {fmt(transport)} kr. på indkøbet, før turen er tjent hjem. Tid og slid på
               bilen er ikke regnet med.
             </p>
@@ -98,16 +96,16 @@ export default function GraensehandelCalculator() {
         {hasTransport && hasSaving && (
           <div
             className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
-            style={{ background: paysOff ? FOREST : AMBER.wash }}
+            style={{ background: paysOff ? TEAL : AMBER.wash }}
           >
             <div className="min-w-0">
-              <p style={{ fontSize: 11, color: paysOff ? ON_FOREST_MUTED : AMBER.ink, marginBottom: 1 }}>
+              <p style={{ fontSize: 11, color: paysOff ? ON_TEAL_MUTED : AMBER.ink, marginBottom: 1 }}>
                 Besparelse minus brændstof
               </p>
               <p className="font-bold text-[17px] leading-tight" style={{ color: paysOff ? '#ffffff' : AMBER.ink }}>
                 {paysOff ? (
                   <>
-                    Ca. <span style={{ color: LAVENDER }}>{fmt(net)} kr.</span> tilbage
+                    Ca. <span style={{ color: MINT }}>{fmt(net)} kr.</span> tilbage
                   </>
                 ) : net === 0 ? (
                   'Det går præcis lige op'
@@ -118,7 +116,7 @@ export default function GraensehandelCalculator() {
             </div>
             <span
               className="shrink-0 font-semibold text-[11px] px-2 py-1"
-              style={{ borderRadius: 8, background: paysOff ? LAVENDER : 'transparent', border: paysOff ? 'none' : `1px solid ${AMBER.ink}`, color: paysOff ? FOREST : AMBER.ink }}
+              style={{ borderRadius: 8, background: paysOff ? MINT : 'transparent', border: paysOff ? 'none' : `1px solid ${AMBER.ink}`, color: paysOff ? TEAL : AMBER.ink }}
             >
               {paysOff ? 'På papiret: ja' : 'På papiret: nej'}
             </span>
@@ -126,7 +124,7 @@ export default function GraensehandelCalculator() {
         )}
       </div>
 
-      <p className="text-[11px] mt-3 leading-relaxed" style={{ color: INK_MUTED }}>
+      <p className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--text-light)' }}>
         Benzinprisen er forudfyldt med Drivkraft Danmarks listepris for benzin (juli 2026). Justér den
         til jeres egen pris. Besparelsen er jeres eget skøn; beregneren tager ikke stilling til, hvad I
         kan spare ved grænsen. Intet gemmes, når I beregner.
