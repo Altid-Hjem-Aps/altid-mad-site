@@ -9,7 +9,7 @@ interface BottomCtaProps {
   subtitle?: string
 }
 
-// The end of every page: the store badges first, the quieter newsletter signup
+// The end of every page: the store pills first, the quieter newsletter signup
 // under them. The SEO pages wrap this in the #hent-appen anchor; the front page
 // has that anchor on the hero's badges.
 export default function BottomCta({
@@ -35,7 +35,7 @@ export default function BottomCta({
         <p className={`${BODY} mx-auto text-balance`} style={{ color: '#fff', maxWidth: 480 }}>
           {subtitle}
         </p>
-        <StoreBadges position="bottom" className="mt-8 justify-center" />
+        <StoreBadges position="bottom" variant="dark" className="mt-8 justify-center" />
 
         <div className="mt-12 pt-10 mx-auto max-w-[520px] text-left" style={{ borderTop: '1px solid rgba(255,255,255,0.14)' }}>
           <NewsletterForm />
