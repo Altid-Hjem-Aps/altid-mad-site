@@ -2,23 +2,30 @@
 
 import { useEffect, useState } from 'react'
 import { useMockupStart } from '@/components/seo/useMockupLoop'
-import { CardHeader } from '@/components/seo/mockupKit'
+import {
+  AMBER,
+  BADGE_BG,
+  CARD_BORDER,
+  CARD_FONT,
+  CARD_SHADOW,
+  CardHeader,
+  FOREST,
+  HAIRLINE,
+  INK_MUTED,
+  LAVENDER,
+  ON_FOREST_MUTED,
+  ROW_WASH,
+} from '@/components/seo/mockupKit'
 
 /**
- * Animated app-UI card for /billigste-supermarked, in the Altid Mad design
- * system (same tokens as the hero's iphone screens, scaled up for page
- * display): the app scans the week's basket across the 13 chains, highlights
+ * Animated data card for /billigste-supermarked, in the app's colours and
+ * font (see seo/mockupKit): the app scans the week's basket across the 13 chains, highlights
  * the cheapest and dearest, and lands on the yearly saving.
  *
  * Numbers are the verified Q3 figures only — the intermediate chains show a
  * checkmark, never an invented price.
  */
 
-const TEAL = '#3E6924'
-const MINT = '#DCD799'
-const AMBER = { wash: 'rgba(232,139,47,0.15)', ink: '#7d430e' }
-const HAIRLINE = 'rgba(62,105,36,0.06)'
-const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
 // Verified basket results: only Lidl (cheapest) and Min Købmand (dearest)
 // carry numbers; the other chains were scanned but their totals are not
@@ -91,7 +98,7 @@ export default function PristjekMockup() {
     <div
       ref={ref}
       className="w-full max-w-[400px] rounded-[24px] px-5 pt-5 pb-4"
-      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: '0 14px 34px rgba(15,55,30,0.10)', fontFamily: 'var(--font-onest)' }}
+      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
       role="img"
       aria-label="Eksempel: Altid Mad sammenligner ugens kurv på tværs af kæderne"
     >
@@ -108,7 +115,7 @@ export default function PristjekMockup() {
               className="flex items-center gap-2.5 px-3.5 py-2.5"
               style={{
                 borderBottom: i < CHAINS.length - 1 ? `1px solid ${HAIRLINE}` : 'none',
-                background: isCheapest ? 'rgba(220,215,153,0.28)' : isDearest ? AMBER.wash : 'transparent',
+                background: isCheapest ? ROW_WASH : isDearest ? AMBER.wash : 'transparent',
                 opacity: scanned ? 1 : 0.35,
                 transition: 'background 0.45s ease, opacity 0.45s ease',
               }}
@@ -119,16 +126,16 @@ export default function PristjekMockup() {
               ) : (
                 <span
                   className="shrink-0 grid place-items-center font-bold"
-                  style={{ width: 24, height: 24, borderRadius: 7, fontSize: 10, background: 'rgba(220,215,153,0.5)', color: TEAL }}
+                  style={{ width: 24, height: 24, borderRadius: 7, fontSize: 10, background: BADGE_BG, color: FOREST }}
                 >
                   {c.initials}
                 </span>
               )}
-              <span className="flex-1 min-w-0 truncate font-semibold text-[13.5px]" style={{ color: 'var(--text-dark)' }}>
+              <span className="flex-1 min-w-0 truncate font-semibold text-[13.5px]" style={{ color: FOREST }}>
                 {c.name}
               </span>
               {isCheapest ? (
-                <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 6, background: MINT, color: TEAL, transition: 'opacity 0.45s ease' }}>
+                <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 6, background: LAVENDER, color: FOREST, transition: 'opacity 0.45s ease' }}>
                   Billigst · 782,70 kr.
                 </span>
               ) : isDearest ? (
@@ -136,7 +143,7 @@ export default function PristjekMockup() {
                   Dyrest · 1.313,94 kr.
                 </span>
               ) : (
-                <span className="shrink-0 text-[12px] tabular-nums" style={{ color: scanned ? TEAL : 'var(--text-light)' }}>
+                <span className="shrink-0 text-[12px] tabular-nums" style={{ color: scanned ? FOREST : INK_MUTED }}>
                   {scanned ? '✓' : '· · ·'}
                 </span>
               )}
@@ -148,7 +155,7 @@ export default function PristjekMockup() {
       <div
         className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
         style={{
-          background: TEAL,
+          background: FOREST,
           opacity: s.saving ? 1 : 0,
           transform: s.saving ? 'translateY(0)' : 'translateY(6px)',
           transition: 'opacity 0.7s ease, transform 0.7s ease',
@@ -156,16 +163,16 @@ export default function PristjekMockup() {
         aria-hidden={!s.saving}
       >
         <div className="min-w-0">
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 1 }}>
+          <p style={{ fontSize: 11, color: ON_FOREST_MUTED, marginBottom: 1 }}>
             Forskel på samme kurv · 531,24 kr. pr. uge
           </p>
           <p className="font-bold text-[17px] leading-tight text-white">
-            Op til <span style={{ color: MINT }}>27.624 kr.</span> om året
+            Op til <span style={{ color: LAVENDER }}>27.624 kr.</span> om året
           </p>
         </div>
         <span
           className="shrink-0 font-semibold text-[11px] px-2 py-1"
-          style={{ borderRadius: 8, background: MINT, color: TEAL }}
+          style={{ borderRadius: 8, background: LAVENDER, color: FOREST }}
         >
           Ugens besparelse
         </span>

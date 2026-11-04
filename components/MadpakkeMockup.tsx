@@ -2,20 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { useMockupStart } from '@/components/seo/useMockupLoop'
-import { CardHeader } from '@/components/seo/mockupKit'
+import {
+  BADGE_BG,
+  CARD_BORDER,
+  CARD_FONT,
+  CARD_SHADOW,
+  CardHeader,
+  FOREST,
+  HAIRLINE,
+  LAVENDER,
+  ON_FOREST_MUTED,
+  ROW_WASH,
+} from '@/components/seo/mockupKit'
 
 /**
- * Animated app-UI card for /madpakker-paa-budget, in the Altid Mad design
- * system (same tokens as the hero's iphone screens, scaled up for page
- * display): the week's lunchboxes fill in day by day, tilbud-tagged where
+ * Animated data card for /madpakker-paa-budget, in the app's colours and
+ * font (see seo/mockupKit): the week's lunchboxes fill in day by day, tilbud-tagged where
  * the plan caught an offer, and the card lands on "indkøbslisten er
  * skrevet". No prices anywhere — the offer tags are qualitative on purpose.
  */
 
-const TEAL = '#3E6924'
-const MINT = '#DCD799'
-const HAIRLINE = 'rgba(62,105,36,0.06)'
-const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
 const DAYS: { day: string; item: string; tilbud?: boolean }[] = [
   { day: 'Man', item: 'Pastasalat med grønt', tilbud: true },
@@ -72,7 +78,7 @@ export default function MadpakkeMockup() {
     <div
       ref={ref}
       className="w-full max-w-[400px] rounded-[24px] px-5 pt-5 pb-4"
-      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: '0 14px 34px rgba(15,55,30,0.10)', fontFamily: 'var(--font-onest)' }}
+      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
       role="img"
       aria-label="Eksempel: Altid Mad planlægger ugens madpakker efter tilbud"
     >
@@ -87,27 +93,27 @@ export default function MadpakkeMockup() {
               className="flex items-center gap-2.5 px-3.5 py-2.5"
               style={{
                 borderBottom: i < DAYS.length - 1 ? `1px solid ${HAIRLINE}` : 'none',
-                background: filled && d.tilbud ? 'rgba(220,215,153,0.28)' : 'transparent',
+                background: filled && d.tilbud ? ROW_WASH : 'transparent',
                 opacity: filled ? 1 : 0.35,
                 transition: 'background 0.45s ease, opacity 0.45s ease',
               }}
             >
               <span
                 className="shrink-0 grid place-items-center font-bold uppercase"
-                style={{ width: 30, height: 24, borderRadius: 7, fontSize: 9.5, background: 'rgba(220,215,153,0.5)', color: TEAL }}
+                style={{ width: 30, height: 24, borderRadius: 7, fontSize: 9.5, background: BADGE_BG, color: FOREST }}
               >
                 {d.day}
               </span>
               <span
                 className="flex-1 min-w-0 truncate font-semibold text-[13.5px]"
-                style={{ color: 'var(--text-dark)', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
+                style={{ color: FOREST, opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
               >
                 {d.item}
               </span>
               {d.tilbud && (
                 <span
                   className="shrink-0 font-semibold text-[10px] uppercase px-2 py-1"
-                  style={{ borderRadius: 6, background: MINT, color: TEAL, letterSpacing: '0.4px', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
+                  style={{ borderRadius: 6, background: LAVENDER, color: FOREST, letterSpacing: '0.4px', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
                 >
                   På tilbud
                 </span>
@@ -120,7 +126,7 @@ export default function MadpakkeMockup() {
       <div
         className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
         style={{
-          background: TEAL,
+          background: FOREST,
           opacity: s.done ? 1 : 0,
           transform: s.done ? 'translateY(0)' : 'translateY(6px)',
           transition: 'opacity 0.7s ease, transform 0.7s ease',
@@ -128,19 +134,19 @@ export default function MadpakkeMockup() {
         aria-hidden={!s.done}
       >
         <div className="min-w-0">
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: MINT, marginBottom: 2 }}>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: LAVENDER, marginBottom: 2 }}>
             Automatisk
           </p>
           <p className="font-bold text-[15px] leading-tight text-white">
-            Indkøbslisten er skrevet <span style={{ color: MINT }}>✓</span>
+            Indkøbslisten er skrevet <span style={{ color: LAVENDER }}>✓</span>
           </p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+          <p style={{ fontSize: 11, color: ON_FOREST_MUTED, marginTop: 2 }}>
             Ugens 5 madpakker er planlagt
           </p>
         </div>
         <span
           className="shrink-0 font-semibold text-[11px] px-2 py-1"
-          style={{ borderRadius: 8, background: MINT, color: TEAL }}
+          style={{ borderRadius: 8, background: LAVENDER, color: FOREST }}
         >
           Klar til ugen
         </span>

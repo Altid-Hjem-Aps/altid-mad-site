@@ -2,19 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import { useMockupStart } from '@/components/seo/useMockupLoop'
-import { CardHeader } from '@/components/seo/mockupKit'
+import {
+  BADGE_BG,
+  CARD_BORDER,
+  CARD_FONT,
+  CARD_SHADOW,
+  CardHeader,
+  FOREST,
+  HAIRLINE,
+  LAVENDER,
+  ROW_WASH,
+} from '@/components/seo/mockupKit'
 
 /**
- * Animated app-UI card for /jul-paa-budget: the christmas shopping spreads
+ * Animated data card for /jul-paa-budget: the christmas shopping spreads
  * itself over the weeks up to christmas instead of one expensive December
  * week, offer-tagged where a plan would catch julevarer in the aviser.
  * Qualitative on purpose — no prices anywhere.
  */
 
-const TEAL = '#3E6924'
-const MINT = '#DCD799'
-const HAIRLINE = 'rgba(62,105,36,0.06)'
-const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
 const WEEKS: { week: string; item: string; tilbud?: boolean }[] = [
   { week: 'U 46', item: 'And og flæskesteg til fryseren', tilbud: true },
@@ -71,7 +77,7 @@ export default function JulekurvMockup() {
     <div
       ref={ref}
       className="w-full max-w-[400px] rounded-[24px] px-5 pt-5 pb-4"
-      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: '0 14px 34px rgba(15,55,30,0.10)', fontFamily: 'var(--font-onest)' }}
+      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
       role="img"
       aria-label="Eksempel: juleindkøbene spredt ud over ugerne op til jul"
     >
@@ -86,27 +92,27 @@ export default function JulekurvMockup() {
               className="flex items-center gap-2.5 px-3.5 py-2.5"
               style={{
                 borderBottom: i < WEEKS.length - 1 ? `1px solid ${HAIRLINE}` : 'none',
-                background: filled && w.tilbud ? 'rgba(220,215,153,0.28)' : 'transparent',
+                background: filled && w.tilbud ? ROW_WASH : 'transparent',
                 opacity: filled ? 1 : 0.35,
                 transition: 'background 0.45s ease, opacity 0.45s ease',
               }}
             >
               <span
                 className="shrink-0 grid place-items-center font-bold uppercase"
-                style={{ width: 34, height: 24, borderRadius: 7, fontSize: 9.5, background: 'rgba(220,215,153,0.5)', color: TEAL }}
+                style={{ width: 34, height: 24, borderRadius: 7, fontSize: 9.5, background: BADGE_BG, color: FOREST }}
               >
                 {w.week}
               </span>
               <span
                 className="flex-1 min-w-0 truncate font-semibold text-[13.5px]"
-                style={{ color: 'var(--text-dark)', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
+                style={{ color: FOREST, opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
               >
                 {w.item}
               </span>
               {w.tilbud && (
                 <span
                   className="shrink-0 font-semibold text-[10px] uppercase px-2 py-1"
-                  style={{ borderRadius: 6, background: MINT, color: TEAL, letterSpacing: '0.4px', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
+                  style={{ borderRadius: 6, background: LAVENDER, color: FOREST, letterSpacing: '0.4px', opacity: filled ? 1 : 0, transition: 'opacity 0.45s ease' }}
                 >
                   På tilbud
                 </span>
@@ -119,7 +125,7 @@ export default function JulekurvMockup() {
       <div
         className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
         style={{
-          background: TEAL,
+          background: FOREST,
           opacity: s.done ? 1 : 0,
           transform: s.done ? 'translateY(0)' : 'translateY(6px)',
           transition: 'opacity 0.7s ease, transform 0.7s ease',
@@ -127,14 +133,14 @@ export default function JulekurvMockup() {
         aria-hidden={!s.done}
       >
         <div className="min-w-0">
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: MINT, marginBottom: 2 }}>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: LAVENDER, marginBottom: 2 }}>
             Automatisk
           </p>
           <p className="font-bold text-[15px] leading-tight text-white">
-            Julen er delt over 5 uger <span style={{ color: MINT }}>✓</span>
+            Julen er delt over 5 uger <span style={{ color: LAVENDER }}>✓</span>
           </p>
         </div>
-        <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 8, background: MINT, color: TEAL }}>
+        <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 8, background: LAVENDER, color: FOREST }}>
           Ingen panik-uge
         </span>
       </div>

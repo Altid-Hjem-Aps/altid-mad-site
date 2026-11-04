@@ -1,7 +1,19 @@
 'use client'
 
 import { useMockupStart } from '@/components/seo/useMockupLoop'
-import { CardHeader } from '@/components/seo/mockupKit'
+import {
+  AMBER,
+  BEIGE,
+  CARD_BORDER,
+  CARD_FONT,
+  CARD_SHADOW,
+  CardHeader,
+  FOREST,
+  HAIRLINE,
+  INK_MUTED,
+  LAVENDER,
+  ON_FOREST_MUTED,
+} from '@/components/seo/mockupKit'
 
 /**
  * The regneeksempel card on /mad-for-3000-om-maaneden: 3.000 kr./md as a
@@ -10,10 +22,6 @@ import { CardHeader } from '@/components/seo/mockupKit'
  * (3.000 × 12 / 52 ≈ 692) or the verified Q3 basket number — nothing else.
  */
 
-const TEAL = '#3E6924'
-const MINT = '#DCD799'
-const AMBER = { wash: 'rgba(232,139,47,0.15)', ink: '#7d430e' }
-const CARD_BORDER = 'rgba(62,105,36,0.1)'
 
 // 3.000 kr./md × 12 / 52 = 692,31 kr./uge; basket 782,70 - 692,31 = 90,39.
 const GOAL_WEEK = 692
@@ -25,15 +33,15 @@ export default function TreTusindMockup() {
   const grown = running || reduced
 
   const rows = [
-    { label: 'Målet: 3.000 kr. pr. måned', value: `${GOAL_WEEK} kr. pr. uge`, width: (GOAL_WEEK / BASKET_WEEK) * 100, bar: 'rgba(62,105,36,0.45)' },
-    { label: 'Billigste testkurv, 2 voksne + 2 teenagere', value: '782,70 kr. pr. uge', width: 100, bar: TEAL },
+    { label: 'Målet: 3.000 kr. pr. måned', value: `${GOAL_WEEK} kr. pr. uge`, width: (GOAL_WEEK / BASKET_WEEK) * 100, bar: LAVENDER },
+    { label: 'Billigste testkurv, 2 voksne + 2 teenagere', value: '782,70 kr. pr. uge', width: 100, bar: FOREST },
   ]
 
   return (
     <div
       ref={ref}
       className="w-full max-w-[440px] rounded-[24px] px-5 pt-5 pb-4"
-      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: '0 14px 34px rgba(15,55,30,0.10)', fontFamily: 'var(--font-onest)' }}
+      style={{ background: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
       role="img"
       aria-label="Regneeksempel: 3.000 kr. om måneden sammenlignet med den billigste testkurv"
     >
@@ -44,17 +52,17 @@ export default function TreTusindMockup() {
           <div
             key={r.label}
             className="px-3.5 py-2.5"
-            style={{ borderBottom: i < rows.length - 1 ? '1px solid rgba(62,105,36,0.06)' : 'none' }}
+            style={{ borderBottom: i < rows.length - 1 ? `1px solid ${HAIRLINE}` : 'none' }}
           >
             <div className="flex items-center justify-between gap-3 mb-1.5">
-              <span className="min-w-0 truncate font-semibold text-[13px]" style={{ color: 'var(--text-dark)' }}>
+              <span className="min-w-0 truncate font-semibold text-[13px]" style={{ color: FOREST }}>
                 {r.label}
               </span>
-              <span className="shrink-0 text-[12.5px] font-bold tabular-nums" style={{ color: TEAL }}>
+              <span className="shrink-0 text-[12.5px] font-bold tabular-nums" style={{ color: FOREST }}>
                 {r.value}
               </span>
             </div>
-            <div className="h-[6px] rounded-full overflow-hidden" style={{ background: 'rgba(62,105,36,0.08)' }}>
+            <div className="h-[6px] rounded-full overflow-hidden" style={{ background: BEIGE }}>
               <div
                 className="h-full rounded-full"
                 style={{
@@ -78,19 +86,19 @@ export default function TreTusindMockup() {
         </div>
       </div>
 
-      <div className="rounded-2xl px-4 py-3" style={{ background: TEAL }}>
-        <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: MINT, marginBottom: 2 }}>
+      <div className="rounded-2xl px-4 py-3" style={{ background: FOREST }}>
+        <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: LAVENDER, marginBottom: 2 }}>
           Ærligt svar
         </p>
         <p className="font-bold text-[15px] leading-tight text-white">
           Ambitiøst for en familie, muligt for mindre husstande
         </p>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+        <p style={{ fontSize: 11, color: ON_FOREST_MUTED, marginTop: 2 }}>
           Selv den billigste udgave af testkurven ligger over målet for en 2+2-husstand
         </p>
       </div>
 
-      <p className="text-[10px] mt-3 leading-relaxed" style={{ color: 'var(--text-light)' }}>
+      <p className="text-[10px] mt-3 leading-relaxed" style={{ color: INK_MUTED }}>
         Regneeksempel: 3.000 kr. pr. måned svarer til ca. 692 kr. pr. uge (× 12 ÷ 52). Kurvtallet er fra
         vores Q3-pristjek af samme kurv med 23 varer hos 13 kæder.
       </p>

@@ -4,19 +4,21 @@ import { useEffect, useState } from 'react'
 import { useMockupStart } from '@/components/seo/useMockupLoop'
 import {
   CARD_BORDER,
+  CARD_FONT,
   CARD_SHADOW,
   CardHeader,
+  FOREST,
   HAIRLINE,
-  MINT,
-  MINT_WASH,
-  ON_TEAL_MUTED,
+  INK_MUTED,
+  LAVENDER,
+  LAVENDER_WASH,
+  ON_FOREST_MUTED,
   ROW_WASH,
-  TEAL,
 } from '@/components/seo/mockupKit'
 
 /**
- * Animated app-UI card for /beregn-dit-madbudget, in the Altid Mad design
- * system: a household's own monthly spend is held up against the Danmarks
+ * Animated data card for /beregn-dit-madbudget, in the app's colours and font
+ * (see seo/mockupKit): a household's own monthly spend is held up against the Danmarks
  * Statistik average for the same household type, the gap is highlighted, and
  * the card lands on the possible saving.
  *
@@ -87,12 +89,12 @@ export default function MadbudgetSammenligningMockup() {
       role="img"
       aria-label="Eksempel: En husstand med 2 voksne og 2 børn bruger 6.200 kr. om måneden, 719 kr. mere end gennemsnittet på 5.481 kr., og kan spare op til 40,4 pct., hvis indkøbene ligner testkurven."
       className="w-full max-w-[440px] rounded-[24px] px-5 pt-5 pb-4"
-      style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: 'var(--font-onest)' }}
+      style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}`, boxShadow: CARD_SHADOW, fontFamily: CARD_FONT }}
     >
       <CardHeader eyebrow="Madbudget" title="Hvordan ligger jeres forbrug?" />
 
-      <div className="rounded-2xl px-3.5 py-2.5 mb-3" style={{ backgroundColor: MINT_WASH, border: `1px solid ${CARD_BORDER}` }}>
-        <span className="text-[11.5px] font-semibold" style={{ color: TEAL }}>
+      <div className="rounded-2xl px-3.5 py-2.5 mb-3" style={{ backgroundColor: LAVENDER_WASH, border: `1px solid ${CARD_BORDER}` }}>
+        <span className="text-[11.5px] font-semibold" style={{ color: FOREST }}>
           {STATUS[phase]}
         </span>
       </div>
@@ -112,12 +114,12 @@ export default function MadbudgetSammenligningMockup() {
                 transition: 'background-color 0.45s ease, opacity 0.45s ease',
               }}
             >
-              <span className="min-w-0 truncate text-[13px]" style={{ color: 'var(--text-light)' }}>
+              <span className="min-w-0 truncate text-[13px]" style={{ color: INK_MUTED }}>
                 {r.label}
               </span>
               <span
                 className="shrink-0 font-semibold text-[13.5px] tabular-nums"
-                style={{ color: lit ? TEAL : 'var(--text-dark)' }}
+                style={{ color: FOREST }}
               >
                 {shown ? r.value : '· · ·'}
               </span>
@@ -129,7 +131,7 @@ export default function MadbudgetSammenligningMockup() {
       <div
         className="rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
         style={{
-          backgroundColor: TEAL,
+          backgroundColor: FOREST,
           opacity: phase === 'done' ? 1 : 0,
           transform: phase === 'done' ? 'translateY(0)' : 'translateY(6px)',
           transition: 'opacity 0.7s ease, transform 0.7s ease',
@@ -137,17 +139,17 @@ export default function MadbudgetSammenligningMockup() {
         aria-hidden={phase !== 'done'}
       >
         <div className="min-w-0">
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: MINT, marginBottom: 2 }}>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: LAVENDER, marginBottom: 2 }}>
             Mulig besparelse
           </p>
           <p className="font-bold text-[17px] leading-tight text-white">
-            Op til <span style={{ color: MINT }}>40,4 pct.</span> at spare
+            Op til <span style={{ color: LAVENDER }}>40,4 pct.</span> at spare
           </p>
-          <p style={{ fontSize: 11, color: ON_TEAL_MUTED, marginTop: 2 }}>
+          <p style={{ fontSize: 11, color: ON_FOREST_MUTED, marginTop: 2 }}>
             Hvis jeres indkøb ligner testkurven
           </p>
         </div>
-        <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 8, backgroundColor: MINT, color: TEAL }}>
+        <span className="shrink-0 font-semibold text-[11px] px-2 py-1" style={{ borderRadius: 8, backgroundColor: LAVENDER, color: FOREST }}>
           Sparemulighed
         </span>
       </div>

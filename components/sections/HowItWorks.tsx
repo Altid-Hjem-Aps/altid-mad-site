@@ -3,17 +3,23 @@
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import * as amplitude from '@amplitude/analytics-browser'
+import { PhoneStill } from '@/components/iphone/PhoneShell'
+import type { ScreenId } from '@/lib/screen-captures'
 import { STORE_ANCHOR } from '@/lib/store-links'
 import { H2, EYEBROW, BUTTON_PRIMARY } from '@/lib/typography'
 
-type Step = { n: string; title: string; desc: React.ReactNode }
+type Step = { n: string; title: string; desc: React.ReactNode; still: ScreenId }
 
 const STEPS: Step[] = [
-  { n: '01', title: 'Fortæl os om din familie', desc: 'Hvem er I, hvad kan I lide, hvor meget tid bruger I i køkkenet, og hvad er jeres ugentlige madbudget?' },
-  { n: '02', title: 'Vælg ugens måltider', desc: 'Få et udvalg af opskrifter tilpasset jeres præferencer, eller lad Altid Mad foreslå en madplan baseret på ugens bedste tilbud.' },
-  { n: '03', title: 'Få din indkøbsliste', desc: 'Automatisk genereret med prissammenligning på tværs af butikker. Du ser præcis hvad du sparer – og hvad der er billigst hvor.' },
-  { n: '04', title: 'Spar penge. Hver uge. Altid.', desc: 'Del listen med familien og køb ind. Glæd jer til at se, hvad det gør for madbudgettet, når I køber varerne, hvor de er billigst.' },
+  { n: '01', title: 'Fortæl os om din familie', desc: 'Hvem er I, hvad kan I lide, hvor meget tid bruger I i køkkenet, og hvad er jeres ugentlige madbudget?', still: 'mad.flow.1_tastes' },
+  { n: '02', title: 'Vælg ugens måltider', desc: 'Få et udvalg af opskrifter tilpasset jeres præferencer, eller lad Altid Mad foreslå en madplan baseret på ugens bedste tilbud.', still: 'mad.flow.9_week_plan' },
+  { n: '03', title: 'Få din indkøbsliste', desc: 'Automatisk genereret med prissammenligning på tværs af butikker. Du ser præcis hvad du sparer – og hvad der er billigst hvor.', still: 'mad.shopping_list' },
+  { n: '04', title: 'Spar penge. Hver uge. Altid.', desc: 'Del listen med familien og køb ind. Glæd jer til at se, hvad det gør for madbudgettet, når I køber varerne, hvor de er billigst.', still: 'mad.trip.in_progress' },
 ]
+
+// The step's real screen stands in the foot of its card with the phone cut off by the
+// card's edge, like a phone in a pocket: the top of a screen is what tells it apart.
+const STILL_SCALE = 0.68
 
 // Hairline dividers ONLY between touching cards (no outer frame), as borders on
 // the cards themselves — so there's no grey container behind them to flash
@@ -37,7 +43,9 @@ export default function HowItWorks() {
     : {
         initial: 'hidden' as const,
         whileInView: 'show' as const,
-        viewport: { once: true, amount: 0.3 },
+        // A share of the grid, and the grid is about 2100 px tall on a phone: much more
+        // than this and it can never fit a small screen, so the cards never appear.
+        viewport: { once: true, amount: 0.1 },
         variants: { hidden: {}, show: { transition: { staggerChildren: 0.13, delayChildren: 0.05 } } },
       }
   const cardVariants = prefersReducedMotion
@@ -68,35 +76,34 @@ export default function HowItWorks() {
           </h2>
         </div>
 
-        {/* Four steps — white cards with a hairline divider ONLY between the
-            cards that touch. The `gap-px` reveals the container background as
-            those internal dividers; there's no outer frame (no padding), so the
-            perimeter has no stroke. Cards are 4:3 from sm up, number top / text
-            bottom to fill the format nicely. */}
+        {/* Four steps: white cards with a hairline divider ONLY between the cards
+            that touch, so the perimeter has no stroke. Number and text on top, the
+            step's real screen at the foot. */}
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 overflow-hidden rounded-[20px]"
           {...gridMotion}
         >
           {STEPS.map((step, i) => (
-            // The 4:3 format is a MINIMUM, not the card's height: an invisible
-            // aspect spacer is stacked under the content (both in grid cell
-            // 1/1), so the card is max(4:3, its text) and can never clip.
-            // Aspect-ratio'd boxes don't stretch to the grid row, so putting
-            // the ratio directly on the card left uneven rows at ~1024–1400px.
             <motion.div
               key={step.n}
               variants={cardVariants}
-              className={`grid grid-cols-[minmax(0,1fr)] ${DIVIDERS[i]}`}
+              className={DIVIDERS[i]}
               style={{ background: '#ffffff', borderColor: 'rgba(22,50,35,0.12)' }}
             >
-              <div aria-hidden className="hidden sm:block w-full sm:aspect-[4/3] col-start-1 row-start-1" />
-              <div className="col-start-1 row-start-1 flex flex-col gap-4" style={{ padding: 'clamp(28px,2.4vw,44px)' }}>
-                <div className="font-normal leading-none text-[clamp(36px,calc(31.2px+1.24vw),55px)]" style={{ color: '#163223' }}>
-                  {step.n}
+              <div className="flex flex-col h-full">
+                <div className="flex flex-col gap-4" style={{ padding: 'clamp(28px,2.4vw,44px)', paddingBottom: 28 }}>
+                  <div className="font-normal leading-none text-[clamp(36px,calc(31.2px+1.24vw),55px)]" style={{ color: '#163223' }}>
+                    {step.n}
+                  </div>
+                  <div>
+                    <p className="font-normal text-[clamp(16px,1.3vw,20px)] leading-snug mb-2.5" style={{ color: '#163223' }}>{step.title}</p>
+                    <p className="font-normal text-[14px] leading-[1.7]" style={{ color: '#6f6a61' }}>{step.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-normal text-[clamp(16px,1.3vw,20px)] leading-snug mb-2.5" style={{ color: '#163223' }}>{step.title}</p>
-                  <p className="font-normal text-[14px] leading-[1.7]" style={{ color: '#6f6a61' }}>{step.desc}</p>
+                <div className="mt-auto overflow-hidden flex justify-center" style={{ height: 290 }}>
+                  <div style={{ transform: `scale(${STILL_SCALE})`, transformOrigin: 'top center' }}>
+                    <PhoneStill id={step.still} variant="back" />
+                  </div>
                 </div>
               </div>
             </motion.div>

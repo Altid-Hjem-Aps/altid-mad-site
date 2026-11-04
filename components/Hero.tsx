@@ -1,5 +1,5 @@
 import StoreBadges from '@/components/StoreBadges'
-import IPhoneMockup from '@/components/IPhoneMockup'
+import HeroPhones from '@/components/HeroPhones'
 import HeroStatCounter from '@/components/HeroStatCounter'
 import PressStrip from '@/components/sections/PressStrip'
 import { STORE_ANCHOR } from '@/lib/store-links'
@@ -73,9 +73,10 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right: our existing iPhone mockup (not the Figma phones) */}
+          {/* Right: real pictures of the app. Below lg this comes after the copy and
+              the badges. */}
           <div className="flex items-center justify-center">
-            <IPhoneMockup />
+            <HeroPhones />
           </div>
 
         </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Onest, Afacad } from 'next/font/google'
+import { Onest, Afacad, DM_Sans } from 'next/font/google'
 import './globals.css'
 import ResetScrollOnLoad from '@/components/ResetScrollOnLoad'
 import CookieBanner from '@/components/CookieBanner'
@@ -16,6 +16,14 @@ const afacad = Afacad({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-afacad',
+})
+
+// The app's own font, for the data cards on the guide pages (seo/mockupKit). Not
+// preloaded: most pages have no such card, and a browser fetches it only when used.
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-dm-sans',
+  preload: false,
 })
 
 export const metadata: Metadata = {
@@ -47,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // data-scroll-behavior: opt-in so Next keeps smooth scrolling for anchor
     // jumps but disables it during route transitions (silences the Next 15+
     // console warning).
-    <html lang="da" data-scroll-behavior="smooth" className={`${onest.variable} ${afacad.variable}`}>
+    <html lang="da" data-scroll-behavior="smooth" className={`${onest.variable} ${afacad.variable} ${dmSans.variable}`}>
       <body>
         <ResetScrollOnLoad />
         {children}

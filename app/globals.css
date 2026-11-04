@@ -9,7 +9,6 @@
   --sage: #a8e063;
   --text-dark: #0d2010;
   --text-mid: #2a4030;
-  --text-light: #4d6a55;
   --accent-yellow: #f5f07a;
   --accent-blue: #8fccff;
   --accent-pink: #ffbab8;
@@ -26,7 +25,6 @@
   --color-sage: var(--sage);
   --color-text-dark: var(--text-dark);
   --color-text-mid: var(--text-mid);
-  --color-text-light: var(--text-light);
   --font-family-sans: var(--font-onest), system-ui, sans-serif;
 }
 
@@ -65,8 +63,7 @@ body {
   [style*="dot-flow"] { animation: none !important; opacity: var(--dot-max, 1); }
 }
 
-/* Carousel pagination (shared via CarouselPagination: Blog, Testimonials and
-   the hero phone) — the active dot is a pill whose fill loads up over the
+/* Carousel pagination (shared via CarouselPagination: Blog and Supermarkets) — the active dot is a pill whose fill loads up over the
    autoplay interval (Apple-gallery style), then the carousel advances. */
 @keyframes blog-progress {
   from { width: 0%; }
@@ -88,13 +85,6 @@ body {
 }
 .faq-scroll::-webkit-scrollbar {
   display: none;
-}
-
-/* Badge pulse in the hero phone screens — khaki, matching the Mad CTAs. */
-@keyframes badge-glow {
-  0%   { box-shadow: 0 0 0 0 rgba(220,215,153,0.75); }
-  60%  { box-shadow: 0 0 0 6px rgba(220,215,153,0); }
-  100% { box-shadow: 0 0 0 0 rgba(220,215,153,0); }
 }
 
 @keyframes slide-down-fade {
@@ -172,3 +162,54 @@ body {
   .chk, .cloche-lid, .fam { animation: none; }
   .chk { opacity: 1; }
 }
+
+/* ScreenTour: the soft dot where someone taps, the pause button, the hand-step dots. */
+.screen-tour-tap {
+  background: rgba(22, 50, 35, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+  animation: screen-tour-tap 420ms ease-out both;
+}
+@keyframes screen-tour-tap {
+  0% { transform: scale(0.5); opacity: 0; }
+  35% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+.screen-tour-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  color: #163223;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.screen-tour-control:hover { background: rgba(22, 50, 35, 0.08); }
+/* Nothing moves under reduced motion, so there is nothing to pause: the dots step instead. */
+@media (prefers-reduced-motion: reduce) {
+  .screen-tour-control { display: none; }
+}
+.screen-tour-control:focus-visible,
+.screen-tour-dot:focus-visible {
+  outline: 2px solid #163223;
+  outline-offset: 2px;
+}
+.screen-tour-dot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.screen-tour-dot::after {
+  content: '';
+  position: absolute;
+  inset: 17px;
+  border-radius: 9999px;
+  /* 3:1 against the page, as a control must have. */
+  background: rgba(22, 50, 35, 0.55);
+}
+.screen-tour-dot:hover::after,
+.screen-tour-dot[aria-current='true']::after { background: #163223; }
