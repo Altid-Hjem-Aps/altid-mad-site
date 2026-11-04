@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     if (!matched) return page('Vi kunne ikke finde dig', 'Linket er måske udløbet. Skriv til hej@altidhjem.dk hvis du har brug for hjælp.', '', 404)
     if (matched.email) await setResendSubscription(matched.email, !resubscribe) // keep Resend Audience in sync
     return resubscribe
-      ? page('Du er tilmeldt igen 🎉', 'Du modtager nu igen opdateringer om din plads i køen.')
+      ? page('Du er tilmeldt igen', 'Du modtager nu igen markedsføringsmails fra Altid Hjem.')
       : page('Du er afmeldt', 'Du modtager ikke flere markedsføringsmails fra Altid Hjem.', button(token, 'resubscribe', 'Fortryd – tilmeld mig igen'))
   } catch (e) {
     console.error('unsubscribe failed', e)

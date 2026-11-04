@@ -11,7 +11,7 @@
 // have yet, so on desktop this link is a no-op until that is wired up.
 
 function shareText(inviteUrl: string): string {
-  return `Kom med på Altid Mad. Tilmeld dig med mit link: ${inviteUrl}`
+  return `Altid Mad finder du i appen Altid Hjem. Se mere her: ${inviteUrl}`
 }
 
 export interface ShareLinks {

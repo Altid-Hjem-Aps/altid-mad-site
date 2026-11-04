@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import MadbudgetBenchmark from '@/components/MadbudgetBenchmark'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -162,13 +163,13 @@ export default function MadbudgetFamiliePaa4() {
           </P>
           <H2>Sådan kan Altid Mad hjælpe</H2>
           <P>
-            Altid Mad er en kommende dansk app, som læser tilbudsaviser, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Ventelisten er åben på altidmad.dk.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem. Den læser tilbudsaviser, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Appen kan hentes i App Store og Google Play.
           </P>
           <P>
             Målet er at gøre prisbevidste valg lettere uden at sende familien rundt efter hvert enkelt tilbud. Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login, og teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
           <P>
-            Skriv jer på ventelisten, hvis I gerne vil have hjælp til at forbinde tilbud, madplan og familiens egne præferencer.
+            Hent appen, hvis I gerne vil have hjælp til at forbinde tilbud, madplan og familiens egne præferencer.
           </P>
         </div>
 
@@ -177,11 +178,10 @@ export default function MadbudgetFamiliePaa4() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Mere familie, mindre regneark'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan hjælpe familien med madplan og indkøb. Gratis.'
-            source='madbudget-familie-paa-4'
+            subtitle='Lad Altid Mad hjælpe familien med madplan og indkøb.'
           />
         </div>
       </main>

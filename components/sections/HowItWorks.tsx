@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import * as amplitude from '@amplitude/analytics-browser'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import { H2, EYEBROW, BUTTON_PRIMARY } from '@/lib/typography'
 
 type Step = { n: string; title: string; desc: React.ReactNode }
@@ -43,14 +44,13 @@ export default function HowItWorks() {
     ? undefined
     : { hidden: { opacity: 0, y: 26 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } }
 
-  // Same signup flow as nav/hero/founder: scroll to the bottom form if present,
-  // otherwise expand the hero form, otherwise navigate home with #venteliste.
+  // Same as the nav: scroll to the store badges on this page, otherwise go to
+  // the front page's.
   function handleCTA() {
-    amplitude.track('Waitlist CTA Clicked', { source: 'how-it-works' })
-    const onPageForm = document.getElementById('venteliste2')
-    if (onPageForm) { onPageForm.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
-    if (window.location.pathname !== '/') { router.push('/#venteliste'); return }
-    window.dispatchEvent(new CustomEvent('expand-waitlist'))
+    amplitude.track('App CTA Clicked', { source: 'how-it-works' })
+    const badges = document.getElementById(STORE_ANCHOR)
+    if (badges) { badges.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
+    router.push(`/#${STORE_ANCHOR}`)
   }
 
   return (
@@ -103,7 +103,7 @@ export default function HowItWorks() {
           ))}
         </motion.div>
 
-        {/* CTA — same button design as the hero, redirecting to the bottom form */}
+        {/* CTA: scrolls to the store badges */}
         <div className="flex justify-center mt-12 sm:mt-14">
           <button
             type="button"
@@ -111,8 +111,8 @@ export default function HowItWorks() {
             className={`${BUTTON_PRIMARY} w-full px-5 lg:w-auto lg:px-[42px]`}
             style={{ background: '#DCD799', color: '#163223' }}
           >
-            <span className="lg:hidden">Skriv dig gratis på ventelisten</span>
-            <span className="hidden lg:inline">Skriv dig på ventelisten og få ro på madbudgettet</span>
+            <span className="lg:hidden">Hent appen</span>
+            <span className="hidden lg:inline">Hent appen, og få ro på madbudgettet</span>
           </button>
         </div>
 

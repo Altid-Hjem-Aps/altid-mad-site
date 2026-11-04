@@ -16,20 +16,18 @@ type Item = { q: string; a: string[] }
 const ITEMS: Item[] = [
   {
     q: 'Er Altid Mad en del af Altid Hjem?',
-    a: ['Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen. Når du skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem – med samme login og samme app.'],
+    a: ['Ja. Altid Mad er en af tjenesterne i Altid Hjem-appen, med samme login og samme app.'],
   },
   {
     q: 'Hvad er Altid Hjem?',
-    a: ['Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter ét sted – mad, strøm, mobil, forsikring, opladning og alarm. Du får ét overblik, ét login og én samlet regning. Altid.'],
+    a: ['Altid Hjem er appen, hvor du finder Altid Mad. Den samler hjemmets faste udgifter, så du får ét overblik og ét login. Altid.'],
   },
-  // Sits at index 2 so it stays inside MOBILE_VISIBLE — it's the answer to the
-  // question the hero's store pills provoke, and the one that stops someone
-  // searching a store for a name that isn't there.
+  // Sits at index 2 so it stays inside MOBILE_VISIBLE: it stops someone searching
+  // a store for a name that isn't there.
   {
     q: 'Kan jeg hente Altid Mad i App Store eller Google Play?',
     a: [
-      'Nej, Altid Mad har ikke sin egen app. Du finder det som en del af Altid Hjem-appen, der snart kommer til både App Store og Google Play.',
-      'Appen kan endnu ikke hentes, men skriver du dig på ventelisten, får du besked, så snart den er klar.',
+      'Ja, i appen Altid Hjem. Altid Mad har ikke sin egen app, så du skal søge efter Altid Hjem i App Store eller Google Play.',
     ],
   },
   {
@@ -39,10 +37,6 @@ const ITEMS: Item[] = [
   {
     q: 'Er Altid Mad gratis at bruge?',
     a: ['Ja. Altid Mad er gratis at bruge. Du kan opgradere til Premium med ekstra funktioner for 29 kr./md.'],
-  },
-  {
-    q: 'Er det gratis at skrive sig på ventelisten?',
-    a: ['Ja, det er helt gratis og uforpligtende. Du får besked, når appen er klar, og du kan til enhver tid afmelde dig igen.'],
   },
 ]
 

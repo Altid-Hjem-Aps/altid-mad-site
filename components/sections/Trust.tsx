@@ -2,7 +2,7 @@ import { Logo, MadLogo } from '@/components/Logo'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
 
 // Teal → green "Mad is part of Hjem" section (Mad CVI frame node 44:1060):
-// Altid Mad (teal, the waitlist funnels into Hjem) next to Altid Hjem (forest,
+// Altid Mad (teal, it lives inside the Hjem app) next to Altid Hjem (forest,
 // the "we've done this before" credibility). The two wordmarks sit at the
 // bottom, bridged by a run of pulsing dots across the seam.
 
@@ -54,7 +54,7 @@ export default function Trust() {
             Altid Mad <span aria-hidden>→</span><span className="sr-only">bliver til</span> Altid Hjem
           </h2>
           <p className={BODY} style={{ color: '#fff', maxWidth: 560 }}>
-            Når du gratis skriver dig på ventelisten til Altid Mad, bliver du automatisk en del af Altid Hjem. Det betyder, at du ikke behøver nøjes med at spare penge på madbudgettet. Du kan faktisk spare penge på alle hjemmets udgifter. Læs mere om Altid Hjem på{' '}
+            Altid Mad finder du i appen Altid Hjem. Det betyder, at du ikke behøver nøjes med at spare penge på madbudgettet. Du får også overblik over hjemmets faste udgifter. Læs mere om Altid Hjem på{' '}
             <a
               href="https://www.altidhjem.dk"
               className="underline underline-offset-4 transition-opacity hover:opacity-80"

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import * as amplitude from '@amplitude/analytics-browser'
 import { MadLogo } from '@/components/Logo'
+import { STORE_ANCHOR } from '@/lib/store-links'
 
 const HIDE_THRESHOLD = 80
 // The campaign banner is hidden at the top and only slides in once the user
@@ -15,9 +16,8 @@ const SCROLL_DELTA_DESKTOP = 6
 const SCROLL_DELTA_TOUCH = 30
 
 // The CVI navigation on the Mad site: Mad is the active item (marker dot);
-// Hjem and Energi link to their live sites; the rest are muted until their
-// sites launch and point at the Hjem services section meanwhile.
-type LinkTone = 'home' | 'live' | 'soon'
+// Hjem, Energi and Forsikring link to their live sites.
+type LinkTone = 'home' | 'live'
 interface NavLink {
   label: string
   href: string
@@ -28,11 +28,6 @@ const NAV_LINKS: NavLink[] = [
   { label: 'Mad', href: '/', tone: 'home' },
   { label: 'Energi', href: 'https://altidenergi.dk', tone: 'live' },
   { label: 'Forsikring', href: 'https://altidforsikring.dk', tone: 'live' },
-  // 'soon' services are muted with a "Kommer snart" sublabel (Figma 26:105)
-  // and rendered inactive (no link) until their site launches.
-  { label: 'Alarm', href: '#', tone: 'soon' },
-  { label: 'Opladning', href: '#', tone: 'soon' },
-  { label: 'Mobil', href: '#', tone: 'soon' },
 ]
 
 interface BannerConfig {
@@ -42,7 +37,7 @@ interface BannerConfig {
   shortPrefix: string
   /** Amplitude source for banner clicks, e.g. 'spiir-banner'. */
   source: string
-  /** Banner CTA text — falls back to the default waitlist label. */
+  /** Banner CTA text: falls back to the default "Hent appen" label. */
   cta?: string
 }
 
@@ -63,10 +58,6 @@ const SPIIR_BANNER: BannerConfig = {
 // use the Mad mint instead of Hjem's signal green.
 const FOREST = '#163223'
 const MINT = '#DCD799'
-// Deliberately low-contrast: these links are INACTIVE until each service's
-// site launches (WCAG 1.4.3 exempts inactive components); they flip to
-// 'live'/white when switched on.
-const MUTED = '#6f6a61'
 
 export default function Nav({ spiirBanner = false, banner }: NavProps) {
   const router = useRouter()
@@ -115,28 +106,22 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
   }, [])
 
   function handleCTA(source: string) {
-    amplitude.track('Waitlist CTA Clicked', { source })
-    // If the page has its own signup form (e.g. /spiir-alternativ's BottomCta,
-    // id 'venteliste2'), scroll to it — that preserves the page's signup_source.
-    // Otherwise: the homepage hero form (the 'expand-waitlist' listener only
-    // exists on '/'; everywhere else navigate home with the #venteliste hash).
-    const onPageForm = document.getElementById('venteliste2')
-    if (onPageForm) {
-      onPageForm.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    amplitude.track('App CTA Clicked', { source })
+    // Scroll to the store badges on this page (the hero on the front page,
+    // BottomCta on the SEO pages). A page without badges goes to the front
+    // page's: router.push, not a full load, so the tracked event isn't dropped.
+    const badges = document.getElementById(STORE_ANCHOR)
+    if (badges) {
+      badges.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
-    if (window.location.pathname !== '/') {
-      router.push('/#venteliste')
-      return
-    }
-    window.dispatchEvent(new CustomEvent('expand-waitlist'))
+    router.push(`/#${STORE_ANCHOR}`)
   }
 
   function linkColor(tone: LinkTone, active = false) {
     // The active item matches its marker dot — mint label over the mint dot.
     if (active) return MINT
-    if (tone === 'home' || tone === 'live') return '#fff'
-    return MUTED
+    return '#fff'
   }
 
   // Right-aligned desktop menu: links + CTA in ONE flex with a shared gap, so
@@ -150,37 +135,22 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
         const active = tone === 'home'
         const external = href.startsWith('http')
         return (
-          <span key={label} className="relative" style={tone === 'soon' ? { opacity: 0.6 } : undefined}>
-            {tone === 'soon' ? (
-              // Not a link: "Kommer snart" services are inactive until launch.
-              <span className="text-[16px] font-medium whitespace-nowrap cursor-default select-none" style={{ color: linkColor(tone) }}>
-                {label}
-              </span>
-            ) : (
-              <a
-                href={href}
-                target={external ? '_blank' : undefined}
-                rel={external ? 'noopener noreferrer' : undefined}
-                className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
-                style={{ color: linkColor(tone, active) }}
-              >
-                {label}
-              </a>
-            )}
+          <span key={label} className="relative">
+            <a
+              href={href}
+              target={external ? '_blank' : undefined}
+              rel={external ? 'noopener noreferrer' : undefined}
+              className="text-[16px] font-medium transition-opacity hover:opacity-80 whitespace-nowrap"
+              style={{ color: linkColor(tone, active) }}
+            >
+              {label}
+            </a>
             {active && (
               <span
                 aria-hidden
                 className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-[7px] h-[7px] rounded-full"
                 style={{ background: MINT }}
               />
-            )}
-            {tone === 'soon' && (
-              <span
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-0.5 text-[9px] font-medium uppercase tracking-[0.08em] whitespace-nowrap"
-                style={{ color: MUTED }}
-              >
-                Kommer snart
-              </span>
             )}
           </span>
         )
@@ -198,7 +168,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
           cursor: 'pointer',
         }}
       >
-        Skriv dig på ventelisten
+        Hent appen
       </button>
     </div>
   )
@@ -251,34 +221,22 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
             <>
               {label}
               {active && <span aria-hidden className="w-[7px] h-[7px] rounded-full" style={{ background: MINT }} />}
-              {tone === 'soon' && (
-                <span className="text-[10px] font-medium uppercase tracking-[0.08em]" style={{ color: MUTED }}>
-                  Kommer snart
-                </span>
-              )}
             </>
           )
           const rowClass = 'flex items-center gap-2 py-3.5 text-[17px] font-medium'
           const rowStyle = { color: linkColor(tone, active), borderBottom: '1px solid rgba(255,255,255,0.06)' }
           return (
             <li key={label}>
-              {tone === 'soon' ? (
-                // Inactive until launch — rendered as plain text, not a link.
-                <span className={`${rowClass} cursor-default select-none`} style={{ ...rowStyle, opacity: 0.6 }}>
-                  {inner}
-                </span>
-              ) : (
-                <a
-                  href={href}
-                  target={external ? '_blank' : undefined}
-                  rel={external ? 'noopener noreferrer' : undefined}
-                  onClick={() => setMenuOpen(false)}
-                  className={rowClass}
-                  style={rowStyle}
-                >
-                  {inner}
-                </a>
-              )}
+              <a
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                onClick={() => setMenuOpen(false)}
+                className={rowClass}
+                style={rowStyle}
+              >
+                {inner}
+              </a>
             </li>
           )
         })}
@@ -290,7 +248,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
           className="w-full text-base font-medium py-3.5 rounded-[20px]"
           style={{ background: MINT, color: FOREST, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
         >
-          Skriv dig på ventelisten
+          Hent appen
         </button>
       </div>
     </div>
@@ -372,7 +330,7 @@ export default function Nav({ spiirBanner = false, banner }: NavProps) {
             className="inline-block align-middle ml-2 px-3 py-1 rounded-full font-medium"
             style={{ background: MINT, color: FOREST }}
           >
-            {(bannerConfig.cta ?? 'Skriv dig på ventelisten').replace(/\s*→\s*$/, '')}
+            {(bannerConfig.cta ?? 'Hent appen').replace(/\s*→\s*$/, '')}
           </span>
         </button>
       </div>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import MadplanMockup from '@/components/MadplanMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -20,7 +21,7 @@ import {
 export const metadata: Metadata = {
   title: 'Madplan efter tilbud, spar på ugens mad – Altid Mad',
   description:
-    'Lav en madplan efter ugens tilbud, undgå dyre impulskøb og få en enkel metode til billigere hverdagsmad. Se guiden, og skriv dig på ventelisten.',
+    'Lav en madplan efter ugens tilbud, undgå dyre impulskøb og få en enkel metode til billigere hverdagsmad. Se guiden, og hent appen Altid Hjem.',
 }
 
 // FAQ copy is used twice: rendered on the page AND serialized as FAQPage
@@ -64,8 +65,8 @@ const FAQ: FaqItem[] = [
   {
     q: 'Kan Altid Mad gøre det for mig?',
     a: [
-      'Altid Mad skal kunne læse tilbudsaviserne, bygge en madplan efter familiens smag og finde ugens dagligvarer til de bedste priser.',
-      'Appen er ikke lanceret endnu, men ventelisten er åben på altidmad.dk.',
+      'Altid Mad læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser.',
+      'I finder Altid Mad i appen Altid Hjem, som kan hentes i App Store og Google Play.',
     ],
   },
 ]
@@ -155,13 +156,13 @@ export default function MadplanEfterTilbud() {
             Altid Mad læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Det samler det arbejde, du ellers skal gøre på tværs af tilbud, retter og indkøbslister.
           </P>
           <P>
-            Du bestemmer stadig, hvad der passer til familien. Altid Mad skal gøre det lettere at vælge realistiske måltider og gennemskue, hvor varerne er billigst den pågældende uge.
+            Du bestemmer stadig, hvad der passer til familien. Altid Mad gør det lettere at vælge realistiske måltider og gennemskue, hvor varerne er billigst den pågældende uge.
           </P>
           <P>
             Appen er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login. Teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
           <P>
-            Altid Mad er ikke lanceret endnu. Skriv dig på ventelisten på altidmad.dk, hvis du vil være blandt dem, der hører mere.
+            Du finder Altid Mad i appen Altid Hjem, som kan hentes i App Store og Google Play.
           </P>
         </div>
 
@@ -170,11 +171,10 @@ export default function MadplanEfterTilbud() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Slip for søndagsarbejdet med aviserne'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan lægge madplanen efter ugens tilbud for jer. Gratis.'
-            source='madplan-efter-tilbud'
+            subtitle='Lad Altid Mad lægge madplanen efter ugens tilbud for jer.'
           />
         </div>
       </main>

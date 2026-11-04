@@ -22,7 +22,7 @@ const PREHEADER = 'Ét klik, så er du med.'
  * The consent wording is quoted verbatim from lib/copy.ts. That quote IS the
  * evidence of what they agreed to; never paraphrase it to fit the layout.
  *
- * Identical in both repos, deliberately: one shared waitlist row should not look
+ * Identical in both repos, deliberately: one shared signup row should not look
  * like two companies depending on which site the person signed up from.
  */
 export function consentTextsFor(pending: ConsentSet): string[] {
@@ -37,10 +37,10 @@ export function confirmHeading(pending: ConsentSet): string {
 
 export function confirmIntro(pending: ConsentSet): string {
   if (pending.mad && pending.group)
-    return 'Du står allerede på ventelisten og har netop bedt om at høre nyt fra Altid Mad og de øvrige Altid-brands.'
+    return 'Du har netop bedt om at høre nyt fra Altid Mad og de øvrige Altid-brands.'
   if (pending.group)
-    return 'Du står allerede på ventelisten og har netop bedt om at høre nyt fra de øvrige Altid-brands.'
-  return 'Du står allerede på ventelisten og har netop bedt om også at høre nyt om Altid Mad.'
+    return 'Du har netop bedt om at høre nyt fra de øvrige Altid-brands.'
+  return 'Du har netop bedt om at høre nyt om Altid Mad.'
 }
 
 function escapeHtml(s: string): string {
@@ -81,7 +81,7 @@ export function renderConsentConfirmEmail(vars: {
 
 <h1 style="margin:0 0 20px;font-size:24px;line-height:1.3;font-weight:500;color:#163223;">${escapeHtml(confirmHeading(pending))}</h1>
 
-<p style="margin:0 0 16px;font-size:16px;line-height:1.55;color:#6F6A61;">Hej ${escapeHtml(firstName)}</p>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.55;color:#6F6A61;">${firstName ? `Hej ${escapeHtml(firstName)}` : 'Hej'}</p>
 <p style="margin:0 0 16px;font-size:16px;line-height:1.55;color:#6F6A61;">${escapeHtml(confirmIntro(pending))}</p>
 <p style="margin:0 0 28px;font-size:16px;line-height:1.55;color:#6F6A61;">Tryk på knappen nedenfor, så sørger vi for resten.</p>
 

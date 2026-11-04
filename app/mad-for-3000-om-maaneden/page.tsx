@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import TreTusindMockup from '@/components/TreTusindMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -65,7 +66,7 @@ const FAQ: FaqItem[] = [
     q: 'Hvor skal vi starte?',
     a: [
       'Start med at gennemgå jeres seneste indkøb og vælge et realistisk månedsbudget.',
-      'Lav derefter en madplan ud fra køkkenets indhold og ugens tilbud, og tilmeld jer ventelisten hos Altid Mad, hvis I vil have hjælp til sammenligningen.',
+      'Lav derefter en madplan ud fra køkkenets indhold og ugens tilbud, og hent appen Altid Hjem, hvis I vil have hjælp fra Altid Mad til sammenligningen.',
     ],
   },
 ]
@@ -159,13 +160,13 @@ export default function MadFor3000OmMaaneden() {
           </P>
           <H2>Sådan kan Altid Mad hjælpe</H2>
           <P>
-            Altid Mad er en kommende dansk app, som læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Ventelisten er åben på altidmad.dk.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem. Den læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Appen kan hentes i App Store og Google Play.
           </P>
           <P>
-            Appen bliver en del af Altid Hjem, der samler hjemmets faste udgifter med ét overblik og ét login. Teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
+            Altid Hjem samler hjemmets faste udgifter med ét overblik og ét login. Teamet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
           <P>
-            Tilmeld jer ventelisten, hvis I vil bruge mindre tid på at sammenligne tilbud og få et mere konkret grundlag for ugens madplan og indkøb.
+            Hent appen, hvis I vil bruge mindre tid på at sammenligne tilbud og få et mere konkret grundlag for ugens madplan og indkøb.
           </P>
         </div>
 
@@ -174,11 +175,10 @@ export default function MadFor3000OmMaaneden() {
         </MockupFrame>
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Ærligt budget, ærlig hjælp'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan presse jeres madbudget uden at presse familien. Gratis.'
-            source='mad-for-3000-om-maaneden'
+            subtitle='Lad Altid Mad presse jeres madbudget uden at presse familien.'
           />
         </div>
       </main>

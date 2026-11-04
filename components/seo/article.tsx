@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { STORE_ANCHOR } from '@/lib/store-links'
 
 /**
  * Shared building blocks for the SEO article pages (billigste-supermarked,
@@ -83,7 +84,7 @@ export function MidCta({ label }: { label: string }) {
   return (
     <div className="my-8 flex justify-center">
       <a
-        href="#venteliste"
+        href={`#${STORE_ANCHOR}`}
         className="inline-flex items-center justify-center rounded-full px-7 py-4 text-[16px] font-medium transition-opacity hover:opacity-85"
         style={{ background: '#DCD799', color: FOREST }}
       >

@@ -3,14 +3,8 @@ import { sendWaitlistConfirmation, sendReferralWelcome, scheduleReleaseEmail, se
 import { sendWaitlistConfirmationSms } from '@/lib/send-sms'
 import { trackServer, identifyServer } from '@/lib/amplitude.server'
 import { recordReferral, mirrorSignup, getReferrerProgress, getSignupByEmail, getUnsubToken, isUnsubscribed, checkRateLimit, checkRateLimitStrict, getQueuePosition } from '@/lib/db'
-import {
-  CONSENT_VERSION,
-  CONFIRM_SENT_HEADING,
-  confirmSentBody,
-  DUPLICATE_ERROR,
-  LOOKUP_FAILED_ERROR,
-  CONFIRM_SENDS_PER_HOUR,
-} from '@/lib/copy'
+import { CONSENT_VERSION, LOOKUP_FAILED_ERROR, CONFIRM_SENDS_PER_HOUR } from '@/lib/copy'
+import { handleNewsletter } from '@/lib/newsletter'
 import { signConfirmToken, assertConsentTokenConfigured } from '@/lib/consent-token'
 import { syncContactTags, addAudienceContact } from '@/lib/resend'
 import { normalizeSignupSource } from '@/lib/signup-source'
@@ -26,6 +20,14 @@ const PHONE_RE = /^\d{8}$/
 const WINDOW_SECONDS = 60 * 60 // 1 hour
 const MAX_ATTEMPTS = 3
 
+// Answers for the step 1 path only. No page posts to steps 1 and 2 any more; they
+// stay working for pages cached before the waitlist form was removed.
+const DUPLICATE_ERROR = 'Du er allerede skrevet op til Altid Hjem.'
+const CONFIRM_SENT_HEADING = 'Du er næsten i mål'
+function confirmSentBody(email: string): string {
+  return `Du står allerede på ventelisten. Vi har sendt en mail til ${email} med et link, som du skal trykke på, før vi må sende dig nyt om Altid Mad.`
+}
+
 export async function POST(req: NextRequest) {
   let body
   try {
@@ -33,6 +35,12 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ success: false, error: 'Ugyldig anmodning' }, { status: 400 })
   }
+
+  if (body === null || typeof body !== 'object') {
+    return NextResponse.json({ success: false, error: 'Ugyldig anmodning' }, { status: 400 })
+  }
+
+  if (body.source === 'newsletter') return handleNewsletter(req, body)
 
   if (body.step === 1) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'

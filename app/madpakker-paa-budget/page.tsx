@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Nav from '@/components/Nav'
 import MadpakkeMockup from '@/components/MadpakkeMockup'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
@@ -52,8 +53,8 @@ const FAQ: { q: string; a: string[] }[] = [
   {
     q: 'Kan Altid Mad hjælpe med madpakker?',
     a: [
-      'Ja, Altid Mad skal tænke madpakker sammen med ugens madplan, tilbud og indkøbsliste.',
-      'Appen er ikke lanceret endnu, men du kan skrive dig på ventelisten på altidmad.dk.',
+      'Ja. Altid Mad samler ugens madplan, tilbud og indkøbsliste, så du kan tænke madpakkerne med, når du planlægger.',
+      'Du finder Altid Mad i appen Altid Hjem, som kan hentes i App Store og Google Play.',
     ],
   },
 ]
@@ -198,7 +199,7 @@ export default function MadpakkerPaaBudget() {
 
           <div className="my-8 flex justify-center">
             <a
-              href="#venteliste"
+              href={`#${STORE_ANCHOR}`}
               className="inline-flex items-center justify-center rounded-full px-7 py-4 text-[16px] font-medium transition-opacity hover:opacity-85"
               style={{ background: '#DCD799', color: FOREST }}
             >
@@ -229,10 +230,10 @@ export default function MadpakkerPaaBudget() {
             .
           </P>
 
-          <H2>Sådan skal Altid Mad hjælpe familien</H2>
+          <H2>Sådan hjælper Altid Mad familien</H2>
           <P>
-            Altid Mad skal læse tilbudsaviserne, bygge en madplan efter familiens smag og finde ugens
-            dagligvarer til de bedste priser. Indkøbslisten skal samle det, I skal bruge, så tilbud,
+            Altid Mad læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens
+            dagligvarer til de bedste priser. Indkøbslisten samler det, I skal bruge, så tilbud,
             aftensmad og madpakker kan tænkes sammen.
           </P>
           <P>
@@ -240,7 +241,7 @@ export default function MadpakkerPaaBudget() {
             næste dags madpakke, og relevante basisvarer på tilbud kan indgå i indkøbslisten.
           </P>
           <P>
-            Appen er ikke lanceret endnu, men ventelisten er åben på altidmad.dk. Altid Mad er en del af
+            Appen kan hentes i App Store og Google Play. Altid Mad er en del af
             Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login, og teamet står også
             bag Altid Energi, Danmarks første gebyrfrie energiselskab.
           </P>
@@ -294,11 +295,10 @@ export default function MadpakkerPaaBudget() {
           </div>
         </div>
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
         <BottomCta
-          eyebrow="Madpakkerne planlægger snart sig selv"
-          subtitle="Skriv dig på ventelisten, så får du besked, når Altid Mad kan tænke tilbud, aftensmad og madpakker sammen for jer. Gratis."
-          source="madpakker-paa-budget"
+          eyebrow="Fra madpakke til madplan"
+          subtitle="Få ugens madplan, tilbud og indkøbsliste samlet i Altid Mad."
         />
         </div>
       </main>

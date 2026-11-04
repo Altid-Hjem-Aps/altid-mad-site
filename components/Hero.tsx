@@ -1,8 +1,8 @@
-import WaitlistForm from '@/components/WaitlistForm'
-import ComingSoonStores from '@/components/ComingSoonStores'
+import StoreBadges from '@/components/StoreBadges'
 import IPhoneMockup from '@/components/IPhoneMockup'
 import HeroStatCounter from '@/components/HeroStatCounter'
 import PressStrip from '@/components/sections/PressStrip'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import { H1, BODY } from '@/lib/typography'
 
 // Stats from the Mad CVI frame (node 44:1060) — left column below the CTA.
@@ -30,49 +30,26 @@ export default function Hero() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[47fr_53fr] gap-12 lg:gap-[clamp(48px,4.8vw,92px)] items-center pb-12 pt-8 lg:py-10 lg:min-h-[680px]">
 
-          {/* Left: copy + form + stats */}
+          {/* Left: copy + store badges + stats */}
           <div className="flex flex-col text-center lg:text-left">
             <h1
               className={`${H1} lg:-ml-[0.05em]`}
               style={{ color: '#163223' }}
             >
-              <span className="block">Snart får danskerne</span>
-              <span className="block" style={{ color: '#3E6924' }}>bedre råd til mad</span>
+              Altid Mad er klar.
             </h1>
 
             <p
               className={`mt-7 ${BODY} lg:text-[18px] mx-auto lg:mx-0`}
               style={{ color: '#6f6a61', maxWidth: 620 }}
             >
-              <span className="max-lg:hidden">Altid Mad laver automatisk din madplan, finder de bedste tilbud og skriver indkøbssedlen, så du kan spare penge året rundt.</span>
-              <span className="lg:hidden">Altid Mad laver din madplan, finder ugens bedste tilbud og skriver indkøbssedlen, så du sparer penge året rundt.</span>{' '}
-              <span style={{ color: '#163223' }}>Altid.</span>
+              Madplan og indkøbsliste, der finder de billigste varer i dine butikker. Du finder Altid Mad i appen Altid Hjem.
             </p>
 
-            {/* One w-fit box around the CTA and the pills so both size to the
-                pills, without hard-coding either width against the other's
-                copy. Two rules keep that honest:
-
-                max-w-[600px] applies at EVERY width, not just lg — fit-content
-                already clamps to the available space, so an lg-only cap left
-                the sm..lg band uncapped and the box grew to the full column.
-
-                w-0 min-w-full on the form makes it contribute nothing to the
-                box's intrinsic width while still filling it. Without that, the
-                consent block (long Danish legal copy, ~1150px unwrapped) mounts
-                on the first keystroke and yanks the box wider than the pills. */}
-            {/* w-full below sm: there the lead-in carries a hard break, so its
-                max-content is only the longest segment and w-fit would shrink
-                the whole box — CTA included — to that. The box only needs to
-                hug at sm+, which is where the pills set the width anyway. */}
-            <div className="mt-8 w-full sm:w-fit max-w-[600px] mx-auto lg:mx-0">
-              <div id="venteliste" className="w-0 min-w-full">
-                <WaitlistForm variant="light" ctaFillsContainer />
-              </div>
-
-              <div className="mt-6">
-                <ComingSoonStores />
-              </div>
+            {/* The target of every "Hent appen" link on the page. The scroll margin
+                keeps the badges clear of the fixed nav. */}
+            <div id={STORE_ANCHOR} className="mt-8 scroll-mt-[140px]">
+              <StoreBadges position="hero" className="justify-center lg:justify-start" />
             </div>
 
             {/* Stats row — single centered stat below lg, both side by side on desktop */}

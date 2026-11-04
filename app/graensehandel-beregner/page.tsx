@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav'
 import GraensehandelCalculator from '@/components/GraensehandelCalculator'
 import BottomCta from '@/components/sections/BottomCta'
+import { STORE_ANCHOR } from '@/lib/store-links'
 import Footer from '@/components/Footer'
 import {
   A,
@@ -148,7 +149,7 @@ export default function GraensehandelBeregner() {
           <MidCta label="Hent besparelsen uden at køre nogen steder" />
           <H2>Sådan kan Altid Mad hjælpe</H2>
           <P>
-            Altid Mad er en kommende dansk app, som læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Ventelisten er åben på altidmad.dk.
+            Altid Mad er en dansk tjeneste i appen Altid Hjem. Den læser tilbudsaviserne, bygger en madplan efter familiens smag og finder ugens dagligvarer til de bedste priser. Appen kan hentes i App Store og Google Play.
           </P>
           <P>
             Altid Mad er en del af Altid Hjem, som samler hjemmets faste udgifter med ét overblik og ét login. Holdet står også bag Altid Energi, Danmarks første gebyrfrie energiselskab.
@@ -158,11 +159,10 @@ export default function GraensehandelBeregner() {
 
         <FaqAccordion faq={FAQ} />
 
-        <div id="venteliste">
+        <div id={STORE_ANCHOR} className="scroll-mt-[120px]">
           <BottomCta
             eyebrow='Besparelsen uden kilometerne'
-            subtitle='Skriv dig på ventelisten, så får du besked, når Altid Mad kan finde besparelsen i jeres egne butikker. Gratis.'
-            source='graensehandel-beregner'
+            subtitle='Lad Altid Mad finde besparelsen i jeres egne butikker.'
           />
         </div>
       </main>

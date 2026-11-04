@@ -2,26 +2,22 @@ import type { Metadata } from 'next'
 import InviterShare from '@/components/InviterShare'
 
 export const metadata: Metadata = {
-  title: 'Inviter venner – Altid Mad',
-  description: 'Del dit personlige link og ryk frem i køen til Altid Mad.',
+  title: 'Inviter venner: Altid Mad',
+  description: 'Del dit personlige link, så dine venner også kan finde Altid Mad.',
   openGraph: {
     title: 'Kom med på Altid Mad',
-    description: 'Bedre råd til mad. Tilmeld dig ventelisten med mit link.',
+    description: 'Bedre råd til mad. Altid Mad finder du i appen Altid Hjem.',
     url: 'https://altidmad.dk/inviter',
     siteName: 'Altid Mad',
     type: 'website',
   },
 }
 
-// The six category icons already live in the repo for the email templates —
-// same lockup as the welcome mail's header.
+// The icons of the services in the app, from the email templates' assets.
 const CATEGORY_ICONS: [string, string][] = [
   ['icon-strom', 'Energi'],
   ['icon-mad', 'Mad'],
   ['icon-forsikring', 'Forsikring'],
-  ['icon-alarm', 'Alarm'],
-  ['icon-mobil', 'Mobil'],
-  ['icon-opladning', 'Opladning'],
 ]
 
 export default async function InviterPage({
