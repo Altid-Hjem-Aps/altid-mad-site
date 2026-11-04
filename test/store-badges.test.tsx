@@ -28,6 +28,21 @@ describe('store badges', () => {
     expectBothBadges(within(document.body))
   })
 
+  it('are the site\'s own pills: visible text, no badge image', () => {
+    const { container } = render(<StoreBadges position="hero" />)
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Hent i App Store' })).toHaveTextContent('Hent i App Store')
+    expect(screen.getByRole('link', { name: 'Hent i Google Play' })).toHaveTextContent('Hent i Google Play')
+  })
+
+  it('are white on the dark bottom section, dark on the light hero', () => {
+    const hero = render(<Hero />)
+    expect(within(hero.container).getByRole('link', { name: 'Hent i App Store' })).toHaveStyle({ color: '#163223' })
+    hero.unmount()
+    const bottom = render(<BottomCta />)
+    expect(within(bottom.container).getByRole('link', { name: 'Hent i App Store' })).toHaveStyle({ color: '#fff' })
+  })
+
   it('count a click with a beacon and let the navigation go ahead', () => {
     const sendBeacon = vi.fn(() => true)
     vi.stubGlobal('navigator', { ...navigator, sendBeacon })
