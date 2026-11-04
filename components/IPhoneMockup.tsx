@@ -48,8 +48,8 @@ export default function IPhoneMockup() {
   }, [])
 
   // Autoplay runs only in the single-phone layout. The layout itself switches in CSS,
-  // so the page never swaps phones on hydration, and being display:none below the
-  // gate the side phones' lazy pictures never load on a phone.
+  // so the page never swaps phones on hydration. Both layouts show the same three
+  // pictures, so the hidden one costs no extra download.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return
     // Below 1050px the side phones crop harshly, so narrower windows get the
