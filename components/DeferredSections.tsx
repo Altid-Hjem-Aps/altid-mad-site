@@ -5,7 +5,7 @@ import LazySection from '@/components/LazySection'
 
 // The page's heavy below-fold sections (the two phone flows, the Mux
 // founder video, the savings counters and the how-it-works cards carry
-// framer-motion plus thousands of lines of choreography). dynamic(ssr:false)
+// framer-motion). dynamic(ssr:false)
 // splits each into its own chunk, and LazySection delays the import until the
 // visitor is within 1500px. Each section's placeholder is used BOTH before
 // the observer fires and as the dynamic() loading fallback, so the height

@@ -101,7 +101,7 @@ export default function BeregnDitMadbudget() {
           </P>
         </div>
 
-        <MockupFrame caption="Budgettet i Altid Mad viser, hvad husstande på jeres størrelse typisk bruger.">
+        <MockupFrame caption="Budgettet i Altid Mad viser, hvad husstande af jeres størrelse typisk bruger.">
           <AppScreenFigure guide="beregn" />
         </MockupFrame>
         <div className="max-w-2xl mx-auto px-6 pb-20">

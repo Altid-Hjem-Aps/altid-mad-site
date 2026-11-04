@@ -25,7 +25,6 @@ export default function AppScreenFigure({ guide }: { guide: keyof typeof GUIDE_S
           alt={entry.alt}
           width={screen.width}
           height={screen.height}
-          sizes="(max-width: 480px) 90vw, 440px"
           unoptimized
           draggable={false}
           loading="lazy"

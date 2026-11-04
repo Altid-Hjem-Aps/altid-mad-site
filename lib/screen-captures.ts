@@ -214,7 +214,7 @@ export const INDKOEB_SCENES: FlowScene[] = [
     ms: 4400,
     beats: [
       { frame: 'mad.flow.12b_cheapest', at: 0, alt: 'Hvor vil I handle? Indkøbet fordelt på tre butikker med samlet pris' },
-      { frame: 'mad.flow.13_combinations', at: 2000, alt: 'Alle kombinationer af en, to og tre butikker med pris for hver' },
+      { frame: 'mad.flow.13_combinations', at: 2000, alt: 'Alle kombinationer af én, to og tre butikker med pris for hver' },
     ],
   },
   {
@@ -249,11 +249,11 @@ export const GUIDE_SCREENS = {
   jul: {
     id: 'mad.meal_plan',
     crop: { x: 0, y: 464, w: 720, h: 382 },
-    alt: 'Ugevælgeren i Altid Mad med en ret for hver dag i ugen',
+    alt: 'Ugevælgeren i Altid Mad med en ret til hver dag i ugen',
   },
   beregn: {
     id: 'mad.flow.6_budget',
-    alt: 'Budgettet i Altid Mad: beløb pr. måned og pr. uge og det, husstande på jeres størrelse typisk bruger',
+    alt: 'Budgettet i Altid Mad: beløb pr. måned og pr. uge og det, husstande af jeres størrelse typisk bruger',
   },
   madpakker: {
     id: 'mad.meal_plan.scrolled',
@@ -266,11 +266,11 @@ export const GUIDE_SCREENS = {
   },
   supermarked: {
     id: 'mad.welcome.3',
-    alt: 'Del indkøbet op: priser i en, to og tre butikker, vist med søjler',
+    alt: 'Del indkøbet op: priser i én, to og tre butikker, vist med søjler',
   },
   spar: {
     id: 'mad.home',
-    alt: 'Altid Mad med ugens retter, det, der er tilbage af budgettet, og indkøbsturen',
+    alt: 'Altid Mad med ugens retter, resten af budgettet og indkøbsturen',
   },
   tretusind: {
     id: 'mad.flow.6_budget.3000',

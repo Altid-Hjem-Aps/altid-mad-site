@@ -7,14 +7,10 @@ import { SCREENS, type ScreenId } from '@/lib/screen-captures'
 export default function PhoneShell({
   children,
   variant = 'foreground',
-  sheen = true,
   softShadow = false,
 }: {
   children: ReactNode
   variant?: 'foreground' | 'back'
-  /** The glass reflection overlay tints everything under it toward white —
-   *  turn it off where exact brand colours matter. */
-  sheen?: boolean
   /** Gentler halo — used by the hero's single-phone mobile layout. */
   softShadow?: boolean
 }) {
@@ -56,26 +52,25 @@ export default function PhoneShell({
               width: '100%',
               height: '100%',
               borderRadius: 44,
-              background: '#000',
+              background: '#fdfaf4',
               overflow: 'hidden',
               position: 'relative',
             }}
           >
             {children}
 
-            {sheen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: 44,
-                  background:
-                    'linear-gradient(130deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 30%, transparent 55%)',
-                  pointerEvents: 'none',
-                  zIndex: 10,
-                }}
-              />
-            )}
+            {/* The glass reflection. */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 44,
+                background:
+                  'linear-gradient(130deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 30%, transparent 55%)',
+                pointerEvents: 'none',
+                zIndex: 10,
+              }}
+            />
           </div>
         </div>
       </div>
@@ -118,9 +113,9 @@ export function PhoneScreen({
         alt={alt}
         width={screen.width}
         height={screen.height}
-        sizes="254px"
         unoptimized
         preload={preload}
+        decoding="sync"
         loading={preload ? undefined : lazy ? 'lazy' : 'eager'}
         draggable={false}
         onError={() => console.error(`Altid Mad frame failed to load: ${screen.file}`)}
@@ -138,8 +133,9 @@ const DECODE_TIMEOUT_MS = 10_000
 export function decodeFrame(id: ScreenId): Promise<void> {
   const image = new window.Image()
   image.src = SCREENS[id].file
-  return Promise.race([
-    image.decode(),
-    new Promise<void>((_, reject) => setTimeout(() => reject(new Error('timed out')), DECODE_TIMEOUT_MS)),
-  ])
+  let timer: ReturnType<typeof setTimeout>
+  const timedOut = new Promise<void>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timed out')), DECODE_TIMEOUT_MS)
+  })
+  return Promise.race([image.decode(), timedOut]).finally(() => clearTimeout(timer))
 }

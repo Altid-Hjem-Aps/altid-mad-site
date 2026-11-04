@@ -27,8 +27,7 @@ render mint/teal. Colour is never the sole cue; every dot/tag pairs with text.
 
 ## Type (lib/typography.ts)
 
-Onest everywhere; Afacad only for the subbrand word in logo lockups; DM Sans, the
-app's font, only on data cards (see Data cards).
+Onest everywhere; Afacad only for the subbrand word in logo lockups.
 
 - **H1** 400 · `clamp(32px → 80px)` · lh 1.08 · ls −0.02em
 - **H2** 400 · `clamp(28px → 50px)` · lh 1.15
@@ -54,23 +53,22 @@ hairline) → rows. Benefit cards: white on teal, `radius 20`, shadow
   REMA teal) + label.
 - **Day chip:** 34×26 `rgba(191,230,224,.45)` + teal.
 - **Pagination:** shared `CarouselPagination` — 9px dots, active stretches to
-  52px pill filling over `autoMs`, + pause toggle. Used by every carousel.
+  52px pill filling over `autoMs`, + pause toggle. Used by every carousel and
+  the animated flow cards.
 - **Nav "Kommer snart":** muted 60% text + 9px uppercase sublabel, not a link.
+- **Photos:** square, `radius 7–8` thumbs (24–30px) in rows, 64px banners in
+  inspiration cards. Source: Unsplash (free commercial license), in
+  `public/food/`.
 - **Pictures of the app:** real captures in `public/app-screens/`, made by
   `scripts/build-app-screens.mjs` and listed in `lib/screen-captures.ts`. Never
-  redraw an app screen in code. Motion goes on top in `components/ScreenTour.tsx`.
-
-## Data cards (components/seo/mockupKit.tsx)
-
-The guide pages' cards and calculators illustrate an article's data, in the app's
-own look: DM Sans, forest `#163223`, tint-mad lavender `#CDC2FB` where this document
-says mint (tags, savings on forest), beige `#F1ECE0` for chips and tracks, border
-`#EAE6DE`, ink-muted `#6B675F`, amber wash `rgba(255,197,107,.28)`.
+  redraw an app screen in code. The phones' motion is in
+  `components/sections/problemShared.tsx` and `components/IPhoneMockup.tsx`.
 
 ## Motion (lib/motion.ts + conventions)
 
 - `REVEAL_SPRING` `cubic-bezier(.34,1.2,.64,1)` — card/scroll reveals
-- `EASE_EXPO` `cubic-bezier(.16,1,.3,1)` entrances
+- `EASE_EXPO` `cubic-bezier(.16,1,.3,1)` entrances · `EASE_QUINT`
+  `cubic-bezier(.22,1,.36,1)` exits (~72% of entrance duration)
 - Never bounce/elastic. Scroll reveals via IntersectionObserver
   (`rootMargin -20%`), play-only-in-view, banked-time pause.
 - Icon micro-loops: coin-drop 4.5s, hand-press 3s, cloche 3.8s, clock 4.8s,

@@ -2,6 +2,7 @@ import { readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import sharp from 'sharp'
 import AppScreenFigure from '@/components/AppScreenFigure'
 import IPhoneMockup from '@/components/IPhoneMockup'
@@ -38,6 +39,11 @@ function regionsOnFrames(): [string, ScreenId, Region][] {
   const presses = beats.flatMap((b): [string, ScreenId, Region][] => (b.press ? [['press', b.frame, b.press.region]] : []))
   const crops = Object.values(GUIDE_SCREENS).flatMap((g): [string, ScreenId, Region][] => ('crop' in g ? [['crop', g.id, g.crop]] : []))
   return [...reveals, ...presses, ...crops]
+}
+
+function setTabHidden(hidden: boolean) {
+  Object.defineProperty(document, 'hidden', { configurable: true, value: hidden })
+  document.dispatchEvent(new Event('visibilitychange'))
 }
 
 function stubReducedMotion(reduce: boolean) {
@@ -160,7 +166,8 @@ describe('the pictures on the site', () => {
     const page = readFileSync(join(process.cwd(), 'app/beregn-dit-madbudget/page.tsx'), 'utf8')
     expect(page).toContain('5.481 kr.')
     expect(page).toContain('40,4 pct.')
-    expect(page).toMatch(/op til/)
+    expect(page).toContain('I kan spare op til dette niveau, hvis jeres indkøb ligner testkurven')
+    expect(page).toContain('Resultatet vises derfor som op til')
   })
 })
 
@@ -205,7 +212,7 @@ describe('the phone stories', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
-    Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    setTabHidden(false)
   })
 
   it('has one dot per step and none for the app icon', () => {
@@ -235,10 +242,7 @@ describe('the phone stories', () => {
     expect(shownFrame(container)).toBe(file('mad.flow.1_tastes'))
 
     intersect(true)
-    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'))
-    })
+    act(() => setTabHidden(true))
     await advance(10_000)
     expect(shownFrame(container)).toBe(file('mad.flow.1_tastes'))
   })
@@ -274,6 +278,34 @@ describe('the phone stories', () => {
     await advance(6000)
     expect(shownFrame(container)).toBe(file('mad.flow.8_building'))
     expect(link().closest('p')).toHaveStyle({ visibility: 'hidden' })
+  })
+
+  // The law again, on a bad connection: the footnote goes with the picture, not the clock.
+  it('keeps the footnote while the 11.207 kr. frame stays up because the next one will not load', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const { container } = render(<ProblemMadplan />)
+    const note = () => screen.getByText('Læs Altid Mad-rapporten').closest('p')
+    intersect(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Gå til Budget' }))
+    await advance(6000)
+    expect(shownFrame(container)).toBe(file('mad.welcome.1'))
+
+    decode.mockRejectedValue(new Error('offline'))
+    await advance(6000)
+    expect(shownFrame(container)).toBe(file('mad.welcome.1'))
+    expect(note()).toHaveStyle({ visibility: 'visible' })
+  })
+
+  it('does not show the footnote before the 11.207 kr. frame has landed', async () => {
+    const { container } = render(<ProblemMadplan />)
+    const note = () => screen.getByText('Læs Altid Mad-rapporten').closest('p')
+    intersect(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Gå til Budget' }))
+    await advance(1000)
+    decode.mockReturnValue(new Promise(() => {}))
+    await advance(5000)
+    expect(shownFrame(container)).toBe(file('mad.flow.6_budget'))
+    expect(note()).toHaveStyle({ visibility: 'hidden' })
   })
 
   it('closes on the app icon with no phone, then opens on the first step again', async () => {
@@ -329,20 +361,34 @@ describe('the phone stories', () => {
 
 describe('the hero phones', () => {
   const decode = vi.fn(() => Promise.resolve())
+  const AUTO_MS = 6000
+  const advance = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms))
+  const SLIDE_2 = '-33.3'
+  const SLIDE_3 = '-66.6'
+
+  // jsdom has no layout: the hero's own 1.5 s fallback counts it as on screen.
+  const renderOnScreen = async () => {
+    const view = render(<IPhoneMockup />)
+    await advance(1500)
+    return view
+  }
+  const position = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('[style*="width: 300%"]')?.style.transform
 
   beforeEach(() => {
     vi.useFakeTimers()
     decode.mockReset().mockResolvedValue(undefined)
     HTMLImageElement.prototype.decode = decode
     stubReducedMotion(false)
+    vi.stubGlobal('IntersectionObserver', undefined)
   })
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    setTabHidden(false)
   })
-
-  const track = (container: HTMLElement) => container.querySelector<HTMLElement>('[style*="width: 300%"]')
 
   it('shows the board frames in the three-phone fan and in the carousel', () => {
     const { container } = render(<IPhoneMockup />)
@@ -353,19 +399,56 @@ describe('the hero phones', () => {
     expect(new Set(sources)).toEqual(new Set(HERO_FRAMES.map(file)))
   })
 
-  it('moves the carousel with its dots, and stays put when the frame will not load', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const { container } = render(<IPhoneMockup />)
-    const carousel = () => track(container)?.style.transform
+  it('preloads the first frame', () => {
+    expect(renderToString(<IPhoneMockup />)).toMatch(/<link[^>]*rel="preload"[^>]*mad\.meal_plan\.webp/)
+  })
 
+  it('moves the carousel by itself once on screen', async () => {
+    const { container } = await renderOnScreen()
+    await advance(AUTO_MS)
+    expect(position(container)).toContain(SLIDE_2)
+  })
+
+  it('stays still on a hidden tab, also on a page opened in the background', async () => {
+    setTabHidden(true)
+    const { container } = await renderOnScreen()
+    await advance(AUTO_MS * 2)
+    expect(position(container)).not.toContain('-')
+  })
+
+  it('stays still under reduced motion and steps by hand', async () => {
+    stubReducedMotion(true)
+    const { container } = await renderOnScreen()
+    await advance(AUTO_MS * 2)
+    expect(position(container)).not.toContain('-')
     fireEvent.click(screen.getByRole('button', { name: 'Skærm 2' }))
-    await act(() => vi.advanceTimersByTimeAsync(0))
-    expect(carousel()).toContain('-33.3')
+    await advance(0)
+    expect(position(container)).toContain(SLIDE_2)
+  })
 
-    decode.mockRejectedValue(new Error('offline'))
-    fireEvent.click(screen.getByRole('button', { name: 'Skærm 3' }))
-    await act(() => vi.advanceTimersByTimeAsync(0))
-    expect(carousel()).toContain('-33.3')
+  it('stays put when the frame will not load, then tries again by itself', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    decode.mockRejectedValueOnce(new Error('offline'))
+    const { container } = await renderOnScreen()
+    await advance(AUTO_MS)
+    expect(position(container)).not.toContain('-')
     expect(error).toHaveBeenCalled()
+
+    await advance(AUTO_MS)
+    expect(position(container)).toContain(SLIDE_2)
+  })
+
+  it('lets only the newest tap move the carousel when an older frame lands late', async () => {
+    let landLate = () => {}
+    decode.mockReturnValueOnce(new Promise<void>((resolve) => { landLate = resolve }))
+    const { container } = render(<IPhoneMockup />)
+    fireEvent.click(screen.getByRole('button', { name: 'Skærm 3' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Skærm 2' }))
+    await advance(0)
+    expect(position(container)).toContain(SLIDE_2)
+    landLate()
+    await advance(0)
+    expect(position(container)).toContain(SLIDE_2)
+    expect(position(container)).not.toContain(SLIDE_3)
   })
 })

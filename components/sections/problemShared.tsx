@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import PhoneShell, { PhoneScreen, decodeFrame } from '@/components/iphone/PhoneShell'
 import { SCREENS, type Beat, type FlowScene, type Region, type Reveal, type Press } from '@/lib/screen-captures'
 import { H2, EYEBROW, BODY } from '@/lib/typography'
+import { useReducedMotion, useTabHidden } from '@/lib/use-page-state'
 
 // Shared kit for the two "Problemet, vi løser automatisk" sections. Each
 // section poses one everyday question (copy column) next to the SAME iPhone
@@ -18,31 +19,14 @@ import { TEAL, FOREST, MUTED, EASE_EXPO, EASE_QUINT } from './problemTokens'
 const TICK_MS = 200
 const FRAME_FADE_S = 0.45
 
-function subscribeReducedMotion(listener: () => void) {
-  if (typeof window.matchMedia !== 'function') return () => {}
-  const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-  query.addEventListener('change', listener)
-  return () => query.removeEventListener('change', listener)
-}
-
-function useReducedMotion() {
-  return useSyncExternalStore(
-    subscribeReducedMotion,
-    () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    () => false,
-  )
-}
 
 // ── The app-icon closer ─────────────────────────────────────────────────────
 
 // The shared final scene: the phone shrinks away (via the flow's `opener`
 // mechanism) into the Altid Hjem app icon with the group tagline.
-export const APP_ICON_MS = 3600
-
-export function AppIconClose() {
+function AppIconClose() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-5">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <motion.img
         src="/app-badge.png"
         alt=""
@@ -114,11 +98,11 @@ function PressOver({ press, base, t }: { press: Press; base: keyof typeof SCREEN
 }
 
 /**
- * What the phone shows: the beat's capture, with the frame before it under it while it
- * fades in. A frame goes up only once it has decoded; one that fails keeps the frame on
- * screen. Reveals and presses are a pure function of `t`, so pausing and scrubbing hold.
+ * Which frame is up. A frame goes up only once it has decoded; one that fails keeps the
+ * frame on screen. Anything that belongs to a frame, like the report's footnote, follows
+ * this and not the clock, so the two can never part on a slow connection.
  */
-function FrameStage({ beat, next, t, reduced }: { beat: Beat; next: Beat; t: number; reduced: boolean }) {
+function useFrameOnScreen(beat: Beat, next: Beat, reduced: boolean) {
   const [up, setUp] = useState(beat)
   const [under, setUnder] = useState<Beat | null>(null)
   // A later beat on the same frame needs no decoding, and carries its own overlays.
@@ -146,34 +130,53 @@ function FrameStage({ beat, next, t, reduced }: { beat: Beat; next: Beat; t: num
     decodeFrame(next.frame).catch((err) => console.error(`Altid Mad frame failed: ${next.frame}`, err))
   }, [next.frame, beat.frame])
 
+  return { shown, under, clearUnder: () => setUnder(null) }
+}
+
+/**
+ * The frame on screen, over the frame before it while it fades in. Keyed by frame, so
+ * the one going under is never remounted and cannot flash. Reveals and presses are a
+ * pure function of `t`, so pausing and scrubbing hold, and they run only while the clock
+ * and the picture agree: a frame kept after a failure stays still.
+ */
+function FrameStage({ shown, under, clearUnder, inStep, t, reduced }: {
+  shown: Beat
+  under: Beat | null
+  clearUnder: () => void
+  inStep: boolean
+  t: number
+  reduced: boolean
+}) {
+  const layers = under && under.frame !== shown.frame ? [under, shown] : [shown]
   return (
     <>
-      {under && (
-        <div className="absolute inset-0" aria-hidden>
-          <PhoneScreen id={under.frame} />
-        </div>
-      )}
-      <motion.div
-        key={shown.frame}
-        className="absolute inset-0"
-        initial={{ opacity: under ? 0 : 1 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: FRAME_FADE_S, ease: 'easeOut' }}
-        onAnimationComplete={() => setUnder(null)}
-      >
-        <PhoneScreen id={shown.frame} alt={shown.alt}>
-          {shown.reveals?.map((reveal) => (
-            <RevealOver
-              key={`${reveal.region.x},${reveal.region.y}`}
-              reveal={reveal}
-              base={shown.frame}
-              shown={t >= reveal.at}
-              reduced={reduced}
-            />
-          ))}
-          {!reduced && shown.press && <PressOver press={shown.press} base={shown.frame} t={t} />}
-        </PhoneScreen>
-      </motion.div>
+      {layers.map((layer) => {
+        const top = layer === shown
+        return (
+          <motion.div
+            key={layer.frame}
+            className="absolute inset-0"
+            aria-hidden={top ? undefined : true}
+            initial={{ opacity: under ? 0 : 1 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: FRAME_FADE_S, ease: 'easeOut' }}
+            onAnimationComplete={top ? clearUnder : undefined}
+          >
+            <PhoneScreen id={layer.frame} alt={layer.alt}>
+              {top && inStep && layer.reveals?.map((reveal) => (
+                <RevealOver
+                  key={`${reveal.region.x},${reveal.region.y}`}
+                  reveal={reveal}
+                  base={layer.frame}
+                  shown={t >= reveal.at}
+                  reduced={reduced}
+                />
+              ))}
+              {top && inStep && !reduced && layer.press && <PressOver press={layer.press} base={layer.frame} t={t} />}
+            </PhoneScreen>
+          </motion.div>
+        )
+      })}
     </>
   )
 }
@@ -214,12 +217,20 @@ function restTick(scenes: FlowScene[], rest: string) {
   throw new Error(`no scene called ${rest}`)
 }
 
-function FlowPhone({ scenes, rest }: FlowPhoneProps) {
+// Remounted if the setting changes, so a story always starts from the right place.
+function FlowPhone(props: FlowPhoneProps) {
   const reduced = useReducedMotion()
+  return <FlowPhoneStage key={String(reduced)} {...props} reduced={reduced} />
+}
+
+/** The phone finishes closing into the app icon on its old frame, then changes behind it. */
+const CLOSER_SWAP_MS = 800
+
+function FlowPhoneStage({ scenes, rest, reduced }: FlowPhoneProps & { reduced: boolean }) {
   const [tick, setTick] = useState(() => (reduced ? restTick(scenes, rest) : 0))
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
-  const [tabHidden, setTabHidden] = useState(false)
+  const tabHidden = useTabHidden()
   // Scrub-in-progress — the clock freezes so a held pointer can't drift the
   // playhead across a scene boundary (or into the opener) on its own.
   const [scrubbing, setScrubbing] = useState(false)
@@ -229,11 +240,7 @@ function FlowPhone({ scenes, rest }: FlowPhoneProps) {
   // viewport RESTARTS the story from scene 1, so scrolling to a section
   // always shows the flow from its beginning rather than mid-loop.
   useEffect(() => {
-    if (reduced) {
-      setTick(restTick(scenes, rest))
-      return
-    }
-    setTick(0)
+    if (reduced) return
     const el = stageRef.current
     if (!el || typeof IntersectionObserver === 'undefined') {
       setPlaying(true)
@@ -245,13 +252,7 @@ function FlowPhone({ scenes, rest }: FlowPhoneProps) {
     }, { threshold: 0.35 })
     io.observe(el)
     return () => io.disconnect()
-  }, [reduced, scenes, rest])
-
-  useEffect(() => {
-    const sync = () => setTabHidden(document.hidden)
-    document.addEventListener('visibilitychange', sync)
-    return () => document.removeEventListener('visibilitychange', sync)
-  }, [])
+  }, [reduced])
 
   // The shared clock — stopping the interval IS the pause (and the scrub).
   useEffect(() => {
@@ -284,15 +285,20 @@ function FlowPhone({ scenes, rest }: FlowPhoneProps) {
   // Opener handling: the phone is closed (scaled into the centre) for the whole
   // opener scene; the moment the opener hands off to the first real scene it
   // opens (scales up from the icon) while the opener overlay fades out over it.
-  // Behind the closed phone the first frame is already up.
   const isOpener = !reduced && !!scenes[index].opener
   const phoneOpen = !isOpener
   const scene = scenes[index]
-  const beat = scene.opener ? scenes[0].beats[0] : beatAt(scene, t)
+  const lastScene = scenes[index - 1]
+  const beat = !scene.opener
+    ? beatAt(scene, t)
+    : t < CLOSER_SWAP_MS
+      ? beatAt(lastScene, lastScene.ms)
+      : scenes[0].beats[0]
   const laterBeat = scene.beats.find((b) => b.at > t)
   const nextScene = scenes[(index + 1) % scenes.length]
   const next = laterBeat ?? (nextScene.opener ? scenes[0].beats[0] : nextScene.beats[0])
   const hasReportNote = scenes.some((s) => s.beats.some((b) => b.reportNote))
+  const { shown, under, clearUnder } = useFrameOnScreen(beat, next, reduced)
 
   return (
     <div ref={stageRef} className="relative flex flex-col items-center">
@@ -322,7 +328,15 @@ function FlowPhone({ scenes, rest }: FlowPhoneProps) {
           transition={{ duration: reduced ? 0 : 0.55, ease: EASE_EXPO }}
         >
           <PhoneShell softShadow>
-            <FrameStage beat={beat} next={next} t={scene.opener ? 0 : t} reduced={reduced} />
+            <FrameStage
+              shown={shown}
+              under={under}
+              clearUnder={clearUnder}
+              inStep={shown === beat}
+              // While the phone closes, the last frame holds its end state.
+              t={scene.opener ? lastScene.ms : t}
+              reduced={reduced}
+            />
           </PhoneShell>
         </motion.div>
 
@@ -364,7 +378,7 @@ function FlowPhone({ scenes, rest }: FlowPhoneProps) {
           onTogglePaused={() => setPaused((p) => !p)}
         />
       </div>
-      {hasReportNote && <ReportNote show={!scene.opener && !!beat.reportNote} />}
+      {hasReportNote && <ReportNote show={!!shown.reportNote} />}
     </div>
   )
 }

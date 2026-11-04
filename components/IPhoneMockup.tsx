@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import PhoneShell, { PhoneScreen, decodeFrame } from './iphone/PhoneShell'
 import { CarouselPagination } from './useAutoCarousel'
 import { HERO_FRAMES, HERO_LABEL } from '@/lib/screen-captures'
+import { useReducedMotion, useTabHidden } from '@/lib/use-page-state'
 
 const SCREEN_COUNT = HERO_FRAMES.length
 const AUTO_ADVANCE_MS = 6000
@@ -16,15 +17,8 @@ export default function IPhoneMockup() {
   const [paused, setPaused] = useState(false)
   const pausedRef = useRef(false)
   // Real prefers-reduced-motion value — gates autoplay and the pagination pill.
-  const [reducedMotion, setReducedMotion] = useState(false)
-  useEffect(() => {
-    if (typeof window.matchMedia !== 'function') return
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => setReducedMotion(mql.matches)
-    sync()
-    mql.addEventListener('change', sync)
-    return () => mql.removeEventListener('change', sync)
-  }, [])
+  const reducedMotion = useReducedMotion()
+  const tabHidden = useTabHidden()
   const containerRef = useRef<HTMLDivElement>(null)
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Autoplay bookkeeping — mirrors useAutoCarousel so the slide advance and
@@ -36,18 +30,20 @@ export default function IPhoneMockup() {
   const touchStartX = useRef<number | null>(null)
   const hoverCountRef = useRef(0)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Stops the carousel on a hidden tab, with the pagination pill.
-  const [tabHidden, setTabHidden] = useState(false)
-  useEffect(() => {
-    const sync = () => setTabHidden(document.hidden)
-    document.addEventListener('visibilitychange', sync)
-    return () => document.removeEventListener('visibilitychange', sync)
-  }, [])
-  // A frame that fails keeps the one on screen.
+  // Only the newest request may move the carousel, and a pause cancels one in flight.
+  const slideRequestRef = useRef(0)
+  // Bumped when a frame fails: the slide stays, and the autoplay timer arms again.
+  const [failedSlides, setFailedSlides] = useState(0)
   const showSlide = useCallback((i: number) => {
+    const request = ++slideRequestRef.current
     decodeFrame(HERO_FRAMES[i]).then(
-      () => setCarouselIndex(i),
-      (err) => console.error(`Altid Mad frame failed: ${HERO_FRAMES[i]}`, err),
+      () => {
+        if (request === slideRequestRef.current) setCarouselIndex(i)
+      },
+      (err) => {
+        console.error(`Altid Mad frame failed: ${HERO_FRAMES[i]}`, err)
+        if (request === slideRequestRef.current) setFailedSlides((n) => n + 1)
+      },
     )
   }, [])
 
@@ -111,7 +107,7 @@ export default function IPhoneMockup() {
       // Sentinel: no timer is live — togglePaused must not bank elapsed time.
       startedAtRef.current = 0
     }
-  }, [carouselIndex, hovered, paused, reducedMotion, showSidePhones, showSlide, tabHidden])
+  }, [carouselIndex, failedSlides, hovered, paused, reducedMotion, showSidePhones, showSlide, tabHidden])
 
   // Leaving the viewport (or switching to/from the desktop fan) resets the
   // pill fill — reset the timer budget with it so they stay in lockstep.
@@ -151,6 +147,7 @@ export default function IPhoneMockup() {
   function togglePaused() {
     const next = !pausedRef.current
     pausedRef.current = next
+    if (next) slideRequestRef.current++
     // Bank remaining time only while a timer is actually live (startedAtRef
     // is 0 otherwise) — a pause tap before autoplay starts must not clamp
     // the first slide to the 400ms floor.
