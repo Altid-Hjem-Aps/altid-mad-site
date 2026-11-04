@@ -360,6 +360,11 @@ export default function FounderVideo() {
           className="relative w-full aspect-square sm:aspect-video lg:aspect-auto lg:h-full lg:min-h-[460px] self-stretch"
         >
           <MuxPlayer
+            // No Mux Data: it sets a persistent muxData cookie and sends viewing
+            // stats to Mux without consent. Plays are tracked in Amplitude, which
+            // follows the cookie banner.
+            disableTracking
+            disableCookies
             playbackId={playbackId}
             streamType="on-demand"
             accentColor="#DCD799"

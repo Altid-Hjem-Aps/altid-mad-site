@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import InviterShare from '@/components/InviterShare'
+import CookieSettingsLink from '@/components/CookieSettingsLink'
 
 export const metadata: Metadata = {
   title: 'Inviter venner – Altid Mad',
@@ -67,6 +68,9 @@ export default async function InviterPage({
 
       <div className="px-6 py-12 sm:py-16">
         <InviterShare code={ref ?? ''} />
+      </div>
+      <div className="pb-8 text-center">
+        <CookieSettingsLink className="text-[13px] underline underline-offset-2 opacity-70 hover:opacity-100" style={{ color: '#163223' }} />
       </div>
     </main>
   )

@@ -11,6 +11,7 @@ import {
 import { redeemConsentToken, isConfirmTokenRedeemed } from '@/lib/db'
 import { trackServer, flushAmplitude } from '@/lib/amplitude.server'
 import ConsentConfirmForm from '@/components/ConsentConfirmForm'
+import CookieSettingsLink from '@/components/CookieSettingsLink'
 import { BRAND } from '@/lib/brand'
 import {
   SIGNUP_CONSENT_MAD,
@@ -129,13 +130,14 @@ async function confirmAction(formData: FormData) {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: BRAND.cream }}>
+    <main className="relative min-h-screen flex items-center justify-center px-6" style={{ background: BRAND.cream }}>
       <div
         className="w-full max-w-[560px] rounded-[20px] px-8 py-10"
         style={{ background: BRAND.white, color: BRAND.forestDeep }}
       >
         {children}
       </div>
+      <CookieSettingsLink className="absolute bottom-6 text-[13px] underline underline-offset-2 opacity-70 hover:opacity-100" style={{ color: BRAND.forestDeep }} />
     </main>
   )
 }
