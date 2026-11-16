@@ -15,6 +15,7 @@ import { signConfirmToken, assertConsentTokenConfigured } from '@/lib/consent-to
 import { syncContactTags, addAudienceContact } from '@/lib/resend'
 import { normalizeSignupSource } from '@/lib/signup-source'
 import { assertSurveyTokenConfigured, signSurveyToken, verifySurveyToken } from '@/lib/survey-token'
+import { isRetired } from '@/lib/retire'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.altidhjem.dk'
 // Pinned, not req.nextUrl.origin: the confirmation link carries a consent token,
@@ -27,6 +28,8 @@ const WINDOW_SECONDS = 60 * 60 // 1 hour
 const MAX_ATTEMPTS = 3
 
 export async function POST(req: NextRequest) {
+  // The waitlist closed when the site was retired into altidhjem.dk (lib/retire.ts).
+  if (isRetired()) return NextResponse.json({ success: false, error: 'Ventelisten er lukket' }, { status: 410 })
   let body
   try {
     body = await req.json()
