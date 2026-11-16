@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import { RETIRED_EXPIRED_BODY, RETIRED_HOME, isRetired } from '@/lib/retire'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { after } from 'next/server'
@@ -29,6 +31,10 @@ import {
 } from '@/lib/copy'
 
 export const dynamic = 'force-dynamic'
+
+// Retired into altidhjem.dk (lib/retire.ts), this is the one page the domain keeps serving, so
+// search engines must not keep it. Live, the page is as it was.
+export const metadata: Metadata = isRetired() ? { title: 'Altid Mad', robots: { index: false, follow: false } } : {}
 
 // The cookie is scoped to /bekraeft (see /api/bekraeft). A bare
 // jar.delete(name) emits Path=/, which browsers will NOT match against a
@@ -150,11 +156,11 @@ function TerminalScreen({ heading, body }: { heading: string; body: string }) {
         {body}
       </p>
       <a
-        href="/"
+        href={isRetired() ? RETIRED_HOME.href : '/'}
         className="inline-block rounded-[20px] px-6 py-3 text-base font-medium"
         style={{ background: BRAND.signal, color: BRAND.forestDeep }}
       >
-        {CONFIRM_HOME_CTA}
+        {isRetired() ? RETIRED_HOME.label : CONFIRM_HOME_CTA}
       </a>
     </Shell>
   )
@@ -179,7 +185,7 @@ export default async function BekraeftPage({
   const claim = state === 'expired' ? null : verifyConfirmToken(raw, Date.now() / 1000)
 
   if (!claim) {
-    return <TerminalScreen heading={CONFIRM_EXPIRED_HEADING} body={CONFIRM_EXPIRED_BODY} />
+    return <TerminalScreen heading={CONFIRM_EXPIRED_HEADING} body={isRetired() ? RETIRED_EXPIRED_BODY : CONFIRM_EXPIRED_BODY} />
   }
 
   // UX only, fail open: someone re-clicking the email link after confirming

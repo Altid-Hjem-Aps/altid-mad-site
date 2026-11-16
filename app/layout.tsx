@@ -4,6 +4,7 @@ import './globals.css'
 import ResetScrollOnLoad from '@/components/ResetScrollOnLoad'
 import ExitIntentModal from '@/components/ExitIntentModal'
 import CookieBanner from '@/components/CookieBanner'
+import { isRetired } from '@/lib/retire'
 
 const onest = Onest({
   subsets: ['latin'],
@@ -52,7 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ResetScrollOnLoad />
         {children}
-        <ExitIntentModal />
+        {/* Retired: the only page left is /bekraeft, where a waitlist pitch would be wrong. */}
+        {isRetired() ? null : <ExitIntentModal />}
         <CookieBanner />
       </body>
     </html>

@@ -1,3 +1,5 @@
+import { RETIRED_HOME, isRetired } from '@/lib/retire'
+
 /**
  * Mad-testen yes-page (ALT-345): who may answer, and the screens.
  *
@@ -385,7 +387,7 @@ ${otherPhone(screen.token, 'iphone', 'Jeg har en iPhone')}
         title: 'Linket virker ikke',
         body: `<h1>Linket virker ikke</h1>
 <p class="lead">Linket kan ikke bruges til testen af Altid&nbsp;Mad. Har du fået det i en mail fra os, så skriv til <a href="mailto:${SUPPORT_MAIL}">${SUPPORT_MAIL}</a>.</p>
-<p class="small"><a href="/">Gå til altidmad.dk</a></p>`,
+<p class="small"><a href="${isRetired() ? RETIRED_HOME.href : '/'}">${isRetired() ? RETIRED_HOME.label : 'Gå til altidmad.dk'}</a></p>`,
       }
     case 'error':
       return {
